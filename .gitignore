@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+spike/audio/
+spike/synth/
+spike/judge_out.txt
+spike/judge_err.txt
+spike/gemini_verdicts.json
