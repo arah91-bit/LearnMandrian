@@ -10,6 +10,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = pathlib.Path(__file__).parent
+sys.path.insert(0, str(HERE.parent))
+from api_alerts import page_if_billing
 AUDIO = HERE / "audio"
 AUDIO.mkdir(exist_ok=True)
 
@@ -86,6 +88,7 @@ def main():
                     "syllable": s, "tone": t, "hanzi": h, "voice": v,
                 }
             except Exception as e:  # noqa: BLE001
+                page_if_billing("openai", e)
                 failures.append((s, t, v, repr(e)))
     (HERE / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1))
     print(f"generated {len(manifest)}/{len(jobs)} clips")

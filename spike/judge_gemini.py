@@ -12,6 +12,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 HERE = pathlib.Path(__file__).parent
+sys.path.insert(0, str(HERE.parent))
+from api_alerts import page_if_billing
 PROVIDERS = {
     "gemini": ("gemini-3.5-flash",
                "https://generativelanguage.googleapis.com/v1beta/openai/",
@@ -73,6 +75,7 @@ def main():
             try:
                 verdicts[f] = fut.result()
             except Exception as e:  # noqa: BLE001
+                page_if_billing(provider, e)
                 print("FAIL", f, repr(e)[:200], file=sys.stderr)
     (HERE / "gemini_verdicts.json").write_text(json.dumps(verdicts, indent=1))
     ok = {f: v for f, v in verdicts.items() if v in (1, 2, 3, 4)}
