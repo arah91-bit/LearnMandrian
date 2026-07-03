@@ -12,7 +12,6 @@ Single-user app behind an auth cookie (LifeLog pattern): every path except
 page, /api/* gets 401. Deploy notes in DEPLOY.md-to-be; test instance is
 testlanguagetutor.arahub.org (compose service languagetutor-test).
 """
-import base64
 import hashlib
 import hmac
 import json
@@ -24,9 +23,11 @@ import subprocess
 import tempfile
 
 import anthropic
+import httpx
 import openai
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, Request, UploadFile, File, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -47,11 +48,17 @@ PASSWORD = os.environ["TUTOR_PASSWORD"]
 
 BRAIN_MODEL = "claude-sonnet-5"
 STT_MODEL = "gpt-4o-transcribe"
-TTS_MODEL = "gpt-4o-mini-tts"
-TTS_VOICE = "nova"
-TTS_STYLE = ("Warm, patient Mandarin tutor. Pronounce Chinese in clear standard "
-             "Beijing Mandarin at a learner-friendly pace with exact lexical tones; "
-             "English at a natural pace.")
+ZH_TTS_MODEL = "gpt-4o-mini-tts"
+ZH_TTS_VOICE = "nova"
+ZH_TTS_STYLE = ("A native Mandarin teacher modeling pronunciation for a beginner. "
+                "Clear standard Beijing Mandarin, learner-friendly pace, exact "
+                "lexical tones.")
+# English rides the self-hosted Kokoro voice Phil already picked for LifeLog
+# (af_heart via the shared `voice` container); hanzi runs can't go through it
+# (English-only phonemizer), so they're synthesized by the Mandarin-capable
+# OpenAI voice and the segments are stitched. Heart carries most of the airtime.
+VOICE_URL = os.environ.get("VOICE_URL", "http://voice:8001").rstrip("/")
+HEART_VOICE = "k-heart"
 MAX_MESSAGES = 40        # conversation window kept on disk / sent to the brain
 
 SYSTEM = (HERE / "tutor_prompt.md").read_text()
@@ -236,23 +243,93 @@ async def get_state():
     return learner.api_view(learner.load())
 
 
-def _tts(text):
-    # Parentheticals are visual asides (pinyin glosses) — spoken they'd be noise.
-    speakable = re.sub(r"\([^)]*\)", "", text).strip() or text
+# ── Speech synthesis: Heart + Mandarin, stitched ───────────────────────────────
+# The client speaks sentence-by-sentence through /api/tts (LifeLog's TTS-queue
+# pattern), so audio starts at the first sentence. Each request is segmented:
+# hanzi runs (with CJK punctuation) → OpenAI Mandarin voice; everything else →
+# Heart. Segments synthesize in parallel, get normalized to 24k mono PCM, and
+# are joined with a short gap. A small cache makes drilled words replay free.
+_ZH_RUN = re.compile(r"[㐀-鿿　-〿！-･]+")
+_GAP_PCM = b"\x00" * int(24000 * 2 * 0.09)          # 90ms between voice switches
+_tts_cache, _TTS_CACHE_MAX = {}, 300
+
+
+def _ffmpeg(args, data):
+    r = subprocess.run(["ffmpeg", *args], input=data, capture_output=True, timeout=30)
+    if r.returncode != 0:
+        raise RuntimeError("ffmpeg: " + r.stderr.decode()[-160:])
+    return r.stdout
+
+
+def _to_pcm(audio_bytes):
+    return _ffmpeg(["-i", "pipe:0", "-f", "s16le", "-ar", "24000", "-ac", "1", "pipe:1"],
+                   audio_bytes)
+
+
+def _synth_zh(text):
+    resp = _oai.audio.speech.create(model=ZH_TTS_MODEL, voice=ZH_TTS_VOICE, input=text,
+                                    instructions=ZH_TTS_STYLE, response_format="mp3")
+    return _to_pcm(resp.content)
+
+
+def _synth_en(text):
+    r = httpx.post(f"{VOICE_URL}/tts", json={"text": text, "voice": HEART_VOICE},
+                   timeout=60)
+    r.raise_for_status()
+    return _to_pcm(r.content)
+
+
+def _segment_pcm(kind, text):
+    key = (kind, text)
+    if key in _tts_cache:
+        return _tts_cache[key]
     try:
-        resp = _oai.audio.speech.create(model=TTS_MODEL, voice=TTS_VOICE,
-                                        input=speakable, instructions=TTS_STYLE,
-                                        response_format="mp3")
-        return base64.b64encode(resp.content).decode()
+        pcm = _synth_zh(text) if kind == "zh" else _synth_en(text)
     except Exception as e:
-        page_if_billing("openai", e)
-        log.warning("tts failed (returning text-only turn): %s", str(e)[:200])
+        if kind == "zh":
+            page_if_billing("openai", e)
+            raise
+        log.warning("heart tts failed, falling back to openai: %s", str(e)[:120])
+        pcm = _synth_zh(text)                 # keep the turn alive on voice-svc outage
+    if len(_tts_cache) >= _TTS_CACHE_MAX:
+        _tts_cache.pop(next(iter(_tts_cache)))
+    _tts_cache[key] = pcm
+    return pcm
+
+
+def synthesize(text):
+    """Text (possibly mixed EN/hanzi) -> mp3 bytes, or None if nothing speakable."""
+    speakable = re.sub(r"\([^)]*\)", " ", text).strip()   # pinyin glosses are visual
+    segs, pos = [], 0
+    for m in _ZH_RUN.finditer(speakable):
+        head = speakable[pos:m.start()].strip()
+        if head and re.search(r"\w", head):
+            segs.append(("en", head))
+        segs.append(("zh", m.group().strip()))
+        pos = m.end()
+    tail = speakable[pos:].strip()
+    if tail and re.search(r"\w", tail):
+        segs.append(("en", tail))
+    if not segs:
         return None
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        pcms = list(pool.map(lambda s: _segment_pcm(*s), segs))
+    pcm = _GAP_PCM.join(pcms)
+    return _ffmpeg(["-f", "s16le", "-ar", "24000", "-ac", "1", "-i", "pipe:0",
+                    "-f", "mp3", "-b:a", "64k", "pipe:1"], pcm)
+
+
+@app.post("/api/tts")
+def tts_route(payload: dict):
+    audio = synthesize(payload.get("text", ""))
+    if audio is None:
+        raise HTTPException(400, "nothing speakable")
+    return Response(content=audio, media_type="audio/mpeg")
 
 
 @app.post("/api/turn")
-async def turn(audio: UploadFile = File(...)):
-    wav = _webm_to_wav(await audio.read())
+def turn(audio: UploadFile = File(...)):
+    wav = _webm_to_wav(audio.file.read())
     try:
         heard = _stt(wav)
         if not heard:
@@ -262,7 +339,7 @@ async def turn(audio: UploadFile = File(...)):
         reply = _brain(heard, EAR.report(wav))
     finally:
         os.unlink(wav)
-    return {"heard": heard, "tones": ear, "reply": reply, "audio": _tts(reply)}
+    return {"heard": heard, "tones": ear, "reply": reply}
 
 
 @app.post("/api/reset")

@@ -73,6 +73,10 @@
   .controls button:hover{color:var(--ink)}
   #dock{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0 14px}
   #status{font-size:13px;color:var(--dim);min-height:18px}
+  #meter{display:flex;gap:3px;height:20px;align-items:flex-end;opacity:0;transition:opacity .2s}
+  #meter.on{opacity:1}
+  #meter i{width:4px;height:100%;border-radius:2px;background:var(--brand-hot);
+           transform:scaleY(0.12);transform-origin:bottom}
   #orb{width:80px;height:80px;border-radius:50%;border:0;
        background:radial-gradient(circle at 32% 30%,var(--brand-hot),var(--brand) 70%);
        box-shadow:0 4px 24px rgba(79,138,106,.35);transition:transform .15s}
@@ -146,7 +150,8 @@
   <section id="view-talk" class="view on">
     <div id="chat"></div>
     <div id="dock">
-      <div id="status">tap the orb and speak</div>
+      <div id="meter" aria-hidden="true"></div>
+      <div id="status">tap the orb to talk</div>
       <button id="orb" aria-label="talk"></button>
     </div>
   </section>
@@ -228,9 +233,103 @@ document.querySelectorAll('nav button').forEach(b=>{
   };
 });
 
-/* ── talk ── */
-const chat = $('#chat'), orb = $('#orb'), status = $('#status');
-let rec = null, chunks = [], audioEl = null;
+/* ── talk: hands-free conversation engine (ported from LifeLog's orb) ──
+   Tap once to open the conversation; from then on it listens, auto-sends when
+   you pause (adaptive endpointing), speaks, and listens again. Tap while it
+   speaks to barge in; tap while listening to send immediately. */
+
+const chat = $('#chat'), orb = $('#orb'), statusEl = $('#status');
+
+/* speech-synthesis queue — LifeLog's TTS pipeline: sentence-by-sentence with a
+   synth-ahead cap, and a generation counter so barge-in orphans every in-flight
+   synthesis and queued chunk. First words play after the first short sentence. */
+let ttsGen = 0, ttsQueue = [], ttsBusy = false, ttsInflight = 0, ttsDone = null;
+let ttsAudio = null, ttsRate = 1.0;
+const SYNTH_AHEAD = 2;
+function ttsReset(){
+  ttsGen++; ttsQueue = []; ttsBusy = false; ttsDone = null;
+  if (ttsAudio){ ttsAudio.onended = ttsAudio.onerror = null; try{ ttsAudio.pause(); }catch(e){} }
+}
+function sentences(text){
+  const plain = text.replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
+  if (!plain) return [];
+  const raw = plain.split(/(?<=[.!?…。！？])\s+/).filter(Boolean);
+  const out = [];
+  for (const s of raw){
+    if (out.length && (s.length < 8 || out[out.length-1].length < 12)) out[out.length-1] += ' ' + s;
+    else out.push(s);
+  }
+  return out;
+}
+function synthFetch(text){
+  ttsInflight++;
+  return fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text})})
+    .then(r=>r.ok ? r.blob() : null).catch(()=>null)
+    .then(b=>{ ttsInflight--; synthPump(); return b; });
+}
+function synthPump(){
+  while (ttsInflight < SYNTH_AHEAD){
+    const it = ttsQueue.find(i=>i.gen===ttsGen && !i.p);
+    if (!it) return;
+    it.p = synthFetch(it.text);
+  }
+}
+function speak(text, rate, onAll){
+  ttsRate = rate || 1.0; ttsDone = onAll || null;
+  for (const s of sentences(text)) ttsQueue.push({text:s, p:null, gen:ttsGen});
+  synthPump(); playPump();
+}
+async function playPump(){
+  if (ttsBusy) return;
+  const it = ttsQueue.shift();
+  if (!it){ const cb = ttsDone; ttsDone = null; if (cb) cb(); return; }
+  ttsBusy = true;
+  if (!it.p) it.p = synthFetch(it.text);
+  const blob = await it.p;
+  if (it.gen !== ttsGen){ ttsBusy = false; return; }
+  const next = ()=>{ ttsBusy = false; if (it.gen === ttsGen) playPump(); };
+  if (!blob){ next(); return; }
+  const url = URL.createObjectURL(blob);
+  ttsAudio = ttsAudio || new Audio();
+  ttsAudio.src = url; ttsAudio.playbackRate = ttsRate;
+  let fired = false;
+  const done = ()=>{ if (fired) return; fired = true; URL.revokeObjectURL(url); next(); };
+  ttsAudio.onended = done; ttsAudio.onerror = done;
+  setOrb('speaking');
+  try{ await ttsAudio.play(); }catch(e){ done(); }
+}
+
+/* adaptive VAD endpointing — LifeLog's exact numbers and logic: the trailing-
+   silence wait adapts to utterance length, room SNR, and a learned per-device
+   bias that grows when transcripts come back looking cut off. */
+const SIL_SHORT=1700, SIL_LONG=2800, SIL_MIN=1200, SIL_MAX=4500;
+const LONG_UTT=5000, NOSPEECH_MS=11000, RMS_FLOOR=6, BLIND_RMS=1, MAX_MS=45000;
+let epBias = Math.max(-600, Math.min(1500, parseInt(localStorage.getItem('lt_vm_bias')||'0',10)||0));
+const CONT_WORDS = new Set(('and but so or because like to the a an my your our his her their i im its that this '+
+  'with for of in on at is was are were be when if then know mean kind sort really just about').split(' '));
+function tuneEndpoint(text){
+  const t = (text||'').trim(); if (!t) return;
+  const noPunct = !/[.!?…。！？]$/.test(t);
+  const lastWord = t.toLowerCase().replace(/[^a-z' ]+/g,' ').trim().split(/\s+/).pop()||'';
+  const bump = CONT_WORDS.has(lastWord.replace(/'.*$/,'')) ? 400 : (noPunct ? 150 : 0);
+  epBias = bump ? Math.min(1500, epBias+bump) : Math.max(-600, epBias-150);
+  localStorage.setItem('lt_vm_bias', String(epBias));
+}
+
+let mode='idle', convoOn=false, busy=false;
+let mStream=null, mRec=null, mChunks=[], actx=null, analyser=null, vadRAF=0, meterRAF=0;
+let heardSpeech=false, silStart=0, listenStart=0, noiseFloor=0, peakRms=0;
+let spStart=0, silNeed=0, discard=false;
+
+const STATUS = {idle:'tap the orb to talk',
+  listening:"listening — just talk, I'll answer when you pause",
+  thinking:'thinking…', speaking:'speaking — tap the orb to jump in'};
+function setOrb(s){
+  mode = s;
+  orb.className = s==='listening' ? 'rec' : (s==='thinking' ? 'busy' : '');
+  statusEl.textContent = STATUS[s];
+}
 
 function el(tag, cls, html){
   const e = document.createElement(tag);
@@ -254,62 +353,140 @@ function addUser(text, tones){
   }
   chat.scrollTop = chat.scrollHeight;
 }
-function addTutor(text, audioB64){
+function addTutor(text){
   const m = el('div','msg tutor'); m.textContent = text; chat.appendChild(m);
-  if (audioB64){
-    const src = 'data:audio/mp3;base64,' + audioB64;
-    const c = el('div','controls');
-    const replay = el('button',null,'replay'), slow = el('button',null,'slow');
-    replay.onclick = ()=>play(src,1.0); slow.onclick = ()=>play(src,0.7);
-    c.append(replay, slow); chat.appendChild(c);
-    play(src,1.0);
-  }
+  const c = el('div','controls');
+  const replay = el('button',null,'replay'), slow = el('button',null,'slow');
+  replay.onclick = ()=>{ interrupt(); speak(text, 1.0, afterSpeech); };
+  slow.onclick   = ()=>{ interrupt(); speak(text, 0.7, afterSpeech); };
+  c.append(replay, slow); chat.appendChild(c);
   chat.scrollTop = chat.scrollHeight;
 }
-function play(src, rate){
-  if (audioEl) audioEl.pause();
-  audioEl = new Audio(src); audioEl.playbackRate = rate; audioEl.play();
-}
+function afterSpeech(){ if (convoOn) autoListen(); else setOrb('idle'); }
+
 async function startRec(){
-  const stream = await navigator.mediaDevices.getUserMedia({audio:{
-    echoCancellation:true, noiseSuppression:true}});
-  chunks = [];
-  rec = new MediaRecorder(stream);
-  rec.ondataavailable = e=>chunks.push(e.data);
-  rec.onstop = ()=>{ stream.getTracks().forEach(t=>t.stop()); send(); };
-  rec.start();
-  orb.classList.add('rec');
-  status.textContent = 'listening… tap to finish';
-  if (audioEl) audioEl.pause();          // barge-in
-}
-async function send(){
-  orb.classList.remove('rec'); orb.classList.add('busy');
-  status.textContent = 'thinking…';
-  const fd = new FormData();
-  fd.append('audio', new Blob(chunks,{type:rec.mimeType||'audio/webm'}), 'turn.webm');
+  try{ mStream = await navigator.mediaDevices.getUserMedia({audio:{
+    echoCancellation:true, noiseSuppression:true}}); }
+  catch(e){ statusEl.textContent = 'mic error: '+(e.name||e.message); return false; }
+  mChunks = []; mRec = new MediaRecorder(mStream);
+  mRec.ondataavailable = e=>{ if (e.data.size) mChunks.push(e.data); };
+  mRec.onstop = onStop;
   try{
+    actx = new (window.AudioContext||window.webkitAudioContext)();
+    if (actx.state==='suspended') actx.resume().catch(()=>{});  // mobile: suspended = deaf VAD
+    analyser = actx.createAnalyser(); analyser.fftSize = 512;
+    actx.createMediaStreamSource(mStream).connect(analyser);
+    startMeter();
+  }catch(e){ actx = null; }
+  mRec.start();
+  return true;
+}
+async function autoListen(){
+  if (busy || (mRec && mRec.state==='recording')) return;
+  heardSpeech=false; silStart=0; listenStart=Date.now(); noiseFloor=0; peakRms=0;
+  spStart=0; silNeed=0; discard=false;
+  if (!(await startRec())){ convoOn=false; setOrb('idle'); return; }
+  setOrb('listening');
+  vadRAF = requestAnimationFrame(vad);
+}
+function stopRec(disc){ discard = disc; if (mRec && mRec.state==='recording') mRec.stop(); }
+function vad(){
+  if (mode!=='listening' || !analyser || !mRec || mRec.state!=='recording') return;
+  const data = new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(data);
+  let sum=0; for (const v of data){ const x=v-128; sum+=x*x; }
+  const rms = Math.sqrt(sum/data.length), now = Date.now();
+  if (rms > peakRms) peakRms = rms;
+  const thresh = Math.max(RMS_FLOOR, noiseFloor*1.8+4);
+  if (rms > thresh){ heardSpeech=true; silStart=0; if (!spStart) spStart=now; }
+  else if (heardSpeech){
+    if (!silStart){
+      silStart = now;
+      const snr = peakRms/Math.max(noiseFloor,1);
+      const noisePad = snr<3.5 ? 700 : snr<6 ? 300 : 0;
+      const base = (now-(spStart||now)) > LONG_UTT ? SIL_LONG : SIL_SHORT;
+      silNeed = Math.max(SIL_MIN, Math.min(SIL_MAX, base+noisePad+epBias));
+    } else if (now-silStart > silNeed){ stopRec(false); return; }
+  }
+  else { noiseFloor = noiseFloor ? noiseFloor*0.9+rms*0.1 : rms; }
+  /* deaf-analyser guard: a flat-zero peak means the meter never heard the mic —
+     send what was recorded rather than silently dropping the user's words */
+  if (!heardSpeech && now-listenStart > NOSPEECH_MS){ convoOn=false; stopRec(peakRms >= BLIND_RMS); return; }
+  if (now-listenStart > MAX_MS){ stopRec(!heardSpeech && peakRms >= BLIND_RMS); return; }
+  vadRAF = requestAnimationFrame(vad);
+}
+async function onStop(){
+  stopMeter();
+  if (vadRAF){ cancelAnimationFrame(vadRAF); vadRAF=0; }
+  if (actx){ try{ actx.close(); }catch(e){} actx=null; }
+  if (mStream) mStream.getTracks().forEach(t=>t.stop());
+  const blob = new Blob(mChunks, {type:(mRec&&mRec.mimeType)||'audio/webm'});
+  if (discard || !blob.size){ discard=false; setOrb('idle'); return; }
+  busy = true; setOrb('thinking');
+  try{
+    const fd = new FormData();
+    fd.append('audio', blob, 'turn.webm');
     const r = await fetch('/api/turn',{method:'POST',body:fd});
     const j = await r.json();
-    if (!r.ok) throw new Error(j.detail || j.error || r.status);
-    if (j.error) status.textContent = j.error;
-    else{
-      addUser(j.heard, j.tones);
-      addTutor(j.reply, j.audio);
-      status.textContent = 'tap the orb and speak';
-      loadState();                        // panels reflect what the tutor recorded
-    }
-  }catch(err){ status.textContent = 'error: ' + err.message; }
-  orb.classList.remove('busy');
+    if (!r.ok) throw new Error(j.detail||j.error||r.status);
+    busy = false;
+    if (j.error){ if (convoOn) autoListen(); else setOrb('idle'); return; }  // noise → keep listening
+    tuneEndpoint(j.heard);
+    addUser(j.heard, j.tones);
+    addTutor(j.reply);
+    loadState();                      // panels reflect what the tutor recorded
+    speak(j.reply, 1.0, afterSpeech);
+  }catch(err){
+    busy = false;
+    statusEl.textContent = 'error: '+err.message;
+    if (convoOn) setTimeout(()=>{ if (convoOn && mode!=='listening' && !busy) autoListen(); }, 1500);
+  }
+}
+function interrupt(){        // take the floor: silence the tutor, drop any recording
+  ttsReset();
+  if (mRec && mRec.state==='recording') stopRec(true);
 }
 orb.onclick = ()=>{
-  if (rec && rec.state === 'recording') rec.stop();
-  else startRec().catch(e=>{ status.textContent = 'mic error: ' + e.message; });
+  if (mode==='listening'){ stopRec(false); return; }           // send now
+  if (mode==='speaking'){ ttsReset(); autoListen(); return; }  // barge-in
+  if (mode==='thinking') return;
+  convoOn = true; autoListen();
 };
+document.addEventListener('visibilitychange', ()=>{
+  if (document.hidden){ convoOn=false; interrupt(); if (mode!=='thinking') setOrb('idle'); }
+});
+
+/* mic-level bars — fed by the SAME analyser the VAD hears through, so flat
+   bars while you talk is the visible cue the mic isn't being heard */
+const N_BARS = 7; let bars = null;
+function buildBars(){ const m = $('#meter'); if (bars || !m) return;
+  m.innerHTML=''; bars=[];
+  for (let i=0;i<N_BARS;i++){ const b=document.createElement('i'); m.appendChild(b); bars.push(b); } }
+function startMeter(){ buildBars(); $('#meter').classList.add('on');
+  if (!meterRAF) meterRAF = requestAnimationFrame(meterTick); }
+function stopMeter(){ if (meterRAF){ cancelAnimationFrame(meterRAF); meterRAF=0; }
+  $('#meter').classList.remove('on');
+  if (bars) bars.forEach(b=>b.style.transform='scaleY(0.12)'); }
+function meterTick(){
+  meterRAF = 0;
+  if (!analyser || !bars || mode!=='listening'){ stopMeter(); return; }
+  const freq = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freq);
+  for (let i=0;i<N_BARS;i++){
+    const lo = 2+Math.floor(i*38/N_BARS), hi = 2+Math.floor((i+1)*38/N_BARS);
+    let s=0,c=0; for (let j=lo;j<hi;j++){ s+=freq[j]; c++; }
+    bars[i].style.transform = 'scaleY('+Math.min(1, 0.12+(c?s/c/255:0)*1.9).toFixed(3)+')';
+  }
+  meterRAF = requestAnimationFrame(meterTick);
+}
+
 $('#reset').onclick = async ()=>{
   if (!confirm('Start the conversation over? Your plan, words and progress are kept.')) return;
+  convoOn = false; interrupt();
   await fetch('/api/reset',{method:'POST'});
   chat.replaceChildren();
-  status.textContent = 'fresh start — tap the orb and say hello';
+  setOrb('idle');
+  statusEl.textContent = 'fresh start — tap the orb and say hello';
 };
 
 /* ── state panels ── */
