@@ -11,7 +11,12 @@ fast-forwards at ship time.
 
 - Compose service `languagetutor-test` in `/srv/docker/docker-compose.yml` (project
   `docker`). API keys ride `/srv/docker/lifelog.env`; the tutor's own secrets
-  (`TUTOR_PASSWORD`, `TUTOR_SESSION_SECRET`) live in `/srv/docker/languagetutor.env`.
+  (`TUTOR_PASSWORD`, `TUTOR_SESSION_SECRET`, `BRAIN_PROVIDER`) live in
+  `/srv/docker/languagetutor.env`.
+- **Brain chain:** `BRAIN_PROVIDER` (deepseek, the cheap default) is tried first,
+  then the rest of deepseek → gpt → claude on ANY failure — one dead key never
+  stops a lesson; billing failures also page Pushbullet. STT falls back from
+  OpenAI to the shared voice container's local Whisper the same way.
 - Learner data (conversation, future lesson state): `/home/phil/PersonalProjects/LanguageTutor-data` → `/data`.
 - After editing `app.py`/`tone_ear.py`/`api_alerts.py`: `docker restart languagetutor-test`
   — single-file bind mounts go stale on atomic-rename saves. `static/` and

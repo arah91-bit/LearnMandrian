@@ -133,6 +133,17 @@ def _webm_to_wav(blob):
     return dst
 
 
+def _stt_local(wav):
+    """Fallback ears: the self-hosted Whisper in the shared voice container.
+    Weaker on mixed EN/zh beginner speech than gpt-4o-transcribe, but it keeps
+    lessons running through an OpenAI outage or a dead key."""
+    with open(wav, "rb") as f:
+        r = httpx.post(f"{VOICE_URL}/transcribe",
+                       files={"file": ("turn.wav", f, "audio/wav")}, timeout=120)
+    r.raise_for_status()
+    return " ".join(s["text"].strip() for s in r.json().get("segments", [])).strip()
+
+
 def _stt(wav):
     try:
         with open(wav, "rb") as f:
@@ -143,7 +154,11 @@ def _stt(wav):
         return tr.text.strip()
     except Exception as e:
         page_if_billing("openai", e)
-        raise HTTPException(502, f"speech-to-text failed: {str(e)[:200]}")
+        log.warning("openai stt failed — falling back to local whisper: %s", str(e)[:150])
+        try:
+            return _stt_local(wav)
+        except Exception as e2:
+            raise HTTPException(502, f"speech-to-text failed: {str(e2)[:200]}")
 
 
 # ── Brain tools: how the tutor maintains the learner state it teaches from ────
@@ -210,11 +225,15 @@ def _run_tool(state, name, args):
 # Which model runs the lessons. The tutor is an instructor working a fixed
 # curriculum with tools — a job a cheaper model handles well (and this app must
 # run itself for years, so cost matters): deepseek is ~1/30th of Sonnet per
-# turn. Flip BRAIN_PROVIDER in languagetutor.env to switch; Claude stays the
-# reference implementation. deepseek-chat is deprecated 2026-07-24 → default to
-# its successor id explicitly so the app doesn't sit on a dying alias.
-BRAIN_PROVIDER = os.environ.get("BRAIN_PROVIDER", "claude")   # claude | deepseek
+# turn, gpt-mini sits in between. BRAIN_PROVIDER picks the primary; on ANY
+# provider failure the turn falls through the rest of BRAIN_CHAIN (billing
+# failures also page via api_alerts), so one dead key never stops a lesson.
+# deepseek-chat is deprecated 2026-07-24 → default to its successor id
+# explicitly so the app doesn't sit on a dying alias.
+BRAIN_PROVIDER = os.environ.get("BRAIN_PROVIDER", "claude")   # claude | deepseek | gpt
+BRAIN_CHAIN = ["deepseek", "gpt", "claude"]
 DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
+GPT_MODEL = os.environ.get("GPT_MODEL", "gpt-5.4-mini-2026-03-17")
 _deepseek = None
 
 
@@ -261,15 +280,18 @@ def _run_brain_claude(state, system, convo):
     return reply or "Say that once more for me?"
 
 
-def _run_brain_deepseek(state, system, convo):
+def _run_brain_oai(client, model, max_param, label, state, system, convo, extra=None):
+    """OpenAI-dialect tool loop — serves deepseek and gpt. NB gpt-5.x models
+    take max_completion_tokens where deepseek takes max_tokens."""
     oai_tools = [{"type": "function", "function": {
         "name": t["name"], "description": t["description"],
         "parameters": t["input_schema"]}} for t in TOOLS]
     msgs = [{"role": "system", "content": system}] + list(convo)
     reply, tin, tout = "", 0, 0
+    extra = extra or {}
     for _ in range(6):
-        resp = _ds().chat.completions.create(model=DEEPSEEK_MODEL, messages=msgs,
-                                             tools=oai_tools, max_tokens=900)
+        resp = client.chat.completions.create(model=model, messages=msgs,
+                                              tools=oai_tools, **{max_param: 900}, **extra)
         if resp.usage:
             tin += resp.usage.prompt_tokens; tout += resp.usage.completion_tokens
         m = resp.choices[0].message
@@ -286,31 +308,53 @@ def _run_brain_deepseek(state, system, convo):
             msgs.append({"role": "tool", "tool_call_id": tc.id,
                          "content": _run_tool(state, tc.function.name, args)})
     if not reply:
-        resp = _ds().chat.completions.create(model=DEEPSEEK_MODEL, max_tokens=500,
-                                             messages=msgs + [{"role": "user", "content": _NUDGE}])
+        resp = client.chat.completions.create(model=model, **{max_param: 500},
+                                              messages=msgs + [{"role": "user", "content": _NUDGE}])
         reply = (resp.choices[0].message.content or "").strip()
-    log.info("brain deepseek turn: %s in / %s out tokens", tin, tout)
+    log.info("brain %s turn: %s in / %s out tokens", label, tin, tout)
     return reply or "Say that once more for me?"
 
 
+_PAGE_NAME = {"deepseek": "deepseek", "gpt": "openai", "claude": "anthropic"}
+
+
+def _brain_once(provider, state, system, convo):
+    if provider == "deepseek":
+        return _run_brain_oai(_ds(), DEEPSEEK_MODEL, "max_tokens", "deepseek",
+                              state, system, convo)
+    if provider == "gpt":
+        # NB: gpt-5.4-mini 400s on reasoning_effort combined with function
+        # tools, so it runs at default effort (~19s/turn) — acceptable for a
+        # leg that only serves while deepseek is down
+        return _run_brain_oai(_oai, GPT_MODEL, "max_completion_tokens", "gpt",
+                              state, system, convo)
+    return _run_brain_claude(state, system, convo)
+
+
 def _brain(user_text, ear_line):
-    state = learner.load()
-    learner.touch_day(state)
     convo = _load_convo()
     convo.append({"role": "user", "content": f"{user_text}\n\n{ear_line}"})
-    system = SYSTEM + "\n\n# Current learner state\n" + learner.snapshot(state)
-    try:
-        run = _run_brain_deepseek if BRAIN_PROVIDER == "deepseek" else _run_brain_claude
-        reply = run(state, system, convo)   # tool exchanges stay in-turn; disk keeps text
-    except HTTPException:
-        raise
-    except Exception as e:
-        page_if_billing(BRAIN_PROVIDER if BRAIN_PROVIDER != "claude" else "anthropic", e)
-        raise HTTPException(502, f"tutor brain failed: {str(e)[:200]}")
-    learner.save(state)
-    convo.append({"role": "assistant", "content": reply})
-    _save_convo(convo)
-    return reply
+    chain = [BRAIN_PROVIDER] + [p for p in BRAIN_CHAIN if p != BRAIN_PROVIDER]
+    last_err = None
+    for provider in chain:
+        # fresh state per attempt: a provider that fails mid-turn discards its
+        # half-done tool writes instead of double-applying them on the retry
+        state = learner.load()
+        learner.touch_day(state)
+        system = SYSTEM + "\n\n# Current learner state\n" + learner.snapshot(state)
+        try:
+            reply = _brain_once(provider, state, system, convo)
+        except Exception as e:
+            page_if_billing(_PAGE_NAME[provider], e)
+            log.warning("brain %s failed (%s) — trying next provider",
+                        provider, str(e)[:150])
+            last_err = e
+            continue
+        learner.save(state)
+        convo.append({"role": "assistant", "content": reply})
+        _save_convo(convo)
+        return reply
+    raise HTTPException(502, f"every tutor brain failed; last: {str(last_err)[:200]}")
 
 
 @app.get("/api/state")
