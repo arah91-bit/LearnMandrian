@@ -246,7 +246,9 @@ def _ds():
     return _deepseek
 
 
-_NUDGE = "[Continue: say your reply to Phil now — plain speakable prose.]"
+_NUDGE = ("[Continue: now give Phil your full spoken reply — respond to his last "
+          "attempt first (what the tone-ear heard, what was right, what to fix), "
+          "then whatever comes next. Plain speakable prose.]")
 
 
 def _run_brain_claude(state, system, convo):
