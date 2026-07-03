@@ -466,7 +466,7 @@ def turn(audio: UploadFile = File(...)):
             return {"heard": "", "reply": None, "tones": None,
                     "error": "didn't catch any speech — try again"}
         ear = EAR.analyze(wav)
-        reply = _brain(heard, EAR.report(wav))
+        reply = _brain(heard, "[spoken — mic turn] " + EAR.report(wav))
     finally:
         os.unlink(wav)
     return {"heard": heard, "tones": ear, "reply": reply}
