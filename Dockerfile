@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py learner.py tone_ear.py api_alerts.py tutor_prompt.md tone_train.json ./
+COPY app.py learner.py tone_ear.py api_alerts.py tutor_prompt.md curriculum.md tone_train.json ./
 COPY static ./static
 ENV DATA_DIR=/data
 EXPOSE 8000

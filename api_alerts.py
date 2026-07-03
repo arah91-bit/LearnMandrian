@@ -16,7 +16,7 @@ STAMPS = pathlib.Path(__file__).parent / ".api_alert_stamps.json"
 WINDOW_HOURS = 6
 _BILLING_MARKERS = ("credit balance", "insufficient_quota", "exceeded your current quota",
                     "billing hard limit", "payment required", "account is not active",
-                    "billing_not_active", "credits are depleted")
+                    "billing_not_active", "credits are depleted", "insufficient balance")
 
 
 def is_billing_error(e) -> bool:

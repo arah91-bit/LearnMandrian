@@ -77,6 +77,12 @@
   #meter.on{opacity:1}
   #meter i{width:4px;height:100%;border-radius:2px;background:var(--brand-hot);
            transform:scaleY(0.12);transform-origin:bottom}
+  #typebar{display:flex;gap:8px;width:min(440px,90%);margin-top:2px}
+  #typebar input{flex:1;font:inherit;padding:8px 14px;border-radius:10px;
+           border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  #typebar input::placeholder{color:var(--muted)}
+  #typebar button{background:var(--panel);border:1px solid var(--line);
+           color:var(--dim);border-radius:10px;padding:0 14px}
   #orb{width:80px;height:80px;border-radius:50%;border:0;
        background:radial-gradient(circle at 32% 30%,var(--brand-hot),var(--brand) 70%);
        box-shadow:0 4px 24px rgba(79,138,106,.35);transition:transform .15s}
@@ -153,6 +159,10 @@
       <div id="meter" aria-hidden="true"></div>
       <div id="status">tap the orb to talk</div>
       <button id="orb" aria-label="talk"></button>
+      <form id="typebar" autocomplete="off">
+        <input id="typein" maxlength="500" placeholder="或者打字 — type for writing practice">
+        <button type="submit" aria-label="send typed message">↩</button>
+      </form>
     </div>
   </section>
 
@@ -455,6 +465,27 @@ orb.onclick = ()=>{
 document.addEventListener('visibilitychange', ()=>{
   if (document.hidden){ convoOn=false; interrupt(); if (mode!=='thinking') setOrb('idle'); }
 });
+
+/* typed turns — the writing channel (no tone ear; the tutor treats these as
+   writing practice per the curriculum's reading & writing track) */
+$('#typebar').onsubmit = async e=>{
+  e.preventDefault();
+  const t = $('#typein').value.trim();
+  if (!t || busy) return;
+  interrupt();
+  busy = true; setOrb('thinking'); $('#typein').value = '';
+  try{
+    const r = await fetch('/api/turn_text',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:t})});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail||r.status);
+    busy = false;
+    addUser(j.heard, null);
+    addTutor(j.reply);
+    loadState();
+    speak(j.reply, 1.0, afterSpeech);
+  }catch(err){ busy = false; statusEl.textContent = 'error: '+err.message; }
+};
 
 /* mic-level bars — fed by the SAME analyser the VAD hears through, so flat
    bars while you talk is the visible cue the mic isn't being heard */

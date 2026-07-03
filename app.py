@@ -61,7 +61,7 @@ VOICE_URL = os.environ.get("VOICE_URL", "http://voice:8001").rstrip("/")
 HEART_VOICE = "k-heart"
 MAX_MESSAGES = 40        # conversation window kept on disk / sent to the brain
 
-SYSTEM = (HERE / "tutor_prompt.md").read_text()
+SYSTEM = (HERE / "tutor_prompt.md").read_text() + "\n\n" + (HERE / "curriculum.md").read_text()
 EAR = ToneEar()
 _oai = openai.OpenAI()
 _claude = anthropic.Anthropic()
@@ -207,30 +207,105 @@ def _run_tool(state, name, args):
         return f"tool error: {e}"
 
 
+# Which model runs the lessons. The tutor is an instructor working a fixed
+# curriculum with tools — a job a cheaper model handles well (and this app must
+# run itself for years, so cost matters): deepseek is ~1/30th of Sonnet per
+# turn. Flip BRAIN_PROVIDER in languagetutor.env to switch; Claude stays the
+# reference implementation. deepseek-chat is deprecated 2026-07-24 → default to
+# its successor id explicitly so the app doesn't sit on a dying alias.
+BRAIN_PROVIDER = os.environ.get("BRAIN_PROVIDER", "claude")   # claude | deepseek
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
+_deepseek = None
+
+
+def _ds():
+    global _deepseek
+    if _deepseek is None:
+        _deepseek = openai.OpenAI(api_key=os.environ["DEEPSEEK_API_KEY"],
+                                  base_url="https://api.deepseek.com")
+    return _deepseek
+
+
+_NUDGE = "[Continue: say your reply to Phil now — plain speakable prose.]"
+
+
+def _run_brain_claude(state, system, convo):
+    msgs, reply, tin, tout = list(convo), "", 0, 0
+    for _ in range(6):
+        # thinking disabled on purpose: Sonnet 5 runs ADAPTIVE thinking when the
+        # param is omitted — it silently burned ~800 tokens/turn, blew the
+        # max_tokens cap, and starved the tool calls (2026-07-03). Voice latency
+        # budget says: no thinking, fix quality via the prompt.
+        resp = _claude.messages.create(model=BRAIN_MODEL, max_tokens=900,
+                                       thinking={"type": "disabled"},
+                                       system=system, messages=msgs, tools=TOOLS)
+        tin += resp.usage.input_tokens; tout += resp.usage.output_tokens
+        if resp.stop_reason != "tool_use":
+            reply = "".join(b.text for b in resp.content if b.type == "text").strip()
+            break
+        msgs.append({"role": "assistant", "content": resp.content})
+        msgs.append({"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": b.id,
+             "content": _run_tool(state, b.name, b.input)}
+            for b in resp.content if b.type == "tool_use"]})
+    if not reply:
+        # The silent-turn bug (2026-07-03): tools ran, no text came back, and the
+        # tutor said nothing into the voice loop. Force one prose-only round.
+        resp = _claude.messages.create(model=BRAIN_MODEL, max_tokens=500, system=system,
+                                       thinking={"type": "disabled"},
+                                       messages=msgs + [{"role": "user", "content": _NUDGE}],
+                                       tools=TOOLS, tool_choice={"type": "none"})
+        tin += resp.usage.input_tokens; tout += resp.usage.output_tokens
+        reply = "".join(b.text for b in resp.content if b.type == "text").strip()
+    log.info("brain claude turn: %s in / %s out tokens", tin, tout)
+    return reply or "Say that once more for me?"
+
+
+def _run_brain_deepseek(state, system, convo):
+    oai_tools = [{"type": "function", "function": {
+        "name": t["name"], "description": t["description"],
+        "parameters": t["input_schema"]}} for t in TOOLS]
+    msgs = [{"role": "system", "content": system}] + list(convo)
+    reply, tin, tout = "", 0, 0
+    for _ in range(6):
+        resp = _ds().chat.completions.create(model=DEEPSEEK_MODEL, messages=msgs,
+                                             tools=oai_tools, max_tokens=900)
+        if resp.usage:
+            tin += resp.usage.prompt_tokens; tout += resp.usage.completion_tokens
+        m = resp.choices[0].message
+        if not m.tool_calls:
+            reply = (m.content or "").strip()
+            break
+        msgs.append({"role": "assistant", "content": m.content or "",
+                     "tool_calls": [tc.model_dump() for tc in m.tool_calls]})
+        for tc in m.tool_calls:
+            try:
+                args = json.loads(tc.function.arguments or "{}")
+            except ValueError:
+                args = {}
+            msgs.append({"role": "tool", "tool_call_id": tc.id,
+                         "content": _run_tool(state, tc.function.name, args)})
+    if not reply:
+        resp = _ds().chat.completions.create(model=DEEPSEEK_MODEL, max_tokens=500,
+                                             messages=msgs + [{"role": "user", "content": _NUDGE}])
+        reply = (resp.choices[0].message.content or "").strip()
+    log.info("brain deepseek turn: %s in / %s out tokens", tin, tout)
+    return reply or "Say that once more for me?"
+
+
 def _brain(user_text, ear_line):
     state = learner.load()
     learner.touch_day(state)
     convo = _load_convo()
     convo.append({"role": "user", "content": f"{user_text}\n\n{ear_line}"})
     system = SYSTEM + "\n\n# Current learner state\n" + learner.snapshot(state)
-    msgs = list(convo)        # tool exchanges stay in-turn; disk keeps text only
-    reply = ""
     try:
-        for _ in range(6):
-            resp = _claude.messages.create(model=BRAIN_MODEL, max_tokens=900,
-                                           system=system, messages=msgs, tools=TOOLS)
-            if resp.stop_reason != "tool_use":
-                reply = "".join(b.text for b in resp.content if b.type == "text").strip()
-                break
-            results = [{"type": "tool_result", "tool_use_id": b.id,
-                        "content": _run_tool(state, b.name, b.input)}
-                       for b in resp.content if b.type == "tool_use"]
-            msgs.append({"role": "assistant", "content": resp.content})
-            msgs.append({"role": "user", "content": results})
-        else:
-            reply = "Let's pick that up again — say that once more?"
+        run = _run_brain_deepseek if BRAIN_PROVIDER == "deepseek" else _run_brain_claude
+        reply = run(state, system, convo)   # tool exchanges stay in-turn; disk keeps text
+    except HTTPException:
+        raise
     except Exception as e:
-        page_if_billing("anthropic", e)
+        page_if_billing(BRAIN_PROVIDER if BRAIN_PROVIDER != "claude" else "anthropic", e)
         raise HTTPException(502, f"tutor brain failed: {str(e)[:200]}")
     learner.save(state)
     convo.append({"role": "assistant", "content": reply})
@@ -246,10 +321,20 @@ async def get_state():
 # ── Speech synthesis: Heart + Mandarin, stitched ───────────────────────────────
 # The client speaks sentence-by-sentence through /api/tts (LifeLog's TTS-queue
 # pattern), so audio starts at the first sentence. Each request is segmented:
-# hanzi runs (with CJK punctuation) → OpenAI Mandarin voice; everything else →
-# Heart. Segments synthesize in parallel, get normalized to 24k mono PCM, and
-# are joined with a short gap. A small cache makes drilled words replay free.
-_ZH_RUN = re.compile(r"[㐀-鿿　-〿！-･]+")
+# hanzi runs (with CJK punctuation) AND tone-marked pinyin → OpenAI Mandarin
+# voice; everything else → Heart. Pinyin routing matters: "mā... mǎ" is Latin
+# text, and sending it to Heart (English phonemizer) produced toneless mush in
+# the middle of a listening drill (2026-07-03). Segments synthesize in
+# parallel, get normalized to 24k mono PCM, and are joined with a short gap.
+# A small cache makes drilled words replay free.
+_PY_TONED = "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜĀÁǍÀĒÉĚÈĪÍǏÌŌÓǑÒŪÚǓÙǕǗǙǛ"
+# a hanzi/CJK run, or a whitespace-joined run of pinyin syllables where at
+# least one carries a tone mark (matched with its neighboring plain syllables
+# so "nǐ hǎo" or "mā... mǎ" travels as one Mandarin segment)
+_ZH_RUN = re.compile(
+    r"[㐀-鿿　-〿！-･]+"
+    r"|(?:[A-Za-z%(py)s]*[%(py)s][A-Za-z%(py)s]*)(?:[\s.…]+[A-Za-z%(py)s]*[%(py)s][A-Za-z%(py)s]*)*"
+    % {"py": _PY_TONED})
 _GAP_PCM = b"\x00" * int(24000 * 2 * 0.09)          # 90ms between voice switches
 _tts_cache, _TTS_CACHE_MAX = {}, 300
 
@@ -340,6 +425,16 @@ def turn(audio: UploadFile = File(...)):
     finally:
         os.unlink(wav)
     return {"heard": heard, "tones": ear, "reply": reply}
+
+
+@app.post("/api/turn_text")
+def turn_text(payload: dict):
+    """Typed turn — the writing channel (curriculum reading & writing track)."""
+    text = (payload.get("text") or "").strip()[:2000]
+    if not text:
+        raise HTTPException(400, "empty message")
+    reply = _brain(text, "[typed input — no tone-ear this turn]")
+    return {"heard": text, "tones": None, "reply": reply}
 
 
 @app.post("/api/reset")

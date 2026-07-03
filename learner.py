@@ -125,7 +125,9 @@ def update_plan(state, focus=None, next_up=None, notes=None):
     if focus is not None:
         state["plan"]["focus"] = focus
     if next_up is not None:
-        state["plan"]["next_up"] = list(next_up)[:8]
+        if isinstance(next_up, str):    # a model WILL pass a bare string eventually
+            next_up = [next_up]         # (it did — list() exploded it into letters)
+        state["plan"]["next_up"] = [str(x) for x in next_up][:8]
     if notes is not None:
         state["plan"]["notes"] = notes
     return "plan updated"
