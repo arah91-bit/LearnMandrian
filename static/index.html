@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>语伴 LanguageTutor</title>
+<style>
+  :root{
+    --bg:#101418; --panel:#181e26; --line:#232b36; --ink:#e8e4da; --dim:#8a94a3;
+    --accent:#3d6b52; --accent-hot:#4f8a6a; --rec:#c0503f;
+    --t1:#4f8a6a; --t2:#4a7fa8; --t3:#b0813d; --t4:#a05468;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
+       display:flex;flex-direction:column;height:100dvh}
+  header{display:flex;align-items:center;gap:10px;padding:14px 18px;
+         border-bottom:1px solid var(--line)}
+  header h1{font-size:17px;font-weight:600;margin:0;letter-spacing:.02em}
+  header .zh{color:var(--accent-hot);font-weight:700}
+  header button{margin-left:auto;background:none;border:1px solid var(--line);
+         color:var(--dim);border-radius:8px;padding:5px 12px;font:13px system-ui;cursor:pointer}
+  #chat{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+  .msg{max-width:min(560px,88%);padding:11px 15px;border-radius:14px;white-space:pre-wrap}
+  .user{align-self:flex-end;background:var(--accent);border-bottom-right-radius:4px}
+  .tutor{align-self:flex-start;background:var(--panel);border:1px solid var(--line);
+         border-bottom-left-radius:4px}
+  .meta{align-self:flex-end;display:flex;gap:6px;flex-wrap:wrap;margin-top:-8px}
+  .chip{font-size:12px;padding:2px 9px;border-radius:99px;color:#fff;opacity:.92}
+  .chip.n{background:var(--panel);color:var(--dim);border:1px solid var(--line)}
+  .controls{align-self:flex-start;display:flex;gap:8px;margin-top:-8px}
+  .controls button{background:none;border:1px solid var(--line);color:var(--dim);
+         border-radius:8px;padding:3px 10px;font:12px system-ui;cursor:pointer}
+  .controls button:hover{color:var(--ink)}
+  #dock{display:flex;flex-direction:column;align-items:center;gap:8px;
+        padding:12px 0 calc(18px + env(safe-area-inset-bottom))}
+  #status{font-size:13px;color:var(--dim);min-height:18px}
+  #orb{width:84px;height:84px;border-radius:50%;border:0;cursor:pointer;
+       background:radial-gradient(circle at 32% 30%,var(--accent-hot),var(--accent) 70%);
+       box-shadow:0 4px 24px rgba(79,138,106,.35);transition:transform .15s}
+  #orb:active{transform:scale(.94)}
+  #orb.rec{background:radial-gradient(circle at 32% 30%,#d96a55,var(--rec) 70%);
+       box-shadow:0 0 0 0 rgba(192,80,63,.5);animation:pulse 1.4s infinite}
+  #orb.busy{opacity:.45;pointer-events:none;animation:none}
+  @keyframes pulse{70%{box-shadow:0 0 0 22px rgba(192,80,63,0)}100%{box-shadow:0 0 0 0 rgba(192,80,63,0)}}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="zh">语伴</span> LanguageTutor</h1>
+  <button id="reset" title="Start the conversation over">reset</button>
+</header>
+<div id="chat"></div>
+<div id="dock">
+  <div id="status">tap the orb and speak</div>
+  <button id="orb" aria-label="talk"></button>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const orb = document.getElementById('orb');
+const status = document.getElementById('status');
+const TONE_COLORS = {1:'var(--t1)',2:'var(--t2)',3:'var(--t3)',4:'var(--t4)'};
+const TONE_NAMES = {1:'high',2:'rising',3:'dipping',4:'falling'};
+
+let rec = null, chunks = [], audioEl = null;
+
+function el(tag, cls, text){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function addUser(text, tones){
+  chat.appendChild(el('div','msg user',text));
+  if (tones && (tones.syllables.length || tones.note)){
+    const m = el('div','meta');
+    tones.syllables.forEach(s=>{
+      const c = el('span','chip',`T${s.tone} ${TONE_NAMES[s.tone]} ${Math.round(s.confidence*100)}%`);
+      c.style.background = TONE_COLORS[s.tone];
+      m.appendChild(c);
+    });
+    if (tones.note) m.appendChild(el('span','chip n',tones.note));
+    chat.appendChild(m);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addTutor(text, audioB64){
+  chat.appendChild(el('div','msg tutor',text));
+  if (audioB64){
+    const src = 'data:audio/mp3;base64,' + audioB64;
+    const c = el('div','controls');
+    const replay = el('button',null,'replay');
+    const slow = el('button',null,'slow');
+    replay.onclick = ()=>play(src,1.0);
+    slow.onclick = ()=>play(src,0.7);
+    c.append(replay,slow);
+    chat.appendChild(c);
+    play(src,1.0);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function play(src, rate){
+  if (audioEl) audioEl.pause();
+  audioEl = new Audio(src);
+  audioEl.playbackRate = rate;
+  audioEl.play();
+}
+
+async function startRec(){
+  const stream = await navigator.mediaDevices.getUserMedia({audio:{
+    echoCancellation:true, noiseSuppression:true}});
+  chunks = [];
+  rec = new MediaRecorder(stream);
+  rec.ondataavailable = e=>chunks.push(e.data);
+  rec.onstop = ()=>{ stream.getTracks().forEach(t=>t.stop()); send(); };
+  rec.start();
+  orb.classList.add('rec');
+  status.textContent = 'listening… tap to finish';
+  if (audioEl) audioEl.pause();   // barge-in: talking interrupts the tutor
+}
+
+async function send(){
+  orb.classList.remove('rec'); orb.classList.add('busy');
+  status.textContent = 'thinking…';
+  const blob = new Blob(chunks, {type: rec.mimeType || 'audio/webm'});
+  const fd = new FormData();
+  fd.append('audio', blob, 'turn.webm');
+  try{
+    const r = await fetch('/api/turn', {method:'POST', body:fd});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || j.error || r.status);
+    if (j.error){ status.textContent = j.error; }
+    else{
+      addUser(j.heard, j.tones);
+      addTutor(j.reply, j.audio);
+      status.textContent = 'tap the orb and speak';
+    }
+  }catch(err){
+    status.textContent = 'error: ' + err.message;
+  }
+  orb.classList.remove('busy');
+}
+
+orb.onclick = ()=>{
+  if (rec && rec.state === 'recording') rec.stop();
+  else startRec().catch(e=>{ status.textContent = 'mic error: ' + e.message; });
+};
+
+document.getElementById('reset').onclick = async ()=>{
+  if (!confirm('Start over? The tutor forgets this conversation.')) return;
+  await fetch('/api/reset', {method:'POST'});
+  chat.replaceChildren();
+  status.textContent = 'fresh start — tap the orb and say hello';
+};
+</script>
+</body>
+</html>

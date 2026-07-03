@@ -1,0 +1,7 @@
+.git
+.venv
+spike
+data
+__pycache__
+*.md
+!tutor_prompt.md
