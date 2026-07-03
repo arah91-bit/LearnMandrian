@@ -72,10 +72,16 @@ def _cookie_value():
     return hmac.new(SECRET.encode(), b"tutor-v1", hashlib.sha256).hexdigest()
 
 
+_PUBLIC = ("/healthz", "/auth/login",
+           # PWA install assets: the browser fetches manifest icons without
+           # credentials, so these must not bounce to the login page
+           "/manifest.json", "/icon-192.png", "/icon-512.png", "/sw.js")
+
+
 class Auth(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         path = request.url.path
-        if (path in ("/healthz", "/auth/login")
+        if (path in _PUBLIC
                 or hmac.compare_digest(request.cookies.get("lt_session", ""),
                                        _cookie_value())):
             return await call_next(request)
@@ -109,6 +115,31 @@ async def login(request: Request):
 @app.get("/")
 async def index():
     return FileResponse(HERE / "static" / "index.html")
+
+
+@app.get("/manifest.json")
+async def manifest():
+    return FileResponse(HERE / "static" / "manifest.json")
+
+
+@app.get("/icon-192.png")
+async def icon192():
+    return FileResponse(HERE / "static" / "icon-192.png")
+
+
+@app.get("/icon-512.png")
+async def icon512():
+    return FileResponse(HERE / "static" / "icon-512.png")
+
+
+@app.get("/sw.js")
+async def sw():
+    """Stamp the shell's mtime into the worker so every deploy byte-changes it —
+    that's what makes stale home-screen installs reload themselves (see sw.js)."""
+    js = (HERE / "static" / "sw.js").read_text()
+    stamp = int((HERE / "static" / "index.html").stat().st_mtime)
+    return Response(content=js + f"\n// build {stamp}\n",
+                    media_type="application/javascript")
 
 
 def _load_convo():

@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>语伴 LanguageTutor</title>
+<link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+<meta name="theme-color" content="#101418">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="语伴">
 <style>
   :root{
     --bg:#101418; --panel:#171d25; --raised:#1c242e; --line:#232b36;
@@ -729,6 +735,11 @@ async function loadState(){
   }catch(e){ /* panels just stay as they are */ }
 }
 loadState();
+
+/* installable app: register the worker (network-only; exists for install +
+   force-updating stale home-screen shells on each deploy) */
+if ('serviceWorker' in navigator)
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
 </script>
 </body>
 </html>

@@ -1,0 +1,13 @@
+{
+  "name": "语伴 LanguageTutor",
+  "short_name": "语伴",
+  "description": "Voice-first Mandarin tutor with a real tone ear",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101418",
+  "theme_color": "#101418",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
