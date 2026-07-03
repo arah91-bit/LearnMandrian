@@ -582,8 +582,9 @@ $('#typebar').onsubmit = e=>{
    memory with hints after misses. Results go back to the tutor as a typed
    [writing practice] turn so it can grade the word. */
 let wrWord = null, wrChars = [], wrIdx = 0, wrPhaseN = 0, wrWriter = null, wrMistakes = 0;
-let wrCharMistakes = 0, wrResults = [];
+let wrCharMistakes = 0, wrResults = [], wrQueue = [], wrQPos = 0, wrItems = [], wrItemMark = 0;
 const WR_PHASES = ['watch the strokes', 'trace it', 'now from memory'];
+const isHz = c => c >= '㐀' && c <= '鿿';
 
 /* the writing ladder (mirrors curriculum.md W0-W3) */
 const LADDER = [
@@ -622,14 +623,29 @@ function wrBuild(){
     highlightColor: '#4f8a6a',
   });
   if (wrPhaseN === 0){
+    wrSay(char);                                    // hear it with the example
     wrWriter.animateCharacter({onComplete: ()=>setTimeout(wrNext, 700)});
   } else {
     wrWriter.quiz({
       showHintAfterMisses: 2,
       onMistake: ()=>{ wrMistakes++; wrCharMistakes++; },
-      onComplete: ()=>{ $('#wrMsg').textContent = '好! nice'; setTimeout(wrNext, 700); },
+      onComplete: ()=>{
+        $('#wrMsg').textContent = '好! nice';
+        if (wrPhaseN === 2) wrSay(char);            // hear it after writing it
+        setTimeout(wrNext, 800);
+      },
     });
   }
+}
+function wrSay(text){
+  fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text})})
+    .then(r=>r.ok ? r.blob() : null).then(b=>{
+      if (!b) return;
+      const a = new Audio(URL.createObjectURL(b));
+      a.onended = ()=>URL.revokeObjectURL(a.src);
+      a.play().catch(()=>{});
+    }).catch(()=>{});
 }
 function wrNext(){
   if (!wrWord) return;
@@ -637,26 +653,63 @@ function wrNext(){
   wrResults.push({char: wrChars[wrIdx], mistakes: wrCharMistakes});   // char complete
   wrCharMistakes = 0;
   if (wrIdx < wrChars.length - 1){ wrIdx++; wrPhaseN = 0; wrBuild(); return; }
+  wrItemDone();
+}
+function wrItemDone(){
+  const m = wrResults.slice(wrItemMark).reduce((a,r)=>a+r.mistakes, 0);
+  wrItems.push({hanzi: wrWord.hanzi, pinyin: wrWord.pinyin, mistakes: m});
+  wrItemMark = wrResults.length;
+  if (wrChars.length > 1) wrSay(wrWord.hanzi);      // multi-char word: hear it whole
+  if (wrQPos < wrQueue.length - 1){                 // flow into the next item
+    wrQPos++;
+    const nx = wrQueue[wrQPos];
+    $('#wrMsg').textContent = `next: ${nx.hanzi} (${nx.pinyin} — ${nx.english})`;
+    setTimeout(()=>{
+      if (!wrWord) return;                          // closed during the pause
+      wrWord = nx; wrChars = [...nx.hanzi].filter(isHz);
+      wrIdx = 0; wrPhaseN = 0;
+      wrBuild();
+    }, 1100);
+    return;
+  }
   wrFinish(true);
 }
 function wrFinish(report){
-  const word = wrWord, mistakes = wrMistakes, results = wrResults;
-  wrWord = null; wrWriter = null; wrResults = [];
+  const items = wrItems, results = wrResults;
+  wrWord = null; wrWriter = null;
+  wrResults = []; wrItems = []; wrQueue = []; wrQPos = 0; wrItemMark = 0;
   $('#wrModal').classList.remove('on');
   $('#wrTarget').innerHTML = '';
   if (results.length)
     fetch('/api/writing_result',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({results})}).then(loadState).catch(()=>{});
-  if (report && word){
+  if (report && items.length){                      // ONE combined report at the end
     document.querySelector('nav button[data-view="talk"]').click();
-    sendTextTurn(`[writing practice] ${word.hanzi} (${word.pinyin}): watched, traced, `+
-      `and wrote from memory — ${mistakes} stroke correction${mistakes===1?'':'s'} total.`);
+    const parts = items.map(i=>`${i.hanzi} (${i.pinyin}) ${i.mistakes===0 ? 'clean'
+      : i.mistakes+' correction'+(i.mistakes===1?'':'s')}`);
+    sendTextTurn(`[writing practice] worked through ${items.length} `+
+      `item${items.length===1?'':'s'}: ${parts.join('; ')}.`);
   }
 }
-function openWriting(word){
-  const chars = [...word.hanzi].filter(c=>c >= '㐀' && c <= '鿿');
+function ladderFollowups(startHz){
+  /* the "next things to work on": ladder characters from startHz onward that
+     aren't clean passes yet */
+  const wr = (lastState && lastState.writing) || {};
+  const all = [];
+  for (const r of LADDER) for (const c of (r.chars||[]))
+    all.push({hanzi: c[0], pinyin: c[1], english: c[2]});
+  const i = Math.max(0, all.findIndex(x=>x.hanzi === startHz));
+  return all.slice(i).filter(x=>{
+    const w = wr[x.hanzi];
+    return !(w && w.best <= 1);
+  });
+}
+function openWriting(word, followups){
+  const chars = [...word.hanzi].filter(isHz);
   if (!chars.length) return;
   interrupt();
+  wrQueue = [word, ...(followups||[]).filter(q=>q.hanzi !== word.hanzi)].slice(0, 5);
+  wrQPos = 0; wrItems = []; wrItemMark = 0;
   wrWord = word; wrChars = chars; wrIdx = 0; wrPhaseN = 0;
   wrMistakes = 0; wrCharMistakes = 0; wrResults = [];
   $('#wrModal').classList.add('on');
@@ -665,15 +718,18 @@ function openWriting(word){
 $('#ladder').addEventListener('click', e=>{
   const t = e.target.closest('.wtile');
   if (!t) return;
-  openWriting({hanzi: t.dataset.hz, pinyin: t.dataset.py, english: t.dataset.en});
+  openWriting({hanzi: t.dataset.hz, pinyin: t.dataset.py, english: t.dataset.en},
+              ladderFollowups(t.dataset.hz));
 });
 $('#wrReplay').onclick = ()=>{ if (wrWord){ wrPhaseN = 0; wrBuild(); } };
 $('#wrSkip').onclick = wrNext;
-$('#wrClose').onclick = ()=>wrFinish(false);
+$('#wrClose').onclick = ()=>wrFinish(wrItems.length > 0);  // early exit still reports what got done
 $('#view-words').addEventListener('click', e=>{
   const b = e.target.closest('.wr');
   if (!b) return;
-  openWriting({hanzi: b.dataset.hz, pinyin: b.dataset.py, english: b.dataset.en});
+  const first = LADDER[0].chars[0][0];
+  openWriting({hanzi: b.dataset.hz, pinyin: b.dataset.py, english: b.dataset.en},
+              ladderFollowups(first));
 });
 
 /* mic-level bars — fed by the SAME analyser the VAD hears through, so flat
@@ -730,7 +786,9 @@ function wordRow(w, today){
     </span><button class="wr" data-hz="${w.hanzi}" data-py="${w.pinyin}"
     data-en="${w.english}" aria-label="practice writing ${w.hanzi}">写</button></div>`;
 }
+let lastState = null;
 function render(s){
+  lastState = s;
   const st = s.stats;
   $('#streak').innerHTML = st.streak > 0
     ? `<b>${st.streak}</b> day streak` : 'no streak yet — today counts';
