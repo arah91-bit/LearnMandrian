@@ -281,6 +281,11 @@ _NUDGE = ("[Continue: now give Phil your full spoken reply — respond to his la
           "attempt first (what the tone-ear heard, what was right, what to fix), "
           "then whatever comes next. Plain speakable prose.]")
 
+# Everything the brain says gets spoken by TTS; an emoji comes out as noise.
+# The prompt forbids them, but models leak — so strip at the door, every provider.
+_EMOJI_RE = re.compile("[\U0001F000-\U0001FAFF☀-➿⬀-⯿"
+                       "\U0001F1E6-\U0001F1FF️‍❤]")
+
 
 def _run_brain_claude(state, system, convo):
     msgs, reply, tin, tout = list(convo), "", 0, 0
@@ -384,6 +389,7 @@ def _brain(user_text, ear_line):
                         provider, str(e)[:150])
             last_err = e
             continue
+        reply = _EMOJI_RE.sub("", reply).strip() or reply
         learner.save(state)
         convo.append({"role": "assistant", "content": reply})
         _save_convo(convo)
