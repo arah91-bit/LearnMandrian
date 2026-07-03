@@ -30,6 +30,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+import learner
 from api_alerts import page_if_billing
 from tone_ear import ToneEar
 
@@ -138,19 +139,101 @@ def _stt(wav):
         raise HTTPException(502, f"speech-to-text failed: {str(e)[:200]}")
 
 
-def _brain(user_text, ear_line):
-    msgs = _load_convo()
-    msgs.append({"role": "user", "content": f"{user_text}\n\n{ear_line}"})
+# ── Brain tools: how the tutor maintains the learner state it teaches from ────
+TOOLS = [
+    {"name": "add_word",
+     "description": "Add a newly introduced word to the vocabulary tracker with "
+                    "spaced-repetition scheduling. Call the moment you teach a new word.",
+     "input_schema": {"type": "object", "properties": {
+         "hanzi": {"type": "string"},
+         "pinyin": {"type": "string", "description": "with tone marks, e.g. mǎi"},
+         "english": {"type": "string"},
+         "tones": {"type": "array", "items": {"type": "integer"},
+                   "description": "tone number per syllable, 1-4 (5 = neutral)"}},
+         "required": ["hanzi", "pinyin", "english", "tones"]}},
+    {"name": "grade_word",
+     "description": "Record how a review/practice of a known word went; reschedules it. "
+                    "5 effortless, 4 solid, 3 shaky pass, 2 close miss, 0-1 fail.",
+     "input_schema": {"type": "object", "properties": {
+         "hanzi": {"type": "string"}, "grade": {"type": "integer"}},
+         "required": ["hanzi", "grade"]}},
+    {"name": "log_tone_attempt",
+     "description": "Record a spoken tone attempt when you know what tones Phil was "
+                    "aiming for: expected tones vs what the tone-ear heard. Feeds the "
+                    "tone accuracy stats he sees on his Progress screen.",
+     "input_schema": {"type": "object", "properties": {
+         "expected": {"type": "array", "items": {"type": "integer"}},
+         "heard": {"type": "array", "items": {"type": "integer"}}},
+         "required": ["expected", "heard"]}},
+    {"name": "update_plan",
+     "description": "Keep the visible lesson plan current: today's focus, what's coming "
+                    "next (short phrases), and brief notes-to-self. Phil sees this on his "
+                    "Plan screen — keep it in plain learner-facing language.",
+     "input_schema": {"type": "object", "properties": {
+         "focus": {"type": "string"},
+         "next_up": {"type": "array", "items": {"type": "string"}},
+         "notes": {"type": "string"}}, "required": []}},
+    {"name": "end_session",
+     "description": "When a session wraps up, record a one-sentence summary of what was "
+                    "covered and how it went. Shows in his session history.",
+     "input_schema": {"type": "object", "properties": {"summary": {"type": "string"}},
+         "required": ["summary"]}},
+]
+
+
+def _run_tool(state, name, args):
     try:
-        resp = _claude.messages.create(model=BRAIN_MODEL, max_tokens=700,
-                                       system=SYSTEM, messages=msgs)
+        if name == "add_word":
+            return learner.add_word(state, args["hanzi"], args["pinyin"],
+                                    args["english"], args["tones"])
+        if name == "grade_word":
+            return learner.grade_word(state, args["hanzi"], args["grade"])
+        if name == "log_tone_attempt":
+            return learner.log_tone_attempt(state, args["expected"], args["heard"])
+        if name == "update_plan":
+            return learner.update_plan(state, args.get("focus"),
+                                       args.get("next_up"), args.get("notes"))
+        if name == "end_session":
+            return learner.end_session(state, args["summary"])
+        return f"unknown tool {name}"
+    except Exception as e:                    # bad args must not kill the turn
+        return f"tool error: {e}"
+
+
+def _brain(user_text, ear_line):
+    state = learner.load()
+    learner.touch_day(state)
+    convo = _load_convo()
+    convo.append({"role": "user", "content": f"{user_text}\n\n{ear_line}"})
+    system = SYSTEM + "\n\n# Current learner state\n" + learner.snapshot(state)
+    msgs = list(convo)        # tool exchanges stay in-turn; disk keeps text only
+    reply = ""
+    try:
+        for _ in range(6):
+            resp = _claude.messages.create(model=BRAIN_MODEL, max_tokens=900,
+                                           system=system, messages=msgs, tools=TOOLS)
+            if resp.stop_reason != "tool_use":
+                reply = "".join(b.text for b in resp.content if b.type == "text").strip()
+                break
+            results = [{"type": "tool_result", "tool_use_id": b.id,
+                        "content": _run_tool(state, b.name, b.input)}
+                       for b in resp.content if b.type == "tool_use"]
+            msgs.append({"role": "assistant", "content": resp.content})
+            msgs.append({"role": "user", "content": results})
+        else:
+            reply = "Let's pick that up again — say that once more?"
     except Exception as e:
         page_if_billing("anthropic", e)
         raise HTTPException(502, f"tutor brain failed: {str(e)[:200]}")
-    reply = "".join(b.text for b in resp.content if b.type == "text").strip()
-    msgs.append({"role": "assistant", "content": reply})
-    _save_convo(msgs)
+    learner.save(state)
+    convo.append({"role": "assistant", "content": reply})
+    _save_convo(convo)
     return reply
+
+
+@app.get("/api/state")
+async def get_state():
+    return learner.api_view(learner.load())
 
 
 def _tts(text):

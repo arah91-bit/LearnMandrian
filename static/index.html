@@ -6,110 +6,270 @@
 <title>语伴 LanguageTutor</title>
 <style>
   :root{
-    --bg:#101418; --panel:#181e26; --line:#232b36; --ink:#e8e4da; --dim:#8a94a3;
-    --accent:#3d6b52; --accent-hot:#4f8a6a; --rec:#c0503f;
-    --t1:#4f8a6a; --t2:#4a7fa8; --t3:#b0813d; --t4:#a05468;
+    --bg:#101418; --panel:#171d25; --raised:#1c242e; --line:#232b36;
+    --ink:#e9e5da; --dim:#8a94a3; --muted:#5c6673;
+    --brand:#3d6b52; --brand-hot:#4f8a6a; --rec:#c0503f;
+    --t1:#3fa269; --t2:#5b8bd6; --t3:#b0813d; --t4:#b25670; --t5:#8a94a3;
+    --hanzi:"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC",Georgia,serif;
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{margin:0;background:var(--bg);color:var(--ink);
-       font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
-       display:flex;flex-direction:column;height:100dvh}
-  header{display:flex;align-items:center;gap:10px;padding:14px 18px;
-         border-bottom:1px solid var(--line)}
-  header h1{font-size:17px;font-weight:600;margin:0;letter-spacing:.02em}
-  header .zh{color:var(--accent-hot);font-weight:700}
-  header button{margin-left:auto;background:none;border:1px solid var(--line);
-         color:var(--dim);border-radius:8px;padding:5px 12px;font:13px system-ui;cursor:pointer}
-  #chat{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
-  .msg{max-width:min(560px,88%);padding:11px 15px;border-radius:14px;white-space:pre-wrap}
-  .user{align-self:flex-end;background:var(--accent);border-bottom-right-radius:4px}
+       font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
+       display:flex;flex-direction:column}
+  button{font:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--brand-hot);outline-offset:2px}
+
+  /* frame */
+  header{display:flex;align-items:baseline;gap:10px;padding:14px 18px 12px;
+         border-bottom:1px solid var(--line);max-width:680px;width:100%;margin:0 auto}
+  .wordmark{font-family:var(--hanzi);font-size:24px;font-weight:700;
+            color:var(--brand-hot);letter-spacing:.04em}
+  .wordsub{font-size:12px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+  #streak{margin-left:auto;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+  #streak b{color:var(--ink);font-size:15px}
+  main{flex:1;overflow-y:auto;width:100%;max-width:680px;margin:0 auto;
+       display:flex;flex-direction:column}
+  .view{display:none;flex-direction:column;gap:14px;padding:16px 16px 24px}
+  .view.on{display:flex}
+  #view-talk.on{flex:1;padding-bottom:0}
+
+  nav{display:flex;border-top:1px solid var(--line);background:var(--bg);
+      max-width:680px;width:100%;margin:0 auto;
+      padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1;background:none;border:0;color:var(--muted);padding:8px 0 7px;
+      display:flex;flex-direction:column;align-items:center;gap:1px;position:relative}
+  nav button .zh{font-family:var(--hanzi);font-size:19px;line-height:1.2}
+  nav button .en{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+  nav button.on{color:var(--ink)}
+  nav button.on .zh{color:var(--brand-hot)}
+  nav .badge{position:absolute;top:4px;right:calc(50% - 22px);min-width:16px;height:16px;
+      border-radius:8px;background:var(--brand-hot);color:#fff;font-size:10px;
+      line-height:16px;padding:0 4px;font-variant-numeric:tabular-nums}
+
+  /* cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+        padding:14px 16px}
+  .card h2{margin:0 0 8px;font-size:11px;font-weight:600;color:var(--muted);
+           letter-spacing:.14em;text-transform:uppercase}
+  .empty{color:var(--muted);font-size:14px}
+
+  /* talk */
+  #chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:13px;
+        padding:16px 2px}
+  .msg{max-width:88%;padding:10px 14px;border-radius:14px;white-space:pre-wrap}
+  .user{align-self:flex-end;background:var(--brand);border-bottom-right-radius:4px}
   .tutor{align-self:flex-start;background:var(--panel);border:1px solid var(--line);
          border-bottom-left-radius:4px}
-  .meta{align-self:flex-end;display:flex;gap:6px;flex-wrap:wrap;margin-top:-8px}
-  .chip{font-size:12px;padding:2px 9px;border-radius:99px;color:#fff;opacity:.92}
+  .meta{align-self:flex-end;display:flex;gap:6px;flex-wrap:wrap;margin-top:-7px}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;
+        padding:2px 9px 2px 6px;border-radius:99px;color:#fff;
+        font-variant-numeric:tabular-nums}
+  .chip svg{display:block}
   .chip.n{background:var(--panel);color:var(--dim);border:1px solid var(--line)}
-  .controls{align-self:flex-start;display:flex;gap:8px;margin-top:-8px}
+  .controls{align-self:flex-start;display:flex;gap:8px;margin-top:-7px}
   .controls button{background:none;border:1px solid var(--line);color:var(--dim);
-         border-radius:8px;padding:3px 10px;font:12px system-ui;cursor:pointer}
+        border-radius:8px;padding:3px 10px;font-size:12px}
   .controls button:hover{color:var(--ink)}
-  #dock{display:flex;flex-direction:column;align-items:center;gap:8px;
-        padding:12px 0 calc(18px + env(safe-area-inset-bottom))}
+  #dock{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0 14px}
   #status{font-size:13px;color:var(--dim);min-height:18px}
-  #orb{width:84px;height:84px;border-radius:50%;border:0;cursor:pointer;
-       background:radial-gradient(circle at 32% 30%,var(--accent-hot),var(--accent) 70%);
+  #orb{width:80px;height:80px;border-radius:50%;border:0;
+       background:radial-gradient(circle at 32% 30%,var(--brand-hot),var(--brand) 70%);
        box-shadow:0 4px 24px rgba(79,138,106,.35);transition:transform .15s}
   #orb:active{transform:scale(.94)}
   #orb.rec{background:radial-gradient(circle at 32% 30%,#d96a55,var(--rec) 70%);
-       box-shadow:0 0 0 0 rgba(192,80,63,.5);animation:pulse 1.4s infinite}
+       animation:pulse 1.4s infinite}
   #orb.busy{opacity:.45;pointer-events:none;animation:none}
-  @keyframes pulse{70%{box-shadow:0 0 0 22px rgba(192,80,63,0)}100%{box-shadow:0 0 0 0 rgba(192,80,63,0)}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,80,63,.5)}
+       70%{box-shadow:0 0 0 22px rgba(192,80,63,0)}100%{box-shadow:0 0 0 0 rgba(192,80,63,0)}}
+  @media (prefers-reduced-motion: reduce){#orb.rec{animation:none}}
+
+  /* plan */
+  #focus-card .focus{font-size:19px;line-height:1.4}
+  .next-item{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .next-item:last-child{border-bottom:0}
+  .next-item::before{content:"";width:3px;border-radius:2px;background:var(--brand-hot);
+        flex:none;margin:3px 0}
+  .notes{color:var(--dim);font-size:14px}
+  .session{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .session:last-child{border-bottom:0}
+  .session .d{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+
+  /* words */
+  .word{display:flex;align-items:center;gap:14px;padding:11px 0;
+        border-bottom:1px solid var(--line)}
+  .word:last-child{border-bottom:0}
+  .word .hz{font-family:var(--hanzi);font-size:32px;line-height:1;min-width:44px}
+  .word .mid{flex:1;min-width:0}
+  .word .py{font-weight:600;font-size:16px}
+  .word .en{color:var(--dim);font-size:13px}
+  .word .right{text-align:right;flex:none}
+  .due-chip{font-size:11px;color:var(--brand-hot);border:1px solid var(--brand);
+        border-radius:99px;padding:1px 8px;white-space:nowrap}
+  .next-rev{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .mastery{width:52px;height:4px;border-radius:4px;background:var(--line);
+        margin:6px 0 0 auto;overflow:hidden}
+  .mastery i{display:block;height:100%;border-radius:4px;background:var(--brand-hot)}
+  .t1{color:var(--t1)} .t2{color:var(--t2)} .t3{color:var(--t3)}
+  .t4{color:var(--t4)} .t5{color:var(--t5)}
+
+  /* progress */
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+        padding:12px 14px}
+  .tile .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.15}
+  .tile .l{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  .tone-row{display:grid;grid-template-columns:46px 86px 1fr 44px;align-items:center;
+        gap:10px;padding:8px 0}
+  .tone-row .name{font-size:13px;color:var(--dim)}
+  .tone-row .name b{color:var(--ink);font-weight:600}
+  .meter{height:6px;border-radius:4px;background:var(--raised);overflow:hidden}
+  .meter i{display:block;height:100%;border-radius:4px}
+  .tone-row .n{font-size:12px;color:var(--muted);text-align:right;
+        font-variant-numeric:tabular-nums}
+  .confusion{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px;
+        color:var(--dim)}
+  .confusion .tag{font-size:12px;font-weight:650;padding:1px 7px;border-radius:6px;
+        color:#fff}
+  #resetzone{margin-top:6px;text-align:center}
+  #reset{background:none;border:0;color:var(--muted);font-size:12px;
+         text-decoration:underline}
 </style>
 </head>
 <body>
 <header>
-  <h1><span class="zh">语伴</span> LanguageTutor</h1>
-  <button id="reset" title="Start the conversation over">reset</button>
+  <span class="wordmark">语伴</span><span class="wordsub">Language&nbsp;Tutor</span>
+  <span id="streak"></span>
 </header>
-<div id="chat"></div>
-<div id="dock">
-  <div id="status">tap the orb and speak</div>
-  <button id="orb" aria-label="talk"></button>
-</div>
+
+<main>
+  <section id="view-talk" class="view on">
+    <div id="chat"></div>
+    <div id="dock">
+      <div id="status">tap the orb and speak</div>
+      <button id="orb" aria-label="talk"></button>
+    </div>
+  </section>
+
+  <section id="view-plan" class="view">
+    <div class="card" id="focus-card">
+      <h2>Today's focus</h2>
+      <div class="focus empty">Your tutor sets this as you go — have your first session.</div>
+    </div>
+    <div class="card" id="next-card">
+      <h2>Next up</h2>
+      <div class="empty">Nothing queued yet.</div>
+    </div>
+    <div class="card" id="notes-card" hidden>
+      <h2>Tutor's notes</h2>
+      <div class="notes"></div>
+    </div>
+    <div class="card" id="history-card">
+      <h2>Session history</h2>
+      <div class="empty">Sessions land here after you wrap one up.</div>
+    </div>
+  </section>
+
+  <section id="view-words" class="view">
+    <div class="card" id="due-card" hidden>
+      <h2>Due now</h2><div class="list"></div>
+    </div>
+    <div class="card" id="all-words-card">
+      <h2>All words</h2>
+      <div class="list"><div class="empty">New words land here with their review
+      schedule when the tutor teaches them.</div></div>
+    </div>
+  </section>
+
+  <section id="view-progress" class="view">
+    <div class="tiles" id="tiles"></div>
+    <div class="card" id="tones-card">
+      <h2>The four tones — your accuracy</h2>
+      <div class="rows"><div class="empty">Say some words in a drill and your
+      per-tone accuracy shows up here.</div></div>
+    </div>
+    <div class="card" id="confusion-card" hidden>
+      <h2>Most common mix-ups</h2><div class="list"></div>
+    </div>
+    <div id="resetzone"><button id="reset">start the conversation over</button></div>
+  </section>
+</main>
+
+<nav>
+  <button data-view="talk" class="on"><span class="zh">说</span><span class="en">Talk</span></button>
+  <button data-view="plan"><span class="zh">课</span><span class="en">Plan</span></button>
+  <button data-view="words"><span class="zh">词</span><span class="en">Words</span>
+    <span class="badge" id="due-badge" hidden></span></button>
+  <button data-view="progress"><span class="zh">进</span><span class="en">Progress</span></button>
+</nav>
 
 <script>
-const chat = document.getElementById('chat');
-const orb = document.getElementById('orb');
-const status = document.getElementById('status');
-const TONE_COLORS = {1:'var(--t1)',2:'var(--t2)',3:'var(--t3)',4:'var(--t4)'};
-const TONE_NAMES = {1:'high',2:'rising',3:'dipping',4:'falling'};
-
-let rec = null, chunks = [], audioEl = null;
-
-function el(tag, cls, text){
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text != null) e.textContent = text;
-  return e;
+const $ = s => document.querySelector(s);
+const TONES = {
+  1:{c:'var(--t1)', hex:'#3fa269', name:'high level',  path:'M5 7 H35'},
+  2:{c:'var(--t2)', hex:'#5b8bd6', name:'rising',      path:'M7 18 L33 5'},
+  3:{c:'var(--t3)', hex:'#b0813d', name:'dipping',     path:'M5 8 Q15 24 23 15 L35 6'},
+  4:{c:'var(--t4)', hex:'#b25670', name:'falling',     path:'M7 5 L33 18'},
+  5:{c:'var(--t5)', hex:'#8a94a3', name:'neutral',     path:'M13 12 H27'},
+};
+function contour(t, size=22, stroke='#fff'){
+  const p = (TONES[t]||TONES[5]).path;
+  return `<svg width="${size}" height="${size*0.6}" viewBox="0 0 40 24" fill="none"
+    aria-hidden="true"><path d="${p}" stroke="${stroke}" stroke-width="4"
+    stroke-linecap="round"/></svg>`;
 }
 
+/* ── tabs ── */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on', x===b));
+    document.querySelectorAll('.view').forEach(v=>
+      v.classList.toggle('on', v.id === 'view-'+b.dataset.view));
+  };
+});
+
+/* ── talk ── */
+const chat = $('#chat'), orb = $('#orb'), status = $('#status');
+let rec = null, chunks = [], audioEl = null;
+
+function el(tag, cls, html){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html != null) e.innerHTML = html;
+  return e;
+}
 function addUser(text, tones){
-  chat.appendChild(el('div','msg user',text));
+  const m = el('div','msg user'); m.textContent = text; chat.appendChild(m);
   if (tones && (tones.syllables.length || tones.note)){
-    const m = el('div','meta');
+    const meta = el('div','meta');
     tones.syllables.forEach(s=>{
-      const c = el('span','chip',`T${s.tone} ${TONE_NAMES[s.tone]} ${Math.round(s.confidence*100)}%`);
-      c.style.background = TONE_COLORS[s.tone];
-      m.appendChild(c);
+      const t = TONES[s.tone]||TONES[5];
+      const c = el('span','chip',
+        contour(s.tone,18) + `T${s.tone} ${t.name} ${Math.round(s.confidence*100)}%`);
+      c.style.background = t.c;
+      meta.appendChild(c);
     });
-    if (tones.note) m.appendChild(el('span','chip n',tones.note));
-    chat.appendChild(m);
+    if (tones.note){ const n = el('span','chip n'); n.textContent = tones.note; meta.appendChild(n); }
+    chat.appendChild(meta);
   }
   chat.scrollTop = chat.scrollHeight;
 }
-
 function addTutor(text, audioB64){
-  chat.appendChild(el('div','msg tutor',text));
+  const m = el('div','msg tutor'); m.textContent = text; chat.appendChild(m);
   if (audioB64){
     const src = 'data:audio/mp3;base64,' + audioB64;
     const c = el('div','controls');
-    const replay = el('button',null,'replay');
-    const slow = el('button',null,'slow');
-    replay.onclick = ()=>play(src,1.0);
-    slow.onclick = ()=>play(src,0.7);
-    c.append(replay,slow);
-    chat.appendChild(c);
+    const replay = el('button',null,'replay'), slow = el('button',null,'slow');
+    replay.onclick = ()=>play(src,1.0); slow.onclick = ()=>play(src,0.7);
+    c.append(replay, slow); chat.appendChild(c);
     play(src,1.0);
   }
   chat.scrollTop = chat.scrollHeight;
 }
-
 function play(src, rate){
   if (audioEl) audioEl.pause();
-  audioEl = new Audio(src);
-  audioEl.playbackRate = rate;
-  audioEl.play();
+  audioEl = new Audio(src); audioEl.playbackRate = rate; audioEl.play();
 }
-
 async function startRec(){
   const stream = await navigator.mediaDevices.getUserMedia({audio:{
     echoCancellation:true, noiseSuppression:true}});
@@ -120,42 +280,122 @@ async function startRec(){
   rec.start();
   orb.classList.add('rec');
   status.textContent = 'listening… tap to finish';
-  if (audioEl) audioEl.pause();   // barge-in: talking interrupts the tutor
+  if (audioEl) audioEl.pause();          // barge-in
 }
-
 async function send(){
   orb.classList.remove('rec'); orb.classList.add('busy');
   status.textContent = 'thinking…';
-  const blob = new Blob(chunks, {type: rec.mimeType || 'audio/webm'});
   const fd = new FormData();
-  fd.append('audio', blob, 'turn.webm');
+  fd.append('audio', new Blob(chunks,{type:rec.mimeType||'audio/webm'}), 'turn.webm');
   try{
-    const r = await fetch('/api/turn', {method:'POST', body:fd});
+    const r = await fetch('/api/turn',{method:'POST',body:fd});
     const j = await r.json();
     if (!r.ok) throw new Error(j.detail || j.error || r.status);
-    if (j.error){ status.textContent = j.error; }
+    if (j.error) status.textContent = j.error;
     else{
       addUser(j.heard, j.tones);
       addTutor(j.reply, j.audio);
       status.textContent = 'tap the orb and speak';
+      loadState();                        // panels reflect what the tutor recorded
     }
-  }catch(err){
-    status.textContent = 'error: ' + err.message;
-  }
+  }catch(err){ status.textContent = 'error: ' + err.message; }
   orb.classList.remove('busy');
 }
-
 orb.onclick = ()=>{
   if (rec && rec.state === 'recording') rec.stop();
   else startRec().catch(e=>{ status.textContent = 'mic error: ' + e.message; });
 };
-
-document.getElementById('reset').onclick = async ()=>{
-  if (!confirm('Start over? The tutor forgets this conversation.')) return;
-  await fetch('/api/reset', {method:'POST'});
+$('#reset').onclick = async ()=>{
+  if (!confirm('Start the conversation over? Your plan, words and progress are kept.')) return;
+  await fetch('/api/reset',{method:'POST'});
   chat.replaceChildren();
   status.textContent = 'fresh start — tap the orb and say hello';
 };
+
+/* ── state panels ── */
+function pinyinHTML(pinyin, tones){
+  const parts = pinyin.split(/[\s']+/);
+  if (parts.length === tones.length)
+    return parts.map((p,i)=>`<span class="t${tones[i]||5}">${p}</span>`).join(' ');
+  return `<span class="t${tones[0]||5}">${pinyin}</span>`;
+}
+function wordRow(w, today){
+  const due = w.due <= today;
+  const right = due
+    ? `<span class="due-chip">due now</span>`
+    : `<span class="next-rev">review in ${Math.max(1,Math.round(
+        (new Date(w.due)-new Date(today))/864e5))}d</span>`;
+  const mastery = Math.min(100, Math.round(w.interval/21*100));
+  return `<div class="word"><span class="hz">${w.hanzi}</span>
+    <span class="mid"><div class="py">${pinyinHTML(w.pinyin,w.tones)}</div>
+    <div class="en">${w.english}</div></span>
+    <span class="right">${right}<div class="mastery"><i style="width:${mastery}%"></i></div>
+    </span></div>`;
+}
+function render(s){
+  const st = s.stats;
+  $('#streak').innerHTML = st.streak > 0
+    ? `<b>${st.streak}</b> day streak` : 'no streak yet — today counts';
+
+  /* plan */
+  if (s.plan.focus){ const f = $('#focus-card .focus');
+    f.classList.remove('empty'); f.textContent = s.plan.focus; }
+  const next = $('#next-card');
+  next.innerHTML = '<h2>Next up</h2>' + (s.plan.next_up.length
+    ? s.plan.next_up.map(x=>`<div class="next-item">${x}</div>`).join('')
+    : '<div class="empty">Nothing queued yet.</div>');
+  const notes = $('#notes-card');
+  notes.hidden = !s.plan.notes;
+  if (s.plan.notes) notes.querySelector('.notes').textContent = s.plan.notes;
+  const hist = $('#history-card');
+  hist.innerHTML = '<h2>Session history</h2>' + (s.sessions.length
+    ? s.sessions.map(x=>`<div class="session"><div class="d">${x.date}</div>${x.summary}</div>`).join('')
+    : '<div class="empty">Sessions land here after you wrap one up.</div>');
+
+  /* words */
+  const due = s.vocab.filter(w=>w.due <= s.today);
+  const rest = s.vocab.filter(w=>w.due > s.today);
+  const dueCard = $('#due-card');
+  dueCard.hidden = !due.length;
+  if (due.length) dueCard.querySelector('.list').innerHTML =
+    due.map(w=>wordRow(w,s.today)).join('');
+  $('#all-words-card .list').innerHTML = rest.length
+    ? rest.slice().reverse().map(w=>wordRow(w,s.today)).join('')
+    : (due.length ? '<div class="empty">Everything else is scheduled ahead.</div>'
+       : '<div class="empty">New words land here with their review schedule when the tutor teaches them.</div>');
+  const badge = $('#due-badge');
+  badge.hidden = !st.due_count; badge.textContent = st.due_count;
+
+  /* progress */
+  $('#tiles').innerHTML = [
+    [st.streak, 'day streak'], [st.due_count, 'due today'],
+    [st.words_total, 'words tracked'], [st.sessions, 'sessions'],
+  ].map(([v,l])=>`<div class="tile"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+  const anyTones = Object.values(st.tone_accuracy).some(a=>a.total>0);
+  $('#tones-card .rows').innerHTML = anyTones
+    ? [1,2,3,4].map(t=>{
+        const a = st.tone_accuracy[t], pct = a.total? Math.round(a.correct/a.total*100) : 0;
+        return `<div class="tone-row">${contour(t,34,TONES[t].hex)}
+          <span class="name"><b>T${t}</b> ${TONES[t].name}</span>
+          <span class="meter"><i style="width:${a.total?pct:0}%;background:${TONES[t].hex}"></i></span>
+          <span class="n">${a.total? pct+'%' : '—'}</span></div>`;
+      }).join('')
+    : '<div class="empty">Say some words in a drill and your per-tone accuracy shows up here.</div>';
+  const conf = $('#confusion-card');
+  conf.hidden = !st.confusions.length;
+  if (st.confusions.length) conf.querySelector('.list').innerHTML =
+    st.confusions.map(c=>`<div class="confusion">aimed
+      <span class="tag" style="background:${TONES[c.expected].hex}">T${c.expected}</span>
+      → came out <span class="tag" style="background:${TONES[c.heard].hex}">T${c.heard}</span>
+      <span style="margin-left:auto">×${c.count}</span></div>`).join('');
+}
+async function loadState(){
+  try{
+    const r = await fetch('/api/state');
+    if (r.ok) render(await r.json());
+  }catch(e){ /* panels just stay as they are */ }
+}
+loadState();
 </script>
 </body>
 </html>
