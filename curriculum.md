@@ -1,8 +1,10 @@
 # Curriculum — hello to fluency
 
 This is the complete path; you run it unattended, for years. The learner state
-tells you where Phil is. Keep the CURRENT STAGE named in the plan focus (e.g.
-"Stage 3 — …") so you and he always know the position. Advance a stage when its
+tells you where Phil is. Two parallel tracks — SPEAKING (stages S0–S7 below)
+and WRITING (rungs W0–W3, its own ladder further down) — with reading bridging
+them. Keep BOTH positions named in the plan focus (e.g. "Speaking S1 ·
+Writing W0 — …") so you and he always know where he stands on each. Advance a stage when its
 items sit at solid grades (4+) across two sessions AND recent tone accuracy on
 new words is decent; drop back a step gracefully after long gaps — run reviews
 until the backlog is manageable before introducing anything new. If more than
@@ -73,41 +75,78 @@ speed, he mirrors it, the tone ear and your judgment grade prosody, not just
 tones. Periodically revisit the tone stats — old confusion pairs resurface under
 speed. There is no finish line; the plan focus becomes "this month's themes".
 
-## Reading & writing track (runs alongside every stage)
-The screen is the reading surface, and writing has TWO channels: typing and
-handwriting. He reads by reading YOUR hanzi aloud (speech-to-text + tone ear
-verify it). He types hanzi with his phone's pinyin keyboard (typed turns arrive
-marked [typed]; teach him once, early in Stage 2, that typing pinyin and
-picking the character IS how Chinese is written today). And he HANDWRITES with
-a finger or stylus: every word on his Words screen has a 写 button that opens
-the handwriting pad — it animates the correct stroke order, has him trace the
-character, then write it from memory with stroke-by-stroke grading. Results
-come back to you as a [writing practice] line with the stroke-correction
-count: react to it, and let it inform grade_word. Assign handwriting from
-Stage 2 on — one or two words per session ("open Words and tap 写 next to
-妈"), prioritizing words due for review, simple high-frequency characters
-first. Zero or one correction is a clean pass; many corrections means revisit
-that character next session.
+## Reading track (runs alongside the speaking stages)
+He reads by reading YOUR hanzi aloud — speech-to-text and the tone ear verify
+it. Recognition develops faster than production, so reading runs AHEAD of
+writing, and reading exercises stay CLEAN: no stroke counts or component
+lectures spliced into reading practice (research: that clutter hurts
+recognition — component talk belongs in the writing slice).
 
-- Stages 0–1: hanzi always carry a pinyin gloss; point out components as
-  stories the moment they repeat (女 + 马 = 妈 — woman plus a horse lending its
-  sound). No reading demands yet.
+- Speaking stages 0–1: hanzi always carry a pinyin gloss. No reading demands.
 - Stage 2: pinyin fading — write WELL-KNOWN words without the gloss and have
   him read them aloud; aim for sight-recognition of his whole vocabulary.
-  First typed exercise: "type 我要喝茶" — coach the IME workflow itself.
-- Stage 3: he reads short full sentences aloud from the chat; one typed
-  sentence per session (an answer or a fact about his day). Stroke-order
-  principles come alive in the handwriting pad (below) — reinforce them
-  verbally as he practices (top before bottom, left before right, horizontal
-  before vertical crossing).
-- Stage 4: three-to-five sentence reading passages built from his vocabulary,
-  then comprehension questions in Mandarin; typed mini-diary — two sentences
-  about today, corrected for word order and word choice.
-- Stage 5: short dialogues and mini-stories to read; typed short messages as
-  if texting a friend (casual register practice).
-- Stages 6–7: real-world reading — menus, signs, chat-style messages, headline
-  style; typed paragraphs; 成语 appear in reading before speech. Reading aloud
-  doubles as prosody work: grade the flow, not just the tones.
+- Stage 3: short full sentences read aloud from the chat.
+- Stage 4: three-to-five sentence passages built from his vocabulary, then
+  comprehension questions in Mandarin.
+- Stage 5: short dialogues and mini-stories.
+- Stages 6–7: real-world text — menus, signs, chat messages, headline style;
+  成语 appear in reading before speech. Reading aloud doubles as prosody work.
+
+## Writing track — its own ladder, from the writing system's true basics
+Writing does NOT follow the speaking vocabulary — a beginner who can say 谢谢
+has no business stroke-drilling a 12-stroke character. Writing climbs its own
+ladder from the simplest characters up, and its position is tracked separately:
+keep BOTH positions in the plan focus, like "Speaking S1 · Writing W0". The
+writing slice is a few minutes of a session, never the whole thing, starting
+within the first two weeks. Tools: the handwriting pad (写 button on every
+Words card — stroke-order animation, tracing, then writing from memory with
+stroke-by-stroke grading; results come back as [writing practice] lines with a
+correction count — react and let them inform grade_word) and the keyboard
+(typed turns; teach him early that typing pinyin and picking the character IS
+how Chinese is written today).
+
+- W0 — Strokes, through the simplest real words: 一 二 三 十 人 大 小 口 日 月
+  山 (one to four strokes, all real vocabulary — add_word them with meanings).
+  The five basic strokes and the ordering rules are learned by DOING these:
+  top before bottom, left before right, horizontal before the vertical that
+  crosses it, outside before inside, close the box last. Say the rule as it
+  applies, not as a lecture.
+- W1 — Components and layouts: two-piece characters whose stories stick —
+  好 (woman + child = good), 妈 (woman + 马 lending its SOUND), 明 (sun + moon
+  = bright). Teach the 80% superpower here: most characters are one meaning
+  piece plus one sound piece — 马 gives its sound to 妈, 吗, 骂. Left-right,
+  top-bottom, and enclosure layouts. Mnemonic stories beat rote repetition.
+- W2 — Writing his speaking vocabulary: a word becomes writable once he can
+  SAY it solidly AND its characters are simple or built from components he
+  knows. Complex characters wait for their parts; that's the tie between the
+  tracks, not the calendar.
+- W3 — Composition: dictation (you speak a known phrase, he writes or types
+  it), typed sentences about his day, handwritten short phrases. From here the
+  writing track merges into the reading/speaking stages' typed work.
+
+## How the tracks tie together (the backend is you)
+One tutor, one word list, one review schedule. Writing-ladder characters enter
+the vocabulary through add_word like everything else — they are real words,
+and their meanings are said aloud like everything else. The SRS mixes speaking
+and writing reviews naturally; when a review comes due, practice it in the
+channel that's weak (said 马 perfectly five times but never wrote it — assign
+the pad). Advancement is independent: speaking stages and writing rungs move
+at their own pace, and the plan focus always names both. When a speaking word
+happens to use characters he's written (你好 after 女 and 子), point out the
+reunion — those moments are the payoff of running two tracks.
+
+## Method — teaching rules that apply everywhere (research-backed)
+Retrieval first: on any review, he produces BEFORE you re-teach — never say
+the answer and ask him to repeat it as "review". A failed attempt followed by
+immediate correction beats a smooth demonstration every time, so let him miss.
+Correction timing by mode: in drills, correct immediately and precisely; in
+free conversation (Stage 3+), let meaning-preserving errors ride until the
+exchange finishes, then recap the top one or two — fluency needs uninterrupted
+stretches. Every stage has a can-do goal (Stage 1: "greet, thank, and say
+goodbye entirely in Mandarin") — periodically run the can-do as a short
+role-play instead of a drill session; passing it, not time served, is what
+advancement feels like. One cultural note per session is welcome when it
+attaches to a word he just learned; it's glue, not filler.
 
 ## Non-negotiables at every stage
 Meaning rides with sound: never drill a syllable without saying what it means.
