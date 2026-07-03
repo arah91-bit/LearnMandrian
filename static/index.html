@@ -154,6 +154,26 @@
   #wrBtns button:hover{color:var(--ink)}
   #wrMsg{font-size:13px;color:var(--muted);min-height:18px}
 
+  /* write tab */
+  .rung{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+        padding:14px 16px;margin-bottom:14px}
+  .rung h3{margin:0;font-size:14px;font-weight:600}
+  .rung h3 .wid{color:var(--brand-hot);font-variant-numeric:tabular-nums;margin-right:8px}
+  .rung.now{border-color:var(--brand)}
+  .rung .rdesc{color:var(--dim);font-size:13px;margin:4px 0 0}
+  .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));
+        gap:8px;margin-top:12px}
+  .wtile{background:var(--raised);border:1px solid var(--line);border-radius:12px;
+        padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;
+        gap:2px;cursor:pointer}
+  .wtile .h{font-family:var(--hanzi);font-size:26px;line-height:1.15}
+  .wtile .p{font-size:11px;color:var(--muted)}
+  .wtile.clean{border-color:var(--t1)}
+  .wtile.clean .p{color:var(--t1)}
+  .wtile.rough{border-color:var(--t3)}
+  .wtile.rough .p{color:var(--t3)}
+  .wtile:hover{border-color:var(--brand-hot)}
+
   /* progress */
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;
@@ -227,6 +247,17 @@
     </div>
   </section>
 
+  <section id="view-write" class="view">
+    <div class="card" id="wrung-card">
+      <h2>Writing ladder</h2>
+      <div class="focus empty">Your tutor starts you on strokes — rung W0.</div>
+    </div>
+    <div id="ladder"></div>
+    <div class="card" id="wwords-card" hidden>
+      <h2>Words you've written</h2><div class="list"></div>
+    </div>
+  </section>
+
   <section id="view-progress" class="view">
     <div class="tiles" id="tiles"></div>
     <div class="card" id="tones-card">
@@ -257,6 +288,7 @@
   <button data-view="plan"><span class="zh">课</span><span class="en">Plan</span></button>
   <button data-view="words"><span class="zh">词</span><span class="en">Words</span>
     <span class="badge" id="due-badge" hidden></span></button>
+  <button data-view="write"><span class="zh">写</span><span class="en">Write</span></button>
   <button data-view="progress"><span class="zh">进</span><span class="en">Progress</span></button>
 </nav>
 
@@ -550,7 +582,23 @@ $('#typebar').onsubmit = e=>{
    memory with hints after misses. Results go back to the tutor as a typed
    [writing practice] turn so it can grade the word. */
 let wrWord = null, wrChars = [], wrIdx = 0, wrPhaseN = 0, wrWriter = null, wrMistakes = 0;
+let wrCharMistakes = 0, wrResults = [];
 const WR_PHASES = ['watch the strokes', 'trace it', 'now from memory'];
+
+/* the writing ladder (mirrors curriculum.md W0-W3) */
+const LADDER = [
+  {id:'W0', title:'Strokes', desc:'The five basic strokes and their order, learned through the simplest real words.',
+   chars:[['一','yī','one'],['二','èr','two'],['三','sān','three'],['十','shí','ten'],
+          ['人','rén','person'],['大','dà','big'],['小','xiǎo','small'],['口','kǒu','mouth'],
+          ['日','rì','sun'],['月','yuè','moon'],['山','shān','mountain']]},
+  {id:'W1', title:'Components', desc:'Characters built from pieces with stories — and the 80% trick: one meaning piece plus one sound piece.',
+   chars:[['女','nǚ','woman'],['子','zǐ','child'],['好','hǎo','good'],['马','mǎ','horse'],
+          ['妈','mā','mom'],['吗','ma','question word'],['明','míng','bright'],['你','nǐ','you']]},
+  {id:'W2', title:'Your words', desc:'Words you can already say become writable once their characters are simple or built from parts you know. Practice from the Words tab (写).',
+   chars:[]},
+  {id:'W3', title:'Composition', desc:'Dictation, typed sentences, handwritten phrases — writing that says something.',
+   chars:[]},
+];
 
 function wrLoader(char, onLoad, onError){
   fetch('/api/hanzi/'+encodeURIComponent(char))
@@ -578,7 +626,7 @@ function wrBuild(){
   } else {
     wrWriter.quiz({
       showHintAfterMisses: 2,
-      onMistake: ()=>{ wrMistakes++; },
+      onMistake: ()=>{ wrMistakes++; wrCharMistakes++; },
       onComplete: ()=>{ $('#wrMsg').textContent = '好! nice'; setTimeout(wrNext, 700); },
     });
   }
@@ -586,14 +634,19 @@ function wrBuild(){
 function wrNext(){
   if (!wrWord) return;
   if (wrPhaseN < 2){ wrPhaseN++; wrBuild(); return; }
+  wrResults.push({char: wrChars[wrIdx], mistakes: wrCharMistakes});   // char complete
+  wrCharMistakes = 0;
   if (wrIdx < wrChars.length - 1){ wrIdx++; wrPhaseN = 0; wrBuild(); return; }
   wrFinish(true);
 }
 function wrFinish(report){
-  const word = wrWord, mistakes = wrMistakes;
-  wrWord = null; wrWriter = null;
+  const word = wrWord, mistakes = wrMistakes, results = wrResults;
+  wrWord = null; wrWriter = null; wrResults = [];
   $('#wrModal').classList.remove('on');
   $('#wrTarget').innerHTML = '';
+  if (results.length)
+    fetch('/api/writing_result',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({results})}).then(loadState).catch(()=>{});
   if (report && word){
     document.querySelector('nav button[data-view="talk"]').click();
     sendTextTurn(`[writing practice] ${word.hanzi} (${word.pinyin}): watched, traced, `+
@@ -604,10 +657,16 @@ function openWriting(word){
   const chars = [...word.hanzi].filter(c=>c >= '㐀' && c <= '鿿');
   if (!chars.length) return;
   interrupt();
-  wrWord = word; wrChars = chars; wrIdx = 0; wrPhaseN = 0; wrMistakes = 0;
+  wrWord = word; wrChars = chars; wrIdx = 0; wrPhaseN = 0;
+  wrMistakes = 0; wrCharMistakes = 0; wrResults = [];
   $('#wrModal').classList.add('on');
   wrBuild();
 }
+$('#ladder').addEventListener('click', e=>{
+  const t = e.target.closest('.wtile');
+  if (!t) return;
+  openWriting({hanzi: t.dataset.hz, pinyin: t.dataset.py, english: t.dataset.en});
+});
 $('#wrReplay').onclick = ()=>{ if (wrWord){ wrPhaseN = 0; wrBuild(); } };
 $('#wrSkip').onclick = wrNext;
 $('#wrClose').onclick = ()=>wrFinish(false);
@@ -704,6 +763,34 @@ function render(s){
        : '<div class="empty">New words land here with their review schedule when the tutor teaches them.</div>');
   const badge = $('#due-badge');
   badge.hidden = !st.due_count; badge.textContent = st.due_count;
+
+  /* write tab */
+  const rung = (s.plan.focus.match(/Writing\s+(W\d)/i)||[])[1] || 'W0';
+  const wr = s.writing || {};
+  $('#wrung-card').innerHTML = `<h2>Writing ladder</h2><div class="focus">You're on
+    <b>${rung}</b> — green tiles are clean passes, amber ones need another go.
+    Tap any character to practice it.</div>`;
+  $('#ladder').innerHTML = LADDER.map(r=>{
+    const grid = r.chars.length ? `<div class="wgrid">` + r.chars.map(([h,p,en])=>{
+      const st = wr[h] ? (wr[h].best <= 1 ? 'clean' : 'rough') : '';
+      return `<div class="wtile ${st}" data-hz="${h}" data-py="${p}" data-en="${en}">
+        <span class="h">${h}</span><span class="p">${p}</span></div>`;
+    }).join('') + `</div>` : '';
+    return `<div class="rung ${r.id===rung?'now':''}"><h3><span class="wid">${r.id}</span>
+      ${r.title}</h3><p class="rdesc">${r.desc}</p>${grid}</div>`;
+  }).join('');
+  const written = s.vocab.filter(w=>{
+    const cs = [...w.hanzi].filter(c=>c >= '㐀' && c <= '鿿');
+    return cs.length && cs.every(c=>wr[c]);
+  });
+  const wwc = $('#wwords-card');
+  wwc.hidden = !written.length;
+  if (written.length) wwc.querySelector('.list').innerHTML = written.map(w=>{
+    const worst = Math.max(...[...w.hanzi].filter(c=>wr[c]).map(c=>wr[c].best));
+    return `<div class="confusion"><span class="hz" style="font-family:var(--hanzi);
+      font-size:20px">${w.hanzi}</span> ${w.pinyin} · ${w.english}
+      <span style="margin-left:auto" class="${worst<=1?'t1':'t3'}">${worst<=1?'clean':'needs work'}</span></div>`;
+  }).join('');
 
   /* progress */
   $('#tiles').innerHTML = [

@@ -21,6 +21,7 @@ _DEFAULT = {
     "tone_stats": {},     # "expected_heard" -> count, e.g. "3_2": 4
     "sessions": [],       # {date, summary}
     "days": [],           # ISO dates with at least one turn
+    "writing": {},        # char -> {times, best (fewest corrections), last}
 }
 
 
@@ -30,7 +31,10 @@ def _today():
 
 def load():
     if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text())
+        state = json.loads(STATE_FILE.read_text())
+        for k, v in _DEFAULT.items():          # older state files gain new keys
+            state.setdefault(k, json.loads(json.dumps(v)))
+        return state
     return json.loads(json.dumps(_DEFAULT))
 
 
@@ -120,6 +124,14 @@ def top_confusions(state, n=3):
     return [{"expected": int(e), "heard": int(h), "count": c} for (e, h), c in offs[:n]]
 
 
+# ── Handwriting-pad results (recorded by the app, not the brain) ──────────────
+def record_writing(state, char, mistakes):
+    w = state["writing"].setdefault(char, {"times": 0, "best": None, "last": None})
+    w["times"] += 1
+    w["best"] = mistakes if w["best"] is None else min(w["best"], mistakes)
+    w["last"] = _today()
+
+
 # ── Plan & sessions ────────────────────────────────────────────────────────────
 def update_plan(state, focus=None, next_up=None, notes=None):
     if focus is not None:
@@ -183,5 +195,6 @@ def api_view(state):
             "confusions": top_confusions(state),
         },
         "sessions": state["sessions"][::-1][:10],
+        "writing": state["writing"],
         "today": t,
     }

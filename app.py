@@ -525,6 +525,20 @@ def hanzi_data(char: str):
     return Response(content=p.read_bytes(), media_type="application/json")
 
 
+@app.post("/api/writing_result")
+def writing_result(payload: dict):
+    """Per-character pad results, recorded deterministically by the app —
+    drives the Write tab's ladder status; the tutor separately hears the
+    word-level [writing practice] report."""
+    state = learner.load()
+    for r in (payload.get("results") or [])[:20]:
+        ch = str(r.get("char", ""))[:1]
+        if ch and "㐀" <= ch <= "鿿":
+            learner.record_writing(state, ch, max(0, int(r.get("mistakes", 0))))
+    learner.save(state)
+    return {"ok": True}
+
+
 @app.post("/api/turn_text")
 def turn_text(payload: dict):
     """Typed turn — the writing channel (curriculum reading & writing track)."""
