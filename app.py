@@ -21,6 +21,7 @@ import pathlib
 import re
 import subprocess
 import tempfile
+from urllib.parse import quote
 
 import anthropic
 import httpx
@@ -469,6 +470,26 @@ def turn(audio: UploadFile = File(...)):
     finally:
         os.unlink(wav)
     return {"heard": heard, "tones": ear, "reply": reply}
+
+
+@app.get("/api/hanzi/{char}")
+def hanzi_data(char: str):
+    """Stroke data for the handwriting pad (hanzi-writer-data), cached to disk
+    forever — after a character is practiced once, the CDN can disappear and
+    writing practice keeps working."""
+    char = char[:1]
+    if not char or not ("㐀" <= char <= "鿿"):
+        raise HTTPException(400, "not a hanzi")
+    cache = DATA / "hanzi-cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    p = cache / f"{ord(char):x}.json"
+    if not p.exists():
+        r = httpx.get(f"https://cdn.jsdelivr.net/npm/hanzi-writer-data@2/{quote(char)}.json",
+                      timeout=30)
+        if r.status_code != 200:
+            raise HTTPException(404, f"no stroke data for {char}")
+        p.write_bytes(r.content)
+    return Response(content=p.read_bytes(), media_type="application/json")
 
 
 @app.post("/api/turn_text")

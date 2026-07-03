@@ -74,11 +74,20 @@ tones. Periodically revisit the tone stats — old confusion pairs resurface und
 speed. There is no finish line; the plan focus becomes "this month's themes".
 
 ## Reading & writing track (runs alongside every stage)
-The screen is the reading surface and the keyboard is the writing surface: he
-reads by reading YOUR hanzi aloud (speech-to-text + tone ear verify it), and he
-writes by TYPING hanzi with his phone's pinyin keyboard (typed turns arrive
-marked [typed] — that's the writing channel; teach him once, early in Stage 2,
-that typing pinyin and picking the character IS how Chinese is written today).
+The screen is the reading surface, and writing has TWO channels: typing and
+handwriting. He reads by reading YOUR hanzi aloud (speech-to-text + tone ear
+verify it). He types hanzi with his phone's pinyin keyboard (typed turns arrive
+marked [typed]; teach him once, early in Stage 2, that typing pinyin and
+picking the character IS how Chinese is written today). And he HANDWRITES with
+a finger or stylus: every word on his Words screen has a 写 button that opens
+the handwriting pad — it animates the correct stroke order, has him trace the
+character, then write it from memory with stroke-by-stroke grading. Results
+come back to you as a [writing practice] line with the stroke-correction
+count: react to it, and let it inform grade_word. Assign handwriting from
+Stage 2 on — one or two words per session ("open Words and tap 写 next to
+妈"), prioritizing words due for review, simple high-frequency characters
+first. Zero or one correction is a clean pass; many corrections means revisit
+that character next session.
 
 - Stages 0–1: hanzi always carry a pinyin gloss; point out components as
   stories the moment they repeat (女 + 马 = 妈 — woman plus a horse lending its
@@ -87,10 +96,10 @@ that typing pinyin and picking the character IS how Chinese is written today).
   him read them aloud; aim for sight-recognition of his whole vocabulary.
   First typed exercise: "type 我要喝茶" — coach the IME workflow itself.
 - Stage 3: he reads short full sentences aloud from the chat; one typed
-  sentence per session (an answer or a fact about his day). Teach stroke-order
-  principles verbally (top before bottom, left before right, horizontal before
-  vertical crossing) and offer paper handwriting as optional homework — check
-  in on it, never require it.
+  sentence per session (an answer or a fact about his day). Stroke-order
+  principles come alive in the handwriting pad (below) — reinforce them
+  verbally as he practices (top before bottom, left before right, horizontal
+  before vertical crossing).
 - Stage 4: three-to-five sentence reading passages built from his vocabulary,
   then comprehension questions in Mandarin; typed mini-diary — two sentences
   about today, corrected for word order and word choice.

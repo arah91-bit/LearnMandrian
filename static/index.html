@@ -122,6 +122,31 @@
   .mastery i{display:block;height:100%;border-radius:4px;background:var(--brand-hot)}
   .t1{color:var(--t1)} .t2{color:var(--t2)} .t3{color:var(--t3)}
   .t4{color:var(--t4)} .t5{color:var(--t5)}
+  .word .wr{background:none;border:1px solid var(--line);color:var(--dim);
+        font-family:var(--hanzi);font-size:15px;border-radius:9px;
+        padding:5px 9px;margin-left:8px;flex:none}
+  .word .wr:hover{color:var(--brand-hot);border-color:var(--brand)}
+
+  /* handwriting pad */
+  #wrModal{position:fixed;inset:0;background:rgba(10,13,16,.92);display:none;
+        flex-direction:column;align-items:center;justify-content:center;gap:14px;
+        z-index:50;padding:16px}
+  #wrModal.on{display:flex}
+  #wrHead{display:flex;align-items:baseline;gap:12px}
+  #wrChar{font-family:var(--hanzi);font-size:30px}
+  #wrPhase{font-size:13px;color:var(--dim)}
+  #wrTarget{background:var(--panel);border:1px solid var(--line);border-radius:18px;
+        touch-action:none;position:relative}
+  #wrTarget::before,#wrTarget::after{content:"";position:absolute;background:var(--line);
+        opacity:.5;pointer-events:none}
+  #wrTarget::before{left:50%;top:6px;bottom:6px;width:1px}
+  #wrTarget::after{top:50%;left:6px;right:6px;height:1px}
+  #wrTarget svg{position:relative;z-index:1;display:block}
+  #wrBtns{display:flex;gap:10px}
+  #wrBtns button{background:var(--panel);border:1px solid var(--line);color:var(--dim);
+        border-radius:10px;padding:7px 16px}
+  #wrBtns button:hover{color:var(--ink)}
+  #wrMsg{font-size:13px;color:var(--muted);min-height:18px}
 
   /* progress */
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -210,6 +235,17 @@
   </section>
 </main>
 
+<div id="wrModal">
+  <div id="wrHead"><span id="wrChar"></span><span id="wrPhase"></span></div>
+  <div id="wrTarget"></div>
+  <div id="wrMsg"></div>
+  <div id="wrBtns">
+    <button id="wrReplay">watch again</button>
+    <button id="wrSkip">skip</button>
+    <button id="wrClose">close</button>
+  </div>
+</div>
+
 <nav>
   <button data-view="talk" class="on"><span class="zh">说</span><span class="en">Talk</span></button>
   <button data-view="plan"><span class="zh">课</span><span class="en">Plan</span></button>
@@ -218,6 +254,7 @@
   <button data-view="progress"><span class="zh">进</span><span class="en">Progress</span></button>
 </nav>
 
+<script src="/static/hanzi-writer.min.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const TONES = {
@@ -468,12 +505,10 @@ document.addEventListener('visibilitychange', ()=>{
 
 /* typed turns — the writing channel (no tone ear; the tutor treats these as
    writing practice per the curriculum's reading & writing track) */
-$('#typebar').onsubmit = async e=>{
-  e.preventDefault();
-  const t = $('#typein').value.trim();
+async function sendTextTurn(t){
   if (!t || busy) return;
   interrupt();
-  busy = true; setOrb('thinking'); $('#typein').value = '';
+  busy = true; setOrb('thinking');
   try{
     const r = await fetch('/api/turn_text',{method:'POST',
       headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:t})});
@@ -485,7 +520,86 @@ $('#typebar').onsubmit = async e=>{
     loadState();
     speak(j.reply, 1.0, afterSpeech);
   }catch(err){ busy = false; statusEl.textContent = 'error: '+err.message; }
+}
+$('#typebar').onsubmit = e=>{
+  e.preventDefault();
+  const t = $('#typein').value.trim();
+  $('#typein').value = '';
+  sendTextTurn(t);
 };
+
+/* ── handwriting pad — stroke-order practice with finger/stylus ──
+   hanzi-writer (vendored, stroke data cached server-side) runs three phases
+   per character: watch the strokes, trace over the outline, then write from
+   memory with hints after misses. Results go back to the tutor as a typed
+   [writing practice] turn so it can grade the word. */
+let wrWord = null, wrChars = [], wrIdx = 0, wrPhaseN = 0, wrWriter = null, wrMistakes = 0;
+const WR_PHASES = ['watch the strokes', 'trace it', 'now from memory'];
+
+function wrLoader(char, onLoad, onError){
+  fetch('/api/hanzi/'+encodeURIComponent(char))
+    .then(r=>{ if (!r.ok) throw new Error('no data'); return r.json(); })
+    .then(onLoad).catch(onError);
+}
+function wrBuild(){
+  const char = wrChars[wrIdx];
+  $('#wrChar').innerHTML = `${char} <span class="t5" style="font-size:16px">${wrWord.pinyin} · ${wrWord.english}</span>`;
+  $('#wrPhase').textContent = `${wrIdx+1}/${wrChars.length} — ${WR_PHASES[wrPhaseN]}`;
+  $('#wrMsg').textContent = '';
+  $('#wrTarget').innerHTML = '';
+  const size = Math.min(300, Math.floor(Math.min(innerWidth, innerHeight) * 0.62));
+  wrWriter = HanziWriter.create($('#wrTarget'), char, {
+    width: size, height: size, padding: 12,
+    charDataLoader: wrLoader,
+    showCharacter: false,
+    showOutline: wrPhaseN === 1,
+    strokeColor: '#e9e5da', outlineColor: '#39434f',
+    drawingColor: '#4f8a6a', drawingWidth: 14,
+    highlightColor: '#4f8a6a',
+  });
+  if (wrPhaseN === 0){
+    wrWriter.animateCharacter({onComplete: ()=>setTimeout(wrNext, 700)});
+  } else {
+    wrWriter.quiz({
+      showHintAfterMisses: 2,
+      onMistake: ()=>{ wrMistakes++; },
+      onComplete: ()=>{ $('#wrMsg').textContent = '好! nice'; setTimeout(wrNext, 700); },
+    });
+  }
+}
+function wrNext(){
+  if (!wrWord) return;
+  if (wrPhaseN < 2){ wrPhaseN++; wrBuild(); return; }
+  if (wrIdx < wrChars.length - 1){ wrIdx++; wrPhaseN = 0; wrBuild(); return; }
+  wrFinish(true);
+}
+function wrFinish(report){
+  const word = wrWord, mistakes = wrMistakes;
+  wrWord = null; wrWriter = null;
+  $('#wrModal').classList.remove('on');
+  $('#wrTarget').innerHTML = '';
+  if (report && word){
+    document.querySelector('nav button[data-view="talk"]').click();
+    sendTextTurn(`[writing practice] ${word.hanzi} (${word.pinyin}): watched, traced, `+
+      `and wrote from memory — ${mistakes} stroke correction${mistakes===1?'':'s'} total.`);
+  }
+}
+function openWriting(word){
+  const chars = [...word.hanzi].filter(c=>c >= '㐀' && c <= '鿿');
+  if (!chars.length) return;
+  interrupt();
+  wrWord = word; wrChars = chars; wrIdx = 0; wrPhaseN = 0; wrMistakes = 0;
+  $('#wrModal').classList.add('on');
+  wrBuild();
+}
+$('#wrReplay').onclick = ()=>{ if (wrWord){ wrPhaseN = 0; wrBuild(); } };
+$('#wrSkip').onclick = wrNext;
+$('#wrClose').onclick = ()=>wrFinish(false);
+$('#view-words').addEventListener('click', e=>{
+  const b = e.target.closest('.wr');
+  if (!b) return;
+  openWriting({hanzi: b.dataset.hz, pinyin: b.dataset.py, english: b.dataset.en});
+});
 
 /* mic-level bars — fed by the SAME analyser the VAD hears through, so flat
    bars while you talk is the visible cue the mic isn't being heard */
@@ -538,7 +652,8 @@ function wordRow(w, today){
     <span class="mid"><div class="py">${pinyinHTML(w.pinyin,w.tones)}</div>
     <div class="en">${w.english}</div></span>
     <span class="right">${right}<div class="mastery"><i style="width:${mastery}%"></i></div>
-    </span></div>`;
+    </span><button class="wr" data-hz="${w.hanzi}" data-py="${w.pinyin}"
+    data-en="${w.english}" aria-label="practice writing ${w.hanzi}">写</button></div>`;
 }
 function render(s){
   const st = s.stats;
