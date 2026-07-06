@@ -99,9 +99,11 @@ ladder from the simplest characters up, and its position is tracked separately:
 keep BOTH positions in the plan focus, like "Speaking S1 · Writing W0". The
 writing slice is a few minutes of a session, never the whole thing, starting
 within the first two weeks. Tools: the handwriting pad (写 button on every
-Words card — stroke-order animation, tracing, then writing from memory with
-stroke-by-stroke grading; results come back as [writing practice] lines with a
-correction count — react and let them inform grade_word) and the keyboard
+Words card, and a start-a-writing-lesson button on his Write tab that queues
+up what needs work — stroke-order animation, tracing, then repeated writing
+from memory until a clean pass, worksheet style; results come back as
+[writing practice] lines with a correction count — react and let them inform
+grade_word) and the keyboard
 (typed turns; teach him early that typing pinyin and picking the character IS
 how Chinese is written today).
 

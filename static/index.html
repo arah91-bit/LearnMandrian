@@ -96,6 +96,10 @@
   #orb.rec{background:radial-gradient(circle at 32% 30%,#d96a55,var(--rec) 70%);
        animation:pulse 1.4s infinite}
   #orb.busy{opacity:.45;pointer-events:none;animation:none}
+  #golesson{background:var(--panel);border:1px solid var(--line);color:var(--dim);
+       border-radius:99px;padding:6px 18px;font-size:13px}
+  #golesson:hover{color:var(--ink);border-color:var(--brand)}
+  #golesson:disabled{opacity:.45;pointer-events:none}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,80,63,.5)}
        70%{box-shadow:0 0 0 22px rgba(192,80,63,0)}100%{box-shadow:0 0 0 0 rgba(192,80,63,0)}}
   @media (prefers-reduced-motion: reduce){#orb.rec{animation:none}}
@@ -159,6 +163,11 @@
         padding:14px 16px;margin-bottom:14px}
   .rung h3{margin:0;font-size:14px;font-weight:600}
   .rung h3 .wid{color:var(--brand-hot);font-variant-numeric:tabular-nums;margin-right:8px}
+  .rung h3 .rcnt{float:right;color:var(--muted);font-weight:400;font-size:12px;
+        font-variant-numeric:tabular-nums}
+  #wstart{margin-top:12px;background:var(--brand);border:0;color:#fff;
+        border-radius:10px;padding:9px 18px;font-size:14px}
+  #wstart:hover{background:var(--brand-hot)}
   .rung.now{border-color:var(--brand)}
   .rung .rdesc{color:var(--dim);font-size:13px;margin:4px 0 0}
   .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));
@@ -210,6 +219,7 @@
       <div id="meter" aria-hidden="true"></div>
       <div id="status">tap the orb to talk</div>
       <button id="orb" aria-label="talk"></button>
+      <button id="golesson">继续 — continue the lesson</button>
       <form id="typebar" autocomplete="off">
         <input id="typein" maxlength="500" placeholder="或者打字 — type for writing practice">
         <button type="submit" aria-label="send typed message">↩</button>
@@ -569,6 +579,27 @@ async function sendTextTurn(t){
     speak(j.reply, 1.0, afterSpeech);
   }catch(err){ busy = false; statusEl.textContent = 'error: '+err.message; }
 }
+/* continue-lesson button — no hello required: the tutor opens with what's next
+   and the hands-free loop starts on its own once it finishes speaking */
+$('#golesson').onclick = async ()=>{
+  if (busy) return;
+  interrupt();
+  convoOn = true; busy = true; setOrb('thinking');
+  try{
+    const r = await fetch('/api/lesson_go',{method:'POST'});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail||r.status);
+    busy = false;
+    addTutor(j.reply);
+    loadState();
+    speak(j.reply, 1.0, afterSpeech);
+  }catch(err){
+    busy = false; convoOn = false;
+    statusEl.textContent = 'error: '+err.message;
+    setOrb('idle');
+  }
+};
+
 $('#typebar').onsubmit = e=>{
   e.preventDefault();
   const t = $('#typein').value.trim();
@@ -583,6 +614,11 @@ $('#typebar').onsubmit = e=>{
    [writing practice] turn so it can grade the word. */
 let wrWord = null, wrChars = [], wrIdx = 0, wrPhaseN = 0, wrWriter = null, wrMistakes = 0;
 let wrCharMistakes = 0, wrResults = [], wrQueue = [], wrQPos = 0, wrItems = [], wrItemMark = 0;
+/* worksheet-style repetition: after watch+trace, write from memory at least
+   WR_MIN reps and keep going until a clean rep (or WR_MAX_REPS) — one write
+   doesn't cement anything. Chars already passed clean skip straight to memory. */
+let wrRep = 0, wrRepMist = 0, wrBestRep = null, wrMinReps = 3;
+const WR_MAX_REPS = 6;
 const WR_PHASES = ['watch the strokes', 'trace it', 'now from memory'];
 const isHz = c => c >= '㐀' && c <= '鿿';
 
@@ -606,10 +642,22 @@ function wrLoader(char, onLoad, onError){
     .then(r=>{ if (!r.ok) throw new Error('no data'); return r.json(); })
     .then(onLoad).catch(onError);
 }
+function wrStartChar(){
+  const w = ((lastState && lastState.writing) || {})[wrChars[wrIdx]];
+  const known = !!(w && w.best <= 1);        // already passed clean once
+  wrPhaseN = known ? 2 : 0;
+  wrMinReps = known ? 2 : 3;
+  wrRep = 0; wrRepMist = 0; wrBestRep = null;
+  wrBuild();
+}
 function wrBuild(){
   const char = wrChars[wrIdx];
   $('#wrChar').innerHTML = `${char} <span class="t5" style="font-size:16px">${wrWord.pinyin} · ${wrWord.english}</span>`;
-  $('#wrPhase').textContent = `${wrIdx+1}/${wrChars.length} — ${WR_PHASES[wrPhaseN]}`;
+  const phase = wrPhaseN === 2
+    ? (wrRep < wrMinReps ? `from memory — ${wrRep+1} of ${wrMinReps}`
+                         : 'from memory — clean pass to finish')
+    : WR_PHASES[wrPhaseN];
+  $('#wrPhase').textContent = `${wrIdx+1}/${wrChars.length} — ${phase}`;
   $('#wrMsg').textContent = '';
   $('#wrTarget').innerHTML = '';
   const size = Math.min(300, Math.floor(Math.min(innerWidth, innerHeight) * 0.62));
@@ -619,24 +667,108 @@ function wrBuild(){
     showCharacter: false,
     showOutline: wrPhaseN === 1,
     strokeColor: '#e9e5da', outlineColor: '#39434f',
-    drawingColor: '#4f8a6a', drawingWidth: 14,
+    /* the visible ink is our brush canvas (wrInk); this thin line underneath
+       is just the fallback if the canvas ever fails */
+    drawingColor: '#4f8a6a', drawingWidth: 2,
     highlightColor: '#4f8a6a',
   });
+  wrInk(size);
   if (wrPhaseN === 0){
     wrSay(char);                                    // hear it with the example
     wrWriter.animateCharacter({onComplete: ()=>setTimeout(wrNext, 700)});
   } else {
     wrWriter.quiz({
       showHintAfterMisses: 2,
-      onMistake: ()=>{ wrMistakes++; wrCharMistakes++; },
+      onMistake: ()=>{ wrMistakes++; wrCharMistakes++; if (wrPhaseN===2) wrRepMist++; },
       onComplete: ()=>{
+        if (wrPhaseN === 2){
+          wrRep++;
+          wrBestRep = wrBestRep === null ? wrRepMist : Math.min(wrBestRep, wrRepMist);
+          const done = (wrRepMist === 0 && wrRep >= wrMinReps) || wrRep >= WR_MAX_REPS;
+          if (!done){
+            $('#wrMsg').textContent = wrRepMist === 0
+              ? '好! again' : 'again — make this one clean';
+            wrRepMist = 0;
+            setTimeout(()=>{ if (wrWord) wrBuild(); }, 700);
+            return;
+          }
+          wrSay(char);                              // hear it after writing it
+        }
         $('#wrMsg').textContent = '好! nice';
-        if (wrPhaseN === 2) wrSay(char);            // hear it after writing it
         setTimeout(wrNext, 800);
       },
     });
   }
 }
+
+/* brush ink — a canvas over the writer renders the live stroke with a
+   pressure-and-speed-shaped width (real pressure on a stylus, speed as the
+   proxy for finger/mouse), so what lands on screen looks like the brush-drawn
+   strokes of the character itself, not a uniform tube. Fades on pen-up, just
+   as hanzi-writer replaces a correct stroke with the real one. */
+let inkCv = null, inkCx = null, inkPrev = null, inkWd = 0, inkMax = 14, inkFade = 0;
+function wrInk(size){
+  inkCv = document.createElement('canvas');
+  const dpr = window.devicePixelRatio || 1;
+  inkCv.width = size * dpr; inkCv.height = size * dpr;
+  inkCv.style.cssText = 'position:absolute;left:0;top:0;width:'+size+'px;height:'
+    + size + 'px;pointer-events:none;z-index:2;transition:opacity .35s';
+  $('#wrTarget').appendChild(inkCv);
+  inkCx = inkCv.getContext('2d');
+  inkCx.scale(dpr, dpr);
+  inkCx.lineCap = inkCx.lineJoin = 'round';
+  inkCx.strokeStyle = inkCx.fillStyle = '#4f8a6a';
+  inkMax = Math.max(10, size * 0.05);
+  inkPrev = null;
+}
+function inkPoint(e){
+  const r = inkCv.getBoundingClientRect();
+  return {x: e.clientX - r.left, y: e.clientY - r.top, t: e.timeStamp};
+}
+function inkTargetW(e, p0, p1){
+  if (e.pointerType === 'pen' && e.pressure > 0)
+    return inkMax * (0.25 + 1.05 * e.pressure);
+  const v = Math.hypot(p1.x - p0.x, p1.y - p0.y) / Math.max(1, p1.t - p0.t);
+  return inkMax * Math.max(0.3, Math.min(1.1, 1.1 - v * 0.5));
+}
+$('#wrTarget').addEventListener('pointerdown', e=>{
+  if (!inkCv || !wrWord || wrPhaseN === 0) return;
+  clearTimeout(inkFade);
+  inkCv.style.opacity = 1;
+  inkPrev = inkPoint(e);
+  inkWd = e.pointerType === 'pen' && e.pressure > 0
+    ? inkMax * (0.25 + 1.05 * e.pressure) : inkMax * 0.45;   // touch a taper on first
+  inkCx.beginPath();
+  inkCx.arc(inkPrev.x, inkPrev.y, inkWd / 2, 0, 7);
+  inkCx.fill();
+}, true);
+$('#wrTarget').addEventListener('pointermove', e=>{
+  if (!inkCv || !inkPrev) return;
+  for (const ce of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e])){
+    const p = inkPoint(ce);
+    inkWd = inkWd * 0.65 + inkTargetW(ce, inkPrev, p) * 0.35;  // smooth the width
+    inkCx.lineWidth = inkWd;
+    inkCx.beginPath();
+    inkCx.moveTo(inkPrev.x, inkPrev.y);
+    inkCx.lineTo(p.x, p.y);
+    inkCx.stroke();
+    inkPrev = p;
+  }
+}, true);
+function inkUp(){
+  if (!inkCv || !inkPrev) return;
+  inkPrev = null;
+  inkCv.style.opacity = 0;
+  inkFade = setTimeout(()=>{
+    if (!inkCx) return;
+    inkCx.save(); inkCx.setTransform(1,0,0,1,0,0);
+    inkCx.clearRect(0, 0, inkCv.width, inkCv.height);
+    inkCx.restore();
+    inkCv.style.opacity = 1;
+  }, 380);
+}
+addEventListener('pointerup', inkUp, true);
+addEventListener('pointercancel', inkUp, true);
 function wrSay(text){
   fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({text})})
@@ -650,9 +782,12 @@ function wrSay(text){
 function wrNext(){
   if (!wrWord) return;
   if (wrPhaseN < 2){ wrPhaseN++; wrBuild(); return; }
-  wrResults.push({char: wrChars[wrIdx], mistakes: wrCharMistakes});   // char complete
+  /* char complete — what counts is his best from-memory rep (a clean rep = he
+     can write it); skipped before any rep finished falls back to raw mistakes */
+  wrResults.push({char: wrChars[wrIdx],
+                  mistakes: wrBestRep === null ? wrCharMistakes : wrBestRep});
   wrCharMistakes = 0;
-  if (wrIdx < wrChars.length - 1){ wrIdx++; wrPhaseN = 0; wrBuild(); return; }
+  if (wrIdx < wrChars.length - 1){ wrIdx++; wrStartChar(); return; }
   wrItemDone();
 }
 function wrItemDone(){
@@ -667,8 +802,8 @@ function wrItemDone(){
     setTimeout(()=>{
       if (!wrWord) return;                          // closed during the pause
       wrWord = nx; wrChars = [...nx.hanzi].filter(isHz);
-      wrIdx = 0; wrPhaseN = 0;
-      wrBuild();
+      wrIdx = 0;
+      wrStartChar();
     }, 1100);
     return;
   }
@@ -704,16 +839,34 @@ function ladderFollowups(startHz){
     return !(w && w.best <= 1);
   });
 }
-function openWriting(word, followups){
+function openWriting(word, followups, cap){
   const chars = [...word.hanzi].filter(isHz);
   if (!chars.length) return;
   interrupt();
-  wrQueue = [word, ...(followups||[]).filter(q=>q.hanzi !== word.hanzi)].slice(0, 5);
+  wrQueue = [word, ...(followups||[]).filter(q=>q.hanzi !== word.hanzi)].slice(0, cap||5);
   wrQPos = 0; wrItems = []; wrItemMark = 0;
-  wrWord = word; wrChars = chars; wrIdx = 0; wrPhaseN = 0;
+  wrWord = word; wrChars = chars; wrIdx = 0;
   wrMistakes = 0; wrCharMistakes = 0; wrResults = [];
   $('#wrModal').classList.add('on');
-  wrBuild();
+  wrStartChar();
+}
+/* the Write tab's one-button lesson: everything not yet clean, in ladder
+   order, padded with the longest-unseen clean characters as review — about
+   ten to fifteen minutes at the pad */
+function startWritingLesson(){
+  const q = ladderFollowups(LADDER[0].chars[0][0]);
+  if (q.length < 8){
+    const wr = (lastState && lastState.writing) || {};
+    const clean = [];
+    for (const r of LADDER) for (const c of (r.chars||[])){
+      const w = wr[c[0]];
+      if (w && w.best <= 1)
+        clean.push({hanzi:c[0], pinyin:c[1], english:c[2], last:w.last||''});
+    }
+    clean.sort((a,b)=> a.last < b.last ? -1 : 1);
+    q.push(...clean);
+  }
+  if (q.length) openWriting(q[0], q.slice(1), 8);
 }
 $('#ladder').addEventListener('click', e=>{
   const t = e.target.closest('.wtile');
@@ -721,7 +874,10 @@ $('#ladder').addEventListener('click', e=>{
   openWriting({hanzi: t.dataset.hz, pinyin: t.dataset.py, english: t.dataset.en},
               ladderFollowups(t.dataset.hz));
 });
-$('#wrReplay').onclick = ()=>{ if (wrWord){ wrPhaseN = 0; wrBuild(); } };
+$('#view-write').addEventListener('click', e=>{
+  if (e.target.closest('#wstart')) startWritingLesson();
+});
+$('#wrReplay').onclick = ()=>{ if (wrWord){ wrPhaseN = 0; wrRep = 0; wrRepMist = 0; wrBuild(); } };
 $('#wrSkip').onclick = wrNext;
 $('#wrClose').onclick = ()=>wrFinish(wrItems.length > 0);  // early exit still reports what got done
 $('#view-words').addEventListener('click', e=>{
@@ -822,20 +978,27 @@ function render(s){
   const badge = $('#due-badge');
   badge.hidden = !st.due_count; badge.textContent = st.due_count;
 
-  /* write tab */
-  const rung = (s.plan.focus.match(/Writing\s+(W\d)/i)||[])[1] || 'W0';
+  /* write tab — where he stands comes from the writing data itself: the first
+     rung that isn't all clean passes is the one he's on */
   const wr = s.writing || {};
+  const rungDone = r => r.chars.filter(([h])=> wr[h] && wr[h].best <= 1).length;
+  const cur = LADDER.find(r=> r.chars.length && rungDone(r) < r.chars.length);
+  const rung = cur ? cur.id
+    : (s.plan.focus.match(/Writing\s+(W\d)/i)||[])[1] || 'W2';
   $('#wrung-card').innerHTML = `<h2>Writing ladder</h2><div class="focus">You're on
     <b>${rung}</b> — green tiles are clean passes, amber ones need another go.
-    Tap any character to practice it.</div>`;
+    Tap a character, or let the lesson pick for you.</div>
+    <button id="wstart">开始 — start a writing lesson · ~10 min</button>`;
   $('#ladder').innerHTML = LADDER.map(r=>{
     const grid = r.chars.length ? `<div class="wgrid">` + r.chars.map(([h,p,en])=>{
       const st = wr[h] ? (wr[h].best <= 1 ? 'clean' : 'rough') : '';
       return `<div class="wtile ${st}" data-hz="${h}" data-py="${p}" data-en="${en}">
         <span class="h">${h}</span><span class="p">${p}</span></div>`;
     }).join('') + `</div>` : '';
+    const cnt = r.chars.length
+      ? `<span class="rcnt">${rungDone(r)}/${r.chars.length}</span>` : '';
     return `<div class="rung ${r.id===rung?'now':''}"><h3><span class="wid">${r.id}</span>
-      ${r.title}</h3><p class="rdesc">${r.desc}</p>${grid}</div>`;
+      ${r.title}${cnt}</h3><p class="rdesc">${r.desc}</p>${grid}</div>`;
   }).join('');
   const written = s.vocab.filter(w=>{
     const cs = [...w.hanzi].filter(c=>c >= '㐀' && c <= '鿿');

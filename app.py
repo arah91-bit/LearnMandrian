@@ -281,9 +281,12 @@ _NUDGE = ("[Continue: now give Phil your full spoken reply — respond to his la
           "attempt first (what the tone-ear heard, what was right, what to fix), "
           "then whatever comes next. Plain speakable prose.]")
 
-# Everything the brain says gets spoken by TTS; an emoji comes out as noise.
-# The prompt forbids them, but models leak — so strip at the door, every provider.
-_EMOJI_RE = re.compile("[\U0001F000-\U0001FAFF☀-➿⬀-⯿"
+# Everything the brain says gets spoken by TTS; an emoji comes out as noise and
+# a "↓" comes out as the words "down arrow" (2026-07-06). The prompt forbids
+# them, but models leak — so strip at the door, every provider: emoji planes
+# plus arrows, technical, geometric shapes, dingbats, misc symbols.
+_EMOJI_RE = re.compile("[←-⇿⌀-⏿■-◿"
+                       "\U0001F000-\U0001FAFF☀-➿⬀-⯿"
                        "\U0001F1E6-\U0001F1FF️‍❤]")
 
 
@@ -441,6 +444,26 @@ def _synth_zh(text):
     return _to_pcm(resp.content)
 
 
+_PCM_BPS = 24000 * 2                       # bytes per second of our 16-bit mono PCM
+
+
+def _synth_zh_guarded(text):
+    """The OpenAI TTS occasionally hallucinates on short hanzi inputs — a long
+    droning hum instead of speech (2026-07-06). No text we send needs more than
+    ~1s per character; anything past that is garbage: retry once, then give the
+    segment up (returns None) rather than play a 30-second drone mid-lesson."""
+    cap = int(_PCM_BPS * (3.0 + 1.0 * len(text)))
+    pcm = _synth_zh(text)
+    if len(pcm) > cap:
+        log.warning("zh tts drone: %.1fs for %d chars — retrying %r",
+                    len(pcm) / _PCM_BPS, len(text), text[:40])
+        pcm = _synth_zh(text)
+    if len(pcm) > cap:
+        log.warning("zh tts droned twice — dropping segment audio for %r", text[:40])
+        return None
+    return pcm
+
+
 def _synth_en(text):
     r = httpx.post(f"{VOICE_URL}/tts", json={"text": text, "voice": HEART_VOICE},
                    timeout=60)
@@ -453,13 +476,16 @@ def _segment_pcm(kind, text):
     if key in _tts_cache:
         return _tts_cache[key]
     try:
-        pcm = _synth_zh(text) if kind == "zh" else _synth_en(text)
+        pcm = _synth_zh_guarded(text) if kind == "zh" else _synth_en(text)
     except Exception as e:
         if kind == "zh":
             page_if_billing("openai", e)
             raise
         log.warning("heart tts failed, falling back to openai: %s", str(e)[:120])
-        pcm = _synth_zh(text)                 # keep the turn alive on voice-svc outage
+        pcm = _synth_zh_guarded(text)         # keep the turn alive on voice-svc outage
+    if pcm is None:                           # glitched audio: the text stays on
+        return b""                            # screen, the segment goes silent —
+                                              # and garbage never enters the cache
     if len(_tts_cache) >= _TTS_CACHE_MAX:
         _tts_cache.pop(next(iter(_tts_cache)))
     _tts_cache[key] = pcm
@@ -537,12 +563,24 @@ def writing_result(payload: dict):
     drives the Write tab's ladder status; the tutor separately hears the
     word-level [writing practice] report."""
     state = learner.load()
-    for r in (payload.get("results") or [])[:20]:
+    for r in (payload.get("results") or [])[:60]:
         ch = str(r.get("char", ""))[:1]
         if ch and "㐀" <= ch <= "鿿":
             learner.record_writing(state, ch, max(0, int(r.get("mistakes", 0))))
     learner.save(state)
     return {"ok": True}
+
+
+@app.post("/api/lesson_go")
+def lesson_go():
+    """The continue-lesson button: no speech, no typing — the tutor arrives
+    already knowing what's next (state note + history) and just starts."""
+    reply = _brain(
+        "[lesson button] Phil tapped the continue-lesson button. Skip greetings "
+        "and don't ask what he wants — say in one short line what today's work "
+        "is, then start it (due reviews first). End with something for him to say.",
+        "[button press — no audio this turn]")
+    return {"reply": reply}
 
 
 @app.post("/api/turn_text")
