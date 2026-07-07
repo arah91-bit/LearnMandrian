@@ -1,0 +1,10 @@
+# App runtime (image). The spike additionally uses pyworld/scipy/soundfile/setuptools<81
+# — install those in .venv by hand when rerunning it; see spike/RESULTS.md.
+fastapi
+uvicorn[standard]
+python-multipart
+anthropic>=0.107,<0.120
+openai>=2,<3
+praat-parselmouth
+scikit-learn
+numpy

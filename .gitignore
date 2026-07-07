@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+spike/audio/
+spike/synth/
+spike/tone_perfect_features.json
+/Tone perfect data set/
+spike/judge_out.txt
+spike/judge_err.txt
+spike/gemini_verdicts.json
+.api_alert_stamps.json

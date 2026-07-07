@@ -1,0 +1,770 @@
+{
+ "ma1_shimmer.wav": {
+  "syllable": "ma",
+  "tone": 1,
+  "hanzi": "妈",
+  "voice": "shimmer"
+ },
+ "ma2_alloy.wav": {
+  "syllable": "ma",
+  "tone": 2,
+  "hanzi": "麻",
+  "voice": "alloy"
+ },
+ "ma2_nova.wav": {
+  "syllable": "ma",
+  "tone": 2,
+  "hanzi": "麻",
+  "voice": "nova"
+ },
+ "ma1_onyx.wav": {
+  "syllable": "ma",
+  "tone": 1,
+  "hanzi": "妈",
+  "voice": "onyx"
+ },
+ "ma1_alloy.wav": {
+  "syllable": "ma",
+  "tone": 1,
+  "hanzi": "妈",
+  "voice": "alloy"
+ },
+ "ma2_onyx.wav": {
+  "syllable": "ma",
+  "tone": 2,
+  "hanzi": "麻",
+  "voice": "onyx"
+ },
+ "ma1_nova.wav": {
+  "syllable": "ma",
+  "tone": 1,
+  "hanzi": "妈",
+  "voice": "nova"
+ },
+ "ma2_shimmer.wav": {
+  "syllable": "ma",
+  "tone": 2,
+  "hanzi": "麻",
+  "voice": "shimmer"
+ },
+ "ma3_onyx.wav": {
+  "syllable": "ma",
+  "tone": 3,
+  "hanzi": "马",
+  "voice": "onyx"
+ },
+ "ma4_onyx.wav": {
+  "syllable": "ma",
+  "tone": 4,
+  "hanzi": "骂",
+  "voice": "onyx"
+ },
+ "ma4_nova.wav": {
+  "syllable": "ma",
+  "tone": 4,
+  "hanzi": "骂",
+  "voice": "nova"
+ },
+ "ma4_shimmer.wav": {
+  "syllable": "ma",
+  "tone": 4,
+  "hanzi": "骂",
+  "voice": "shimmer"
+ },
+ "ma3_nova.wav": {
+  "syllable": "ma",
+  "tone": 3,
+  "hanzi": "马",
+  "voice": "nova"
+ },
+ "ma3_shimmer.wav": {
+  "syllable": "ma",
+  "tone": 3,
+  "hanzi": "马",
+  "voice": "shimmer"
+ },
+ "ma4_alloy.wav": {
+  "syllable": "ma",
+  "tone": 4,
+  "hanzi": "骂",
+  "voice": "alloy"
+ },
+ "ma3_alloy.wav": {
+  "syllable": "ma",
+  "tone": 3,
+  "hanzi": "马",
+  "voice": "alloy"
+ },
+ "yi1_nova.wav": {
+  "syllable": "yi",
+  "tone": 1,
+  "hanzi": "一",
+  "voice": "nova"
+ },
+ "yi1_shimmer.wav": {
+  "syllable": "yi",
+  "tone": 1,
+  "hanzi": "一",
+  "voice": "shimmer"
+ },
+ "yi1_alloy.wav": {
+  "syllable": "yi",
+  "tone": 1,
+  "hanzi": "一",
+  "voice": "alloy"
+ },
+ "yi1_onyx.wav": {
+  "syllable": "yi",
+  "tone": 1,
+  "hanzi": "一",
+  "voice": "onyx"
+ },
+ "yi2_onyx.wav": {
+  "syllable": "yi",
+  "tone": 2,
+  "hanzi": "姨",
+  "voice": "onyx"
+ },
+ "yi2_shimmer.wav": {
+  "syllable": "yi",
+  "tone": 2,
+  "hanzi": "姨",
+  "voice": "shimmer"
+ },
+ "yi3_nova.wav": {
+  "syllable": "yi",
+  "tone": 3,
+  "hanzi": "椅",
+  "voice": "nova"
+ },
+ "yi3_onyx.wav": {
+  "syllable": "yi",
+  "tone": 3,
+  "hanzi": "椅",
+  "voice": "onyx"
+ },
+ "yi3_alloy.wav": {
+  "syllable": "yi",
+  "tone": 3,
+  "hanzi": "椅",
+  "voice": "alloy"
+ },
+ "yi2_alloy.wav": {
+  "syllable": "yi",
+  "tone": 2,
+  "hanzi": "姨",
+  "voice": "alloy"
+ },
+ "yi4_nova.wav": {
+  "syllable": "yi",
+  "tone": 4,
+  "hanzi": "意",
+  "voice": "nova"
+ },
+ "yi3_shimmer.wav": {
+  "syllable": "yi",
+  "tone": 3,
+  "hanzi": "椅",
+  "voice": "shimmer"
+ },
+ "yi4_alloy.wav": {
+  "syllable": "yi",
+  "tone": 4,
+  "hanzi": "意",
+  "voice": "alloy"
+ },
+ "yi4_onyx.wav": {
+  "syllable": "yi",
+  "tone": 4,
+  "hanzi": "意",
+  "voice": "onyx"
+ },
+ "yi4_shimmer.wav": {
+  "syllable": "yi",
+  "tone": 4,
+  "hanzi": "意",
+  "voice": "shimmer"
+ },
+ "shi1_nova.wav": {
+  "syllable": "shi",
+  "tone": 1,
+  "hanzi": "诗",
+  "voice": "nova"
+ },
+ "shi2_nova.wav": {
+  "syllable": "shi",
+  "tone": 2,
+  "hanzi": "十",
+  "voice": "nova"
+ },
+ "shi2_alloy.wav": {
+  "syllable": "shi",
+  "tone": 2,
+  "hanzi": "十",
+  "voice": "alloy"
+ },
+ "shi1_shimmer.wav": {
+  "syllable": "shi",
+  "tone": 1,
+  "hanzi": "诗",
+  "voice": "shimmer"
+ },
+ "shi1_alloy.wav": {
+  "syllable": "shi",
+  "tone": 1,
+  "hanzi": "诗",
+  "voice": "alloy"
+ },
+ "shi1_onyx.wav": {
+  "syllable": "shi",
+  "tone": 1,
+  "hanzi": "诗",
+  "voice": "onyx"
+ },
+ "shi2_shimmer.wav": {
+  "syllable": "shi",
+  "tone": 2,
+  "hanzi": "十",
+  "voice": "shimmer"
+ },
+ "shi3_alloy.wav": {
+  "syllable": "shi",
+  "tone": 3,
+  "hanzi": "史",
+  "voice": "alloy"
+ },
+ "shi3_nova.wav": {
+  "syllable": "shi",
+  "tone": 3,
+  "hanzi": "史",
+  "voice": "nova"
+ },
+ "shi3_shimmer.wav": {
+  "syllable": "shi",
+  "tone": 3,
+  "hanzi": "史",
+  "voice": "shimmer"
+ },
+ "shi3_onyx.wav": {
+  "syllable": "shi",
+  "tone": 3,
+  "hanzi": "史",
+  "voice": "onyx"
+ },
+ "shi2_onyx.wav": {
+  "syllable": "shi",
+  "tone": 2,
+  "hanzi": "十",
+  "voice": "onyx"
+ },
+ "yi2_nova.wav": {
+  "syllable": "yi",
+  "tone": 2,
+  "hanzi": "姨",
+  "voice": "nova"
+ },
+ "shi4_alloy.wav": {
+  "syllable": "shi",
+  "tone": 4,
+  "hanzi": "是",
+  "voice": "alloy"
+ },
+ "shi4_onyx.wav": {
+  "syllable": "shi",
+  "tone": 4,
+  "hanzi": "是",
+  "voice": "onyx"
+ },
+ "shi4_nova.wav": {
+  "syllable": "shi",
+  "tone": 4,
+  "hanzi": "是",
+  "voice": "nova"
+ },
+ "wu1_alloy.wav": {
+  "syllable": "wu",
+  "tone": 1,
+  "hanzi": "屋",
+  "voice": "alloy"
+ },
+ "wu1_onyx.wav": {
+  "syllable": "wu",
+  "tone": 1,
+  "hanzi": "屋",
+  "voice": "onyx"
+ },
+ "shi4_shimmer.wav": {
+  "syllable": "shi",
+  "tone": 4,
+  "hanzi": "是",
+  "voice": "shimmer"
+ },
+ "wu2_nova.wav": {
+  "syllable": "wu",
+  "tone": 2,
+  "hanzi": "无",
+  "voice": "nova"
+ },
+ "wu2_onyx.wav": {
+  "syllable": "wu",
+  "tone": 2,
+  "hanzi": "无",
+  "voice": "onyx"
+ },
+ "wu2_shimmer.wav": {
+  "syllable": "wu",
+  "tone": 2,
+  "hanzi": "无",
+  "voice": "shimmer"
+ },
+ "wu2_alloy.wav": {
+  "syllable": "wu",
+  "tone": 2,
+  "hanzi": "无",
+  "voice": "alloy"
+ },
+ "wu1_shimmer.wav": {
+  "syllable": "wu",
+  "tone": 1,
+  "hanzi": "屋",
+  "voice": "shimmer"
+ },
+ "wu3_nova.wav": {
+  "syllable": "wu",
+  "tone": 3,
+  "hanzi": "五",
+  "voice": "nova"
+ },
+ "wu3_alloy.wav": {
+  "syllable": "wu",
+  "tone": 3,
+  "hanzi": "五",
+  "voice": "alloy"
+ },
+ "wu1_nova.wav": {
+  "syllable": "wu",
+  "tone": 1,
+  "hanzi": "屋",
+  "voice": "nova"
+ },
+ "wu3_onyx.wav": {
+  "syllable": "wu",
+  "tone": 3,
+  "hanzi": "五",
+  "voice": "onyx"
+ },
+ "wu4_alloy.wav": {
+  "syllable": "wu",
+  "tone": 4,
+  "hanzi": "物",
+  "voice": "alloy"
+ },
+ "wu4_nova.wav": {
+  "syllable": "wu",
+  "tone": 4,
+  "hanzi": "物",
+  "voice": "nova"
+ },
+ "wu3_shimmer.wav": {
+  "syllable": "wu",
+  "tone": 3,
+  "hanzi": "五",
+  "voice": "shimmer"
+ },
+ "wu4_onyx.wav": {
+  "syllable": "wu",
+  "tone": 4,
+  "hanzi": "物",
+  "voice": "onyx"
+ },
+ "ba1_alloy.wav": {
+  "syllable": "ba",
+  "tone": 1,
+  "hanzi": "八",
+  "voice": "alloy"
+ },
+ "ba1_nova.wav": {
+  "syllable": "ba",
+  "tone": 1,
+  "hanzi": "八",
+  "voice": "nova"
+ },
+ "wu4_shimmer.wav": {
+  "syllable": "wu",
+  "tone": 4,
+  "hanzi": "物",
+  "voice": "shimmer"
+ },
+ "ba1_shimmer.wav": {
+  "syllable": "ba",
+  "tone": 1,
+  "hanzi": "八",
+  "voice": "shimmer"
+ },
+ "ba2_nova.wav": {
+  "syllable": "ba",
+  "tone": 2,
+  "hanzi": "拔",
+  "voice": "nova"
+ },
+ "ba1_onyx.wav": {
+  "syllable": "ba",
+  "tone": 1,
+  "hanzi": "八",
+  "voice": "onyx"
+ },
+ "ba3_alloy.wav": {
+  "syllable": "ba",
+  "tone": 3,
+  "hanzi": "把",
+  "voice": "alloy"
+ },
+ "ba2_onyx.wav": {
+  "syllable": "ba",
+  "tone": 2,
+  "hanzi": "拔",
+  "voice": "onyx"
+ },
+ "ba2_alloy.wav": {
+  "syllable": "ba",
+  "tone": 2,
+  "hanzi": "拔",
+  "voice": "alloy"
+ },
+ "ba3_nova.wav": {
+  "syllable": "ba",
+  "tone": 3,
+  "hanzi": "把",
+  "voice": "nova"
+ },
+ "ba2_shimmer.wav": {
+  "syllable": "ba",
+  "tone": 2,
+  "hanzi": "拔",
+  "voice": "shimmer"
+ },
+ "ba3_onyx.wav": {
+  "syllable": "ba",
+  "tone": 3,
+  "hanzi": "把",
+  "voice": "onyx"
+ },
+ "ba4_nova.wav": {
+  "syllable": "ba",
+  "tone": 4,
+  "hanzi": "爸",
+  "voice": "nova"
+ },
+ "ba4_onyx.wav": {
+  "syllable": "ba",
+  "tone": 4,
+  "hanzi": "爸",
+  "voice": "onyx"
+ },
+ "ba3_shimmer.wav": {
+  "syllable": "ba",
+  "tone": 3,
+  "hanzi": "把",
+  "voice": "shimmer"
+ },
+ "ba4_shimmer.wav": {
+  "syllable": "ba",
+  "tone": 4,
+  "hanzi": "爸",
+  "voice": "shimmer"
+ },
+ "tang1_alloy.wav": {
+  "syllable": "tang",
+  "tone": 1,
+  "hanzi": "汤",
+  "voice": "alloy"
+ },
+ "tang1_nova.wav": {
+  "syllable": "tang",
+  "tone": 1,
+  "hanzi": "汤",
+  "voice": "nova"
+ },
+ "tang1_onyx.wav": {
+  "syllable": "tang",
+  "tone": 1,
+  "hanzi": "汤",
+  "voice": "onyx"
+ },
+ "tang1_shimmer.wav": {
+  "syllable": "tang",
+  "tone": 1,
+  "hanzi": "汤",
+  "voice": "shimmer"
+ },
+ "tang2_nova.wav": {
+  "syllable": "tang",
+  "tone": 2,
+  "hanzi": "糖",
+  "voice": "nova"
+ },
+ "tang2_alloy.wav": {
+  "syllable": "tang",
+  "tone": 2,
+  "hanzi": "糖",
+  "voice": "alloy"
+ },
+ "tang2_onyx.wav": {
+  "syllable": "tang",
+  "tone": 2,
+  "hanzi": "糖",
+  "voice": "onyx"
+ },
+ "tang3_nova.wav": {
+  "syllable": "tang",
+  "tone": 3,
+  "hanzi": "躺",
+  "voice": "nova"
+ },
+ "tang2_shimmer.wav": {
+  "syllable": "tang",
+  "tone": 2,
+  "hanzi": "糖",
+  "voice": "shimmer"
+ },
+ "tang3_shimmer.wav": {
+  "syllable": "tang",
+  "tone": 3,
+  "hanzi": "躺",
+  "voice": "shimmer"
+ },
+ "tang3_alloy.wav": {
+  "syllable": "tang",
+  "tone": 3,
+  "hanzi": "躺",
+  "voice": "alloy"
+ },
+ "ba4_alloy.wav": {
+  "syllable": "ba",
+  "tone": 4,
+  "hanzi": "爸",
+  "voice": "alloy"
+ },
+ "tang4_alloy.wav": {
+  "syllable": "tang",
+  "tone": 4,
+  "hanzi": "烫",
+  "voice": "alloy"
+ },
+ "tang4_shimmer.wav": {
+  "syllable": "tang",
+  "tone": 4,
+  "hanzi": "烫",
+  "voice": "shimmer"
+ },
+ "tang4_nova.wav": {
+  "syllable": "tang",
+  "tone": 4,
+  "hanzi": "烫",
+  "voice": "nova"
+ },
+ "yao1_nova.wav": {
+  "syllable": "yao",
+  "tone": 1,
+  "hanzi": "腰",
+  "voice": "nova"
+ },
+ "tang4_onyx.wav": {
+  "syllable": "tang",
+  "tone": 4,
+  "hanzi": "烫",
+  "voice": "onyx"
+ },
+ "yao1_onyx.wav": {
+  "syllable": "yao",
+  "tone": 1,
+  "hanzi": "腰",
+  "voice": "onyx"
+ },
+ "tang3_onyx.wav": {
+  "syllable": "tang",
+  "tone": 3,
+  "hanzi": "躺",
+  "voice": "onyx"
+ },
+ "yao1_alloy.wav": {
+  "syllable": "yao",
+  "tone": 1,
+  "hanzi": "腰",
+  "voice": "alloy"
+ },
+ "yao1_shimmer.wav": {
+  "syllable": "yao",
+  "tone": 1,
+  "hanzi": "腰",
+  "voice": "shimmer"
+ },
+ "yao2_nova.wav": {
+  "syllable": "yao",
+  "tone": 2,
+  "hanzi": "摇",
+  "voice": "nova"
+ },
+ "yao2_onyx.wav": {
+  "syllable": "yao",
+  "tone": 2,
+  "hanzi": "摇",
+  "voice": "onyx"
+ },
+ "yao2_alloy.wav": {
+  "syllable": "yao",
+  "tone": 2,
+  "hanzi": "摇",
+  "voice": "alloy"
+ },
+ "yao2_shimmer.wav": {
+  "syllable": "yao",
+  "tone": 2,
+  "hanzi": "摇",
+  "voice": "shimmer"
+ },
+ "yao3_alloy.wav": {
+  "syllable": "yao",
+  "tone": 3,
+  "hanzi": "咬",
+  "voice": "alloy"
+ },
+ "yao3_nova.wav": {
+  "syllable": "yao",
+  "tone": 3,
+  "hanzi": "咬",
+  "voice": "nova"
+ },
+ "yao3_shimmer.wav": {
+  "syllable": "yao",
+  "tone": 3,
+  "hanzi": "咬",
+  "voice": "shimmer"
+ },
+ "yao3_onyx.wav": {
+  "syllable": "yao",
+  "tone": 3,
+  "hanzi": "咬",
+  "voice": "onyx"
+ },
+ "yao4_onyx.wav": {
+  "syllable": "yao",
+  "tone": 4,
+  "hanzi": "药",
+  "voice": "onyx"
+ },
+ "yao4_alloy.wav": {
+  "syllable": "yao",
+  "tone": 4,
+  "hanzi": "药",
+  "voice": "alloy"
+ },
+ "xi1_alloy.wav": {
+  "syllable": "xi",
+  "tone": 1,
+  "hanzi": "西",
+  "voice": "alloy"
+ },
+ "xi1_onyx.wav": {
+  "syllable": "xi",
+  "tone": 1,
+  "hanzi": "西",
+  "voice": "onyx"
+ },
+ "yao4_shimmer.wav": {
+  "syllable": "yao",
+  "tone": 4,
+  "hanzi": "药",
+  "voice": "shimmer"
+ },
+ "xi1_shimmer.wav": {
+  "syllable": "xi",
+  "tone": 1,
+  "hanzi": "西",
+  "voice": "shimmer"
+ },
+ "xi1_nova.wav": {
+  "syllable": "xi",
+  "tone": 1,
+  "hanzi": "西",
+  "voice": "nova"
+ },
+ "xi2_nova.wav": {
+  "syllable": "xi",
+  "tone": 2,
+  "hanzi": "习",
+  "voice": "nova"
+ },
+ "xi2_shimmer.wav": {
+  "syllable": "xi",
+  "tone": 2,
+  "hanzi": "习",
+  "voice": "shimmer"
+ },
+ "xi3_alloy.wav": {
+  "syllable": "xi",
+  "tone": 3,
+  "hanzi": "洗",
+  "voice": "alloy"
+ },
+ "xi3_nova.wav": {
+  "syllable": "xi",
+  "tone": 3,
+  "hanzi": "洗",
+  "voice": "nova"
+ },
+ "xi3_onyx.wav": {
+  "syllable": "xi",
+  "tone": 3,
+  "hanzi": "洗",
+  "voice": "onyx"
+ },
+ "xi4_alloy.wav": {
+  "syllable": "xi",
+  "tone": 4,
+  "hanzi": "戏",
+  "voice": "alloy"
+ },
+ "xi3_shimmer.wav": {
+  "syllable": "xi",
+  "tone": 3,
+  "hanzi": "洗",
+  "voice": "shimmer"
+ },
+ "xi4_nova.wav": {
+  "syllable": "xi",
+  "tone": 4,
+  "hanzi": "戏",
+  "voice": "nova"
+ },
+ "yao4_nova.wav": {
+  "syllable": "yao",
+  "tone": 4,
+  "hanzi": "药",
+  "voice": "nova"
+ },
+ "xi2_onyx.wav": {
+  "syllable": "xi",
+  "tone": 2,
+  "hanzi": "习",
+  "voice": "onyx"
+ },
+ "xi4_onyx.wav": {
+  "syllable": "xi",
+  "tone": 4,
+  "hanzi": "戏",
+  "voice": "onyx"
+ },
+ "xi4_shimmer.wav": {
+  "syllable": "xi",
+  "tone": 4,
+  "hanzi": "戏",
+  "voice": "shimmer"
+ },
+ "xi2_alloy.wav": {
+  "syllable": "xi",
+  "tone": 2,
+  "hanzi": "习",
+  "voice": "alloy"
+ }
+}
