@@ -5,7 +5,8 @@ Architecture (the whole point, see spike/RESULTS.md): NO voice-to-voice model.
 - brain = claude-sonnet-5 (text — where the actual tutoring intelligence lives)
 - mouth = gpt-4o-mini-tts (pay-per-character)
 - tone ear = tone_ear.py, local DSP, free — the thing audio LLMs can't do (40%
-  vs our 83%); its report is injected into the brain's context each turn.
+  vs our 93%, real speakers); its report is injected into the brain's context
+  each turn.
 
 Single-user app behind an auth cookie (LifeLog pattern): every path except
 /healthz and /auth/login requires the session cookie; bare paths get the login

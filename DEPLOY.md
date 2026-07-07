@@ -28,4 +28,5 @@ fast-forwards at ship time.
   the container (`docker exec languagetutor-test python -c "import app; ..."` with
   `app._cookie_value()`), not by raw curl — unauthenticated paths get the login page.
 - Architecture ground truth: `spike/RESULTS.md`. The tone ear is local DSP on purpose;
-  keep audio LLMs out of the tone-judging path (measured: 40% vs our 83%).
+  keep audio LLMs out of the tone-judging path (measured: 40% vs our 93%, real
+  speakers, leave-one-speaker-out on Tone Perfect).

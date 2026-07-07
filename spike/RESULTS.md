@@ -60,3 +60,64 @@ Confusions concentrate where real human learners and listeners also struggle
 ../.venv/bin/python plant_errors.py    # planted-error detection
 ../.venv/bin/python judge_gemini.py gpt  # audio-LLM baseline
 ```
+
+# Retrain on Tone Perfect — 2026-07-07
+
+Access to the MSU Tone Perfect corpus came through: 9,837 usable clips (of
+9,840; 3 unvoiced) across 6 real speakers (FV1-3, MV1-3), 410 syllables ×
+tones 1-4, extracted via `tone_perfect_eval.py`. Evaluation is
+**leave-one-speaker-out** — the direct analogue of the TTS spike's LOVO, now
+on real voices instead of synthetic ones.
+
+## Results
+
+| Model | Pooled LOSO accuracy |
+|---|---|
+| Logistic regression (the spike's classifier, unchanged) | **74.1%** |
+| Random forest (300 trees) | **92.8%** |
+| Gradient boosting | 92.4% |
+| MLP (32,16) | 91.4% |
+
+Logistic regression *regressed* on real speech relative to its 83.3% on TTS
+voices — real tone contours, especially tone 3's creaky dip, aren't linearly
+separable the way clean synthetic templates are. Nonlinear models close
+almost all of the gap to the ~95% CNN benchmarks in the literature. Random
+forest was picked for production: best accuracy, no feature scaling, no
+convergence tuning, and refits from raw features at app-import time in ~1-2s
+(300 trees, n_jobs=-1) — same "retrain at import" design as before.
+
+Confusion (random forest, rows=true, cols=predicted):
+
+```
+  T1: [2380, 0,    78,   1]
+  T2: [0,    2284, 174,  2]
+  T3: [53,   97,   2132, 178]
+  T4: [0,    0,    127,  2331]
+```
+
+Tone 3 went from 35.5% correct (logreg) to 86.7% (random forest). Remaining
+confusion is exactly the classic pairs — T2↔T3 and T3↔T4 — the same ones
+human listeners and learners struggle with, not pipeline artifacts (the
+per-tone mean contours are phonetically correct dip/rise/fall shapes at both
+classifiers; only the *linear separability* of individual instances differed).
+
+**Shipped:** `tone_train.json` regenerated from all 9,837 Tone Perfect clips
+(replacing the 120 TTS-voice samples); `tone_ear.py` switched from
+`LogisticRegression` to `RandomForestClassifier(n_estimators=300)`. The raw
+corpus and per-clip feature cache stay out of git (gitignored, regenerable
+from the Tone Perfect mp3s per speaker/syllable naming convention).
+
+## Next steps
+
+- Tone 2/3 boundary is still the weak point — consider adding a creak/HNR
+  feature so the classifier can tell "real dip" from "lost pitch track."
+- Re-run `plant_errors.py` and the audio-LLM baseline against the new
+  classifier for an apples-to-apples update of the whole results table.
+- Extend to syllables-in-context (tone sandhi, neutral tone) — Tone Perfect
+  is isolated-syllable only, same limitation as before.
+
+## Reproduce
+
+```
+../.venv/bin/python tone_perfect_eval.py   # LOSO eval against Tone Perfect
+```

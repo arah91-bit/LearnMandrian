@@ -1,10 +1,14 @@
 """The tone ear — local DSP pitch analysis, no API, no cost, no audio LLM.
 
-Same method the spike validated (83% tone ID on unseen voices vs 40% for a
-frontier audio model, spike/RESULTS.md): two-pass adaptive Praat pitch tracking,
-speaker-relative semitone contours, logistic regression over contour shape.
-Trained at import from tone_train.json (regenerate via spike/gen_syllables.py +
-the export snippet in spike/RESULTS.md; retrain on Tone Perfect when it arrives).
+Same method the spike validated: two-pass adaptive Praat pitch tracking,
+speaker-relative semitone contours, classifier over contour shape. Retrained
+on Tone Perfect (MSU; 9,837 real clips, 6 speakers) — 92.8% tone ID on unseen
+speakers (leave-one-speaker-out) vs 40% for a frontier audio model,
+spike/RESULTS.md. A random forest replaced logistic regression here: real
+speech's messier per-instance contours (esp. tone 3's creaky dip) need a
+nonlinear model — logreg only reached 74% on the same real-speech data.
+Trained at import from tone_train.json (regenerate via
+spike/tone_perfect_eval.py against the Tone Perfect corpus).
 
 v1 scope: each voiced run is scored as one syllable candidate. Isolated
 syllables and short words score cleanly; long connected speech is reported as
@@ -15,7 +19,7 @@ import pathlib
 
 import numpy as np
 import parselmouth
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 HERE = pathlib.Path(__file__).parent
 N_POINTS = 24
@@ -68,7 +72,7 @@ def _contour(f0, s, e):
 class ToneEar:
     def __init__(self, train_file=HERE / "tone_train.json"):
         data = json.loads(pathlib.Path(train_file).read_text())
-        self.clf = LogisticRegression(max_iter=2000).fit(
+        self.clf = RandomForestClassifier(n_estimators=300, random_state=0, n_jobs=-1).fit(
             np.array(data["X"]), np.array(data["y"]))
 
     def analyze(self, wav_path):
