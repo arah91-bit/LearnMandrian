@@ -2,6 +2,7 @@
 .venv
 spike
 data
+Tone perfect data set
 __pycache__
 *.md
 !tutor_prompt.md

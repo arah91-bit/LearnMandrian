@@ -426,6 +426,43 @@ _ZH_RUN = re.compile(
 _GAP_PCM = b"\x00" * int(24000 * 2 * 0.09)          # 90ms between voice switches
 _tts_cache, _TTS_CACHE_MAX = {}, 300
 
+# tokens inside a Mandarin run: maximal hanzi runs OR maximal latin/pinyin runs
+# (punctuation/space between them dropped) — used to spot lone-syllable drills.
+_ZH_TOKEN = re.compile(r"[㐀-鿿]+|[A-Za-z%s]+" % _PY_TONED)
+
+
+# ── Reference voice: real Tone Perfect clips for isolated syllables ─────────────
+# For single syllables the corpus covers, "hear it correctly" is a real human
+# clip (speaker FV1, the most tone-canonical voice in the LOSO eval) instead of
+# TTS — top tone fidelity exactly where a perception drill lives or dies, and a
+# recording can't drone-hallucinate the way short-hanzi TTS does. Words and
+# sentences stay on TTS: stitched isolated clips lose sandhi/coarticulation and
+# sound wrong. Ear and mouth then share one ground truth — the same corpus the
+# tone classifier is graded against. Staged by spike/build_ref_voice.py into
+# DATA/tone_perfect_ref/ (gitignored data mount); REF_VOICE=0 disables it.
+class RefVoice:
+    def __init__(self, root):
+        self.root, self.hanzi, self.pinyin = root, {}, {}
+        self.enabled = os.environ.get("REF_VOICE", "1") != "0"
+        index = root / "index.json"
+        if self.enabled and index.exists():
+            d = json.loads(index.read_text())
+            self.hanzi, self.pinyin = d["hanzi"], d["pinyin"]
+            log.info("ref voice: %s — %d hanzi / %d syllables",
+                     d.get("speaker"), len(self.hanzi), len(self.pinyin))
+        else:
+            log.info("ref voice: off (%s)",
+                     "REF_VOICE=0" if not self.enabled else "no index at %s" % index)
+
+    def clip(self, token):
+        """Clip filename for a lone-syllable token, else None (leave it to TTS)."""
+        if not self.enabled:
+            return None
+        return self.hanzi.get(token) or self.pinyin.get(token)
+
+
+REF = RefVoice(DATA / "tone_perfect_ref")
+
 
 def _ffmpeg(args, data):
     r = subprocess.run(["ffmpeg", *args], input=data, capture_output=True, timeout=30)
@@ -472,13 +509,32 @@ def _synth_en(text):
     return _to_pcm(r.content)
 
 
+def _synth_ref(fname):
+    """A staged Tone Perfect clip -> our PCM. Missing file drops to silence
+    (returns None) rather than killing the turn — build_ref_voice.py stages
+    every referenced clip, so this is an ops-error guard, not a normal path."""
+    path = REF.root / fname
+    if not path.exists():
+        log.warning("ref clip missing: %s", fname)
+        return None
+    return _to_pcm(path.read_bytes())
+
+
 def _segment_pcm(kind, text):
     key = (kind, text)
     if key in _tts_cache:
         return _tts_cache[key]
     try:
-        pcm = _synth_zh_guarded(text) if kind == "zh" else _synth_en(text)
+        if kind == "ref":
+            pcm = _synth_ref(text)
+        elif kind == "zh":
+            pcm = _synth_zh_guarded(text)
+        else:
+            pcm = _synth_en(text)
     except Exception as e:
+        if kind == "ref":
+            log.warning("ref clip failed, dropping segment: %s", str(e)[:120])
+            return b""
         if kind == "zh":
             page_if_billing("openai", e)
             raise
@@ -493,6 +549,23 @@ def _segment_pcm(kind, text):
     return pcm
 
 
+def _expand_zh(run):
+    """A Mandarin run -> segments. Only a run that is a SINGLE token which is a
+    lone corpus syllable becomes a real clip; anything else passes through to
+    TTS with its text and punctuation intact. Single-token is the safe test:
+    hanzi drills ("妈 麻 马 骂", "妈…马") already arrive as separate one-token
+    runs, so they each swap in a clip — but a multi-syllable run stays on TTS,
+    which is what we want, since space-separated pinyin is ambiguous between a
+    drill ("mā má mǎ mà") and a word ("nǐ hǎo") and we must never chop a word
+    into robotic isolated syllables (wrong sandhi, no coarticulation)."""
+    tokens = _ZH_TOKEN.findall(run)
+    if len(tokens) == 1:
+        fname = REF.clip(tokens[0])
+        if fname:
+            return [("ref", fname)]
+    return [("zh", run)]
+
+
 def synthesize(text):
     """Text (possibly mixed EN/hanzi) -> mp3 bytes, or None if nothing speakable."""
     speakable = re.sub(r"\([^)]*\)", " ", text).strip()   # pinyin glosses are visual
@@ -501,7 +574,7 @@ def synthesize(text):
         head = speakable[pos:m.start()].strip()
         if head and re.search(r"\w", head):
             segs.append(("en", head))
-        segs.append(("zh", m.group().strip()))
+        segs.extend(_expand_zh(m.group().strip()))
         pos = m.end()
     tail = speakable[pos:].strip()
     if tail and re.search(r"\w", tail):

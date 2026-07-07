@@ -18,6 +18,13 @@ fast-forwards at ship time.
   stops a lesson; billing failures also page Pushbullet. STT falls back from
   OpenAI to the shared voice container's local Whisper the same way.
 - Learner data (conversation, future lesson state): `/home/phil/PersonalProjects/LanguageTutor-data` → `/data`.
+- **Reference voice** (real Tone Perfect clips played for isolated-syllable
+  drills instead of TTS): staged under `/data/tone_perfect_ref/` (1,640 FV1
+  clips + `index.json`) by `spike/build_ref_voice.py`, run once against the
+  Tone Perfect corpus. It's data, not image — lives in the `/data` mount, so
+  **prod needs the same dir populated** (rerun the script pointed at prod's
+  data dir, or copy the folder over). `REF_VOICE=0` disables it (falls back to
+  TTS everywhere). The corpus itself is git- and docker-ignored (305 MB).
 - After editing `app.py`/`tone_ear.py`/`api_alerts.py`: `docker restart languagetutor-test`
   — single-file bind mounts go stale on atomic-rename saves. `static/` and
   `tutor_prompt.md` hot-reload (dir mount / uvicorn --reload-include).
