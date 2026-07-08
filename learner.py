@@ -7,10 +7,12 @@ The tutor BRAIN maintains it through tools (see app.py TOOLS); the UI reads it
 via /api/state; a compact snapshot is injected into the brain's system prompt
 each turn so it always arrives knowing where Phil is.
 """
+import contextlib
 import datetime
 import json
 import os
 import pathlib
+import threading
 
 import curriculum
 
@@ -50,9 +52,27 @@ def load():
     return json.loads(json.dumps(_DEFAULT))
 
 
+_LOCK = threading.RLock()
+
+
 def save(state):
     DATA.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=1))
+    tmp = STATE_FILE.with_suffix(".tmp")     # atomic: a crash never tears the file
+    tmp.write_text(json.dumps(state, ensure_ascii=False, indent=1))
+    tmp.replace(STATE_FILE)
+
+
+@contextlib.contextmanager
+def txn():
+    """load → mutate → save as one unit. Sync endpoints run on uvicorn's thread
+    pool, so two quick actions (grade a review, flip a setting) can otherwise
+    interleave read-modify-write and drop one. An exception inside skips the
+    save. The brain keeps its own load/save (holding this lock across a
+    multi-second LLM call would freeze every panel action; its window stays)."""
+    with _LOCK:
+        state = load()
+        yield state
+        save(state)
 
 
 def touch_day(state):

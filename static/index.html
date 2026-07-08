@@ -480,6 +480,11 @@
 <script src="/static/hanzi-writer.min.js"></script>
 <script>
 const $ = s => document.querySelector(s);
+/* every model- or file-derived string that lands in innerHTML goes through
+   here — the tutor brain writes vocab entries and plan text, and a stray
+   quote or angle bracket must render as text, never as markup */
+const esc = s => String(s ?? '').replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const TONES = {
   1:{c:'var(--t1)', hex:'#3fa269', name:'high level',  path:'M5 7 H35'},
   2:{c:'var(--t2)', hex:'#5b8bd6', name:'rising',      path:'M7 18 L33 5'},
@@ -828,7 +833,7 @@ function wrStartChar(){
 }
 function wrBuild(){
   const char = wrChars[wrIdx];
-  $('#wrChar').innerHTML = `${char} <span class="t5" style="font-size:16px">${wrWord.pinyin} · ${wrWord.english}</span>`;
+  $('#wrChar').innerHTML = `${esc(char)} <span class="t5" style="font-size:16px">${esc(wrWord.pinyin)} · ${esc(wrWord.english)}</span>`;
   const phase = wrPhaseN === 2
     ? (wrRep < wrMinReps ? `from memory — ${wrRep+1} of ${wrMinReps}`
                          : 'from memory — clean pass to finish')
@@ -1199,8 +1204,8 @@ function pinyinHTML(pinyin, tones){
   if (!S.show_pinyin) return '';
   const parts = pinyin.split(/[\s']+/);
   if (parts.length === tones.length)
-    return parts.map((p,i)=>`<span class="t${tones[i]||5}">${pyDisp(p)}</span>`).join(' ');
-  return `<span class="t${tones[0]||5}">${pyDisp(pinyin)}</span>`;
+    return parts.map((p,i)=>`<span class="t${tones[i]||5}">${esc(pyDisp(p))}</span>`).join(' ');
+  return `<span class="t${tones[0]||5}">${esc(pyDisp(pinyin))}</span>`;
 }
 function wordRow(w, today){
   const due = w.due <= today;
@@ -1211,13 +1216,13 @@ function wordRow(w, today){
   const mastery = Math.min(100, Math.round(w.interval/21*100));
   const showHz = S.show_hanzi || !S.show_pinyin;   // never blank both out
   const py = pinyinHTML(w.pinyin, w.tones);
-  return `<div class="word">${showHz ? `<span class="hz" data-say="${w.hanzi}"
-    title="tap to hear">${w.hanzi}</span>` : ''}
+  return `<div class="word">${showHz ? `<span class="hz" data-say="${esc(w.hanzi)}"
+    title="tap to hear">${esc(w.hanzi)}</span>` : ''}
     <span class="mid">${py ? `<div class="py">${py}</div>` : ''}
-    <div class="en">${w.english}</div></span>
+    <div class="en">${esc(w.english)}</div></span>
     <span class="right">${right}<div class="mastery"><i style="width:${mastery}%"></i></div>
-    </span><button class="wr" data-hz="${w.hanzi}" data-py="${w.pinyin}"
-    data-en="${w.english}" aria-label="practice writing ${w.hanzi}">写</button></div>`;
+    </span><button class="wr" data-hz="${esc(w.hanzi)}" data-py="${esc(w.pinyin)}"
+    data-en="${esc(w.english)}" aria-label="practice writing ${esc(w.hanzi)}">写</button></div>`;
 }
 let lastState = null;
 function render(s){
@@ -1246,14 +1251,14 @@ function render(s){
     f.classList.remove('empty'); f.textContent = s.plan.focus; }
   const next = $('#next-card');
   next.innerHTML = '<h2>Next up</h2>' + (s.plan.next_up.length
-    ? s.plan.next_up.map(x=>`<div class="next-item">${x}</div>`).join('')
+    ? s.plan.next_up.map(x=>`<div class="next-item">${esc(x)}</div>`).join('')
     : '<div class="empty">Nothing queued yet.</div>');
   const notes = $('#notes-card');
   notes.hidden = !s.plan.notes;
   if (s.plan.notes) notes.querySelector('.notes').textContent = s.plan.notes;
   const hist = $('#history-card');
   hist.innerHTML = '<h2>Session history</h2>' + (s.sessions.length
-    ? s.sessions.map(x=>`<div class="session"><div class="d">${x.date}</div>${x.summary}</div>`).join('')
+    ? s.sessions.map(x=>`<div class="session"><div class="d">${esc(x.date)}</div>${esc(x.summary)}</div>`).join('')
     : '<div class="empty">Sessions land here after you wrap one up.</div>');
 
   /* words */
@@ -1285,8 +1290,8 @@ function render(s){
   $('#ladder').innerHTML = LADDER.map(r=>{
     const grid = r.chars.length ? `<div class="wgrid">` + r.chars.map(([h,p,en])=>{
       const st = wr[h] ? (wr[h].best <= 1 ? 'clean' : 'rough') : '';
-      return `<div class="wtile ${st}" data-hz="${h}" data-py="${p}" data-en="${en}">
-        <span class="h">${h}</span><span class="p">${p}</span></div>`;
+      return `<div class="wtile ${st}" data-hz="${esc(h)}" data-py="${esc(p)}" data-en="${esc(en)}">
+        <span class="h">${esc(h)}</span><span class="p">${esc(p)}</span></div>`;
     }).join('') + `</div>` : '';
     const cnt = r.chars.length
       ? `<span class="rcnt">${rungDone(r)}/${r.chars.length}</span>` : '';
@@ -1302,7 +1307,7 @@ function render(s){
   if (written.length) wwc.querySelector('.list').innerHTML = written.map(w=>{
     const worst = Math.max(...[...w.hanzi].filter(c=>wr[c]).map(c=>wr[c].best));
     return `<div class="confusion"><span class="hz" style="font-family:var(--hanzi);
-      font-size:20px">${w.hanzi}</span> ${w.pinyin} · ${w.english}
+      font-size:20px">${esc(w.hanzi)}</span> ${esc(w.pinyin)} · ${esc(w.english)}
       <span style="margin-left:auto" class="${worst<=1?'t1':'t3'}">${worst<=1?'clean':'needs work'}</span></div>`;
   }).join('');
 
@@ -1368,23 +1373,23 @@ function renderGrammar(){
     const st = CURR.stages.find(s=>s.id===sid);
     return `<div class="gstage">${sid} — ${st ? st.name : ''}</div>` +
       byStage[sid].map(g=> g.unlocked
-        ? `<button class="gpoint" data-gram="${g.id}">${g.name}
-             <span class="gpat">${g.pattern}</span></button>`
-        : `<button class="gpoint locked">${g.name}
-             <span class="gpat">unlocks at ${g.stage}</span></button>`).join('');
+        ? `<button class="gpoint" data-gram="${esc(g.id)}">${esc(g.name)}
+             <span class="gpat">${esc(g.pattern)}</span></button>`
+        : `<button class="gpoint locked">${esc(g.name)}
+             <span class="gpat">unlocks at ${esc(g.stage)}</span></button>`).join('');
   }).join('');
 }
 function openGrammar(id){
   const g = CURR.grammar.find(x=>x.id===id);
   if (!g) return;
   $('#gramTitle').textContent = g.name;
-  $('#gramBody').innerHTML = `<div class="gpattern">${g.pattern}</div>
-    <p style="margin:8px 0 12px">${g.explain}</p>` +
+  $('#gramBody').innerHTML = `<div class="gpattern">${esc(g.pattern)}</div>
+    <p style="margin:8px 0 12px">${esc(g.explain)}</p>` +
     g.examples.map(([zh,py,en])=>`<div class="gx">
-      <div class="zh" data-say="${zh}" title="tap to hear">${zh} <span class="t5"
+      <div class="zh" data-say="${esc(zh)}" title="tap to hear">${esc(zh)} <span class="t5"
         style="font-size:13px">▶</span></div>
-      ${S.show_pinyin ? `<div class="py">${pyDisp(py)}</div>` : ''}
-      <div class="en">${en}</div></div>`).join('');
+      ${S.show_pinyin ? `<div class="py">${esc(pyDisp(py))}</div>` : ''}
+      <div class="en">${esc(en)}</div></div>`).join('');
   $('#gramModal').classList.add('on');
 }
 
@@ -1403,18 +1408,18 @@ function qzBuild(){
   $('#qzProg').textContent = `${qz.idx+1} / ${qz.items.length}`;
   let body = '';
   if (qz.kind === 'listening'){
-    body += `<button class="qz-play" data-say="${it.zh}" aria-label="play">▶</button>`;
+    body += `<button class="qz-play" data-say="${esc(it.zh)}" aria-label="play">▶</button>`;
   } else if (it.kind === 'passage'){
-    body += `<div class="qz-passage" data-say="${it.zh}">${it.zh}</div>`
-          + (it.py && S.show_pinyin ? `<div class="qz-py">${pyDisp(it.py)}</div>` : '');
+    body += `<div class="qz-passage" data-say="${esc(it.zh)}">${esc(it.zh)}</div>`
+          + (it.py && S.show_pinyin ? `<div class="qz-py">${esc(pyDisp(it.py))}</div>` : '');
   } else if (it.zh){
-    body += `<div class="qz-word" data-say="${it.zh}">${it.zh}</div>`;
+    body += `<div class="qz-word" data-say="${esc(it.zh)}">${esc(it.zh)}</div>`;
   } else if (it.py){
-    body += `<div class="qz-word">${pyDisp(it.py)}</div>`;
+    body += `<div class="qz-word">${esc(pyDisp(it.py))}</div>`;
   }
-  body += `<div class="qz-prompt">${it.prompt}</div>
+  body += `<div class="qz-prompt">${esc(it.prompt)}</div>
     <div class="qz-choices">` + it.choices.map((c,i)=>
-      `<button data-pick="${i}">${c}</button>`).join('') + `</div>
+      `<button data-pick="${i}">${esc(c)}</button>`).join('') + `</div>
     <div class="qz-note"></div>`;
   $('#qzBody').innerHTML = body;
   if (qz.kind === 'listening') wrSay(it.zh);        // speak it on arrival
@@ -1503,10 +1508,10 @@ function rvBuild(){
   $('#rvProg').textContent = `${rv.idx+1} / ${rv.queue.length}`;
   const front = S.show_hanzi || !S.show_pinyin ? w.hanzi : pyDisp(w.pinyin);
   $('#rvBody').innerHTML = `
-    <div class="rv-front" data-say="${w.hanzi}" title="tap to hear">${front}</div>
+    <div class="rv-front" data-say="${esc(w.hanzi)}" title="tap to hear">${esc(front)}</div>
     ${rv.flipped ? `<div class="rv-back">
         ${S.show_pinyin ? `<div class="py">${pinyinHTML(w.pinyin, w.tones)}</div>` : ''}
-        <div class="en">${w.english}</div></div>
+        <div class="en">${esc(w.english)}</div></div>
       <div class="rv-grades">
         <button class="g1" data-grade="1">again</button>
         <button data-grade="3">hard</button>
@@ -1572,9 +1577,9 @@ async function loadLibrary(){
     if (!j.books || !j.books.length) return;
     $('#library-card').hidden = false;
     $('#library-card .books').innerHTML = j.books.map(b=>
-      `<div class="book"><b>${b.title}</b> — ${b.authors || 'unknown'}
-       · ${b.format}${b.pages ? ' · '+b.pages+'pp' : ''}
-       ${b.hsk_volumes.length ? ' · HSK '+b.hsk_volumes.join('–') : ''}</div>`).join('');
+      `<div class="book"><b>${esc(b.title)}</b> — ${esc(b.authors || 'unknown')}
+       · ${esc(b.format)}${b.pages ? ' · '+esc(b.pages)+'pp' : ''}
+       ${b.hsk_volumes.length ? ' · HSK '+esc(b.hsk_volumes.join('–')) : ''}</div>`).join('');
   }catch(e){}
 }
 let libT = 0;
@@ -1586,9 +1591,9 @@ $('#libq').oninput = e=>{
     if (!q){ box.innerHTML = ''; return; }
     const r = await fetch('/api/library/search?q='+encodeURIComponent(q));
     const j = await r.json();
-    box.innerHTML = j.hits.map(h=>`<div class="libhit">${h.section || h.book}
-      ${h.page ? ' — p.'+h.page : ''}<br><span style="font-size:11px;color:var(--muted)">
-      ${h.book}</span></div>`).join('') || '<div class="libhit">no matches</div>';
+    box.innerHTML = j.hits.map(h=>`<div class="libhit">${esc(h.section || h.book)}
+      ${h.page ? ' — p.'+esc(h.page) : ''}<br><span style="font-size:11px;color:var(--muted)">
+      ${esc(h.book)}</span></div>`).join('') || '<div class="libhit">no matches</div>';
   }, 250);
 };
 

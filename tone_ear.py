@@ -99,9 +99,11 @@ class ToneEar:
                     "tone scoring only works on isolated syllables/short words")
         return {"syllables": out, "note": note}
 
-    def report(self, wav_path):
-        """One-line bracketed summary for the tutor brain's context."""
-        a = self.analyze(wav_path)
+    def report(self, wav_path=None, analysis=None):
+        """One-line bracketed summary for the tutor brain's context. Pass the
+        analyze() result if you already have it — the pitch tracking is the
+        expensive part, and re-running it per turn was pure waste."""
+        a = analysis if analysis is not None else self.analyze(wav_path)
         if not a["syllables"]:
             return f"[tone-ear] {a['note'] or 'nothing scoreable'}"
         parts = [f"#{i+1} tone{s['tone']} ({int(s['confidence']*100)}%)"

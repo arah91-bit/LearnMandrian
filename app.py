@@ -22,6 +22,7 @@ import pathlib
 import re
 import subprocess
 import tempfile
+import time
 from urllib.parse import quote
 
 import anthropic
@@ -103,10 +104,24 @@ async def healthz():
     return {"ok": True}
 
 
+# Login throttle: the URL is on the open internet behind Caddy. Global, not
+# per-IP (single user; a distributed guesser defeats per-IP anyway) — after
+# _LOGIN_MAX failures in the window, everyone waits. Phil's cookie lasts 90
+# days, so a lockout costs him nothing.
+_login_fails, _LOGIN_MAX, _LOGIN_WINDOW = [], 10, 900
+
+
 @app.post("/auth/login")
 async def login(request: Request):
     form = await request.form()
+    now = time.time()
+    _login_fails[:] = [t for t in _login_fails if now - t < _LOGIN_WINDOW]
+    if len(_login_fails) >= _LOGIN_MAX:
+        return HTMLResponse(LOGIN_HTML.replace("<!--err-->",
+                            "<p class=err>Too many attempts — try again later.</p>"),
+                            status_code=429)
     if not hmac.compare_digest(str(form.get("password", "")), PASSWORD):
+        _login_fails.append(now)
         return HTMLResponse(LOGIN_HTML.replace("<!--err-->",
                             "<p class=err>Wrong password.</p>"), status_code=401)
     resp = RedirectResponse("/", status_code=303)
@@ -150,7 +165,9 @@ def _load_convo():
 
 
 def _save_convo(msgs):
-    CONVO.write_text(json.dumps(msgs[-MAX_MESSAGES:], ensure_ascii=False, indent=1))
+    tmp = CONVO.with_suffix(".tmp")
+    tmp.write_text(json.dumps(msgs[-MAX_MESSAGES:], ensure_ascii=False, indent=1))
+    tmp.replace(CONVO)
 
 
 def _webm_to_wav(blob):
@@ -453,18 +470,21 @@ def review_queue():
 
 @app.post("/api/review/grade")
 def review_grade(payload: dict):
-    state = learner.load()
-    hanzi, grade = str(payload.get("hanzi", "")), int(payload.get("grade", -1))
+    try:
+        hanzi, grade = str(payload.get("hanzi", ""))[:20], int(payload.get("grade"))
+    except (TypeError, ValueError):
+        raise HTTPException(400, "grade must be an integer 0-5")
     if grade not in (0, 1, 2, 3, 4, 5):
         raise HTTPException(400, "grade must be 0-5")
-    msg = learner.grade_word(state, hanzi, grade)
-    if "not in the vocab list" in msg:
-        raise HTTPException(404, msg)
-    learner.record_activity(state, "review", hanzi, grade)
-    learner.touch_day(state)
-    learner.save(state)
-    return {"result": msg, "remaining": len(learner.due_words(state)),
-            "recommend": learner.recommend(state)}
+    with learner.txn() as state:
+        msg = learner.grade_word(state, hanzi, grade)
+        if "not in the vocab list" in msg:
+            raise HTTPException(404, msg)
+        learner.record_activity(state, "review", hanzi, grade)
+        learner.touch_day(state)
+        out = {"result": msg, "remaining": len(learner.due_words(state)),
+               "recommend": learner.recommend(state)}
+    return out
 
 
 @app.post("/api/placement/start")
@@ -475,15 +495,17 @@ def placement_start():
 
 @app.post("/api/placement/submit")
 def placement_submit(payload: dict):
-    answers = payload.get("answers") or {}
-    result = curriculum.score_placement(
-        {str(k): int(v) for k, v in answers.items()})
-    state = learner.load()
-    learner.set_placement(state, result)
-    learner.record_activity(state, "placement", result["stage"])
-    learner.touch_day(state)
-    learner.save(state)
-    return {**result, "recommend": learner.recommend(state)}
+    try:
+        answers = {str(k): int(v) for k, v in (payload.get("answers") or {}).items()}
+    except (TypeError, ValueError, AttributeError):
+        raise HTTPException(400, "answers must map item ids to choice indices")
+    result = curriculum.score_placement(answers)
+    with learner.txn() as state:
+        learner.set_placement(state, result)
+        learner.record_activity(state, "placement", result["stage"])
+        learner.touch_day(state)
+        out = {**result, "recommend": learner.recommend(state)}
+    return out
 
 
 @app.get("/api/practice/{kind}")
@@ -503,13 +525,16 @@ def practice_result(payload: dict):
     kind = payload.get("kind")
     if kind not in ("reading", "listening"):
         raise HTTPException(400, "unknown practice kind")
-    right, total = int(payload.get("right", 0)), int(payload.get("total", 0))
-    state = learner.load()
-    learner.record_activity(state, kind, str(payload.get("stage", "")),
-                            f"{right}/{total}")
-    learner.touch_day(state)
-    learner.save(state)
-    return {"ok": True, "recommend": learner.recommend(state)}
+    try:
+        right, total = int(payload.get("right", 0)), int(payload.get("total", 0))
+    except (TypeError, ValueError):
+        raise HTTPException(400, "right/total must be integers")
+    with learner.txn() as state:
+        learner.record_activity(state, kind, str(payload.get("stage", ""))[:4],
+                                f"{right}/{total}")
+        learner.touch_day(state)
+        out = {"ok": True, "recommend": learner.recommend(state)}
+    return out
 
 
 @app.get("/api/settings")
@@ -519,9 +544,8 @@ def settings_get():
 
 @app.post("/api/settings")
 def settings_set(payload: dict):
-    state = learner.load()
-    out = learner.update_settings(state, payload)
-    learner.save(state)
+    with learner.txn() as state:
+        out = learner.update_settings(state, payload)
     return out
 
 
@@ -723,6 +747,10 @@ def _expand_zh(run):
     return [("zh", run)]
 
 
+# one bounded pool for all synthesis — a pool per call leaked thread churn
+_TTS_POOL = ThreadPoolExecutor(max_workers=4)
+
+
 def synthesize(text):
     """Text (possibly mixed EN/hanzi) -> mp3 bytes, or None if nothing speakable."""
     speakable = re.sub(r"\([^)]*\)", " ", text).strip()   # pinyin glosses are visual
@@ -738,8 +766,7 @@ def synthesize(text):
         segs.append(("en", tail))
     if not segs:
         return None
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        pcms = list(pool.map(lambda s: _segment_pcm(*s), segs))
+    pcms = list(_TTS_POOL.map(lambda s: _segment_pcm(*s), segs))
     pcm = _GAP_PCM.join(pcms)
     return _ffmpeg(["-f", "s16le", "-ar", "24000", "-ac", "1", "-i", "pipe:0",
                     "-f", "mp3", "-b:a", "64k", "pipe:1"], pcm)
@@ -747,22 +774,31 @@ def synthesize(text):
 
 @app.post("/api/tts")
 def tts_route(payload: dict):
-    audio = synthesize(payload.get("text", ""))
+    text = str(payload.get("text", ""))
+    if len(text) > 2000:              # client speaks sentence-by-sentence; a
+        raise HTTPException(413, "text too long")   # novel here is a bug or abuse
+    audio = synthesize(text)
     if audio is None:
         raise HTTPException(400, "nothing speakable")
     return Response(content=audio, media_type="audio/mpeg")
 
 
+_MAX_AUDIO = 20 * 1024 * 1024         # ~45s of webm is ~1MB; 20MB is a bug or abuse
+
+
 @app.post("/api/turn")
 def turn(audio: UploadFile = File(...)):
-    wav = _webm_to_wav(audio.file.read())
+    blob = audio.file.read(_MAX_AUDIO + 1)
+    if len(blob) > _MAX_AUDIO:
+        raise HTTPException(413, "audio too large")
+    wav = _webm_to_wav(blob)
     try:
         heard = _stt(wav)
         if not heard:
             return {"heard": "", "reply": None, "tones": None,
                     "error": "didn't catch any speech — try again"}
-        ear = EAR.analyze(wav)
-        reply = _brain(heard, "[spoken — mic turn] " + EAR.report(wav))
+        ear = EAR.analyze(wav)        # one analysis serves both the UI chips
+        reply = _brain(heard, "[spoken — mic turn] " + EAR.report(analysis=ear))
     finally:
         os.unlink(wav)
     return {"heard": heard, "tones": ear, "reply": reply}
@@ -793,12 +829,17 @@ def writing_result(payload: dict):
     """Per-character pad results, recorded deterministically by the app —
     drives the Write tab's ladder status; the tutor separately hears the
     word-level [writing practice] report."""
-    state = learner.load()
-    for r in (payload.get("results") or [])[:60]:
-        ch = str(r.get("char", ""))[:1]
-        if ch and "㐀" <= ch <= "鿿":
-            learner.record_writing(state, ch, max(0, int(r.get("mistakes", 0))))
-    learner.save(state)
+    with learner.txn() as state:
+        for r in (payload.get("results") or [])[:60]:
+            if not isinstance(r, dict):
+                continue
+            ch = str(r.get("char", ""))[:1]
+            try:
+                mistakes = max(0, int(r.get("mistakes", 0)))
+            except (TypeError, ValueError):
+                continue
+            if ch and "㐀" <= ch <= "鿿":
+                learner.record_writing(state, ch, mistakes)
     return {"ok": True}
 
 

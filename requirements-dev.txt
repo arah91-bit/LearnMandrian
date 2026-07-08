@@ -1,0 +1,5 @@
+# Dev/test tooling — not in the image. Install into the repo venv:
+#   pip install -r requirements.txt -r requirements-dev.txt
+# Checks: python -m pytest tests/ && ruff check .
+pytest
+ruff

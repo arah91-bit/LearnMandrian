@@ -3,6 +3,7 @@
 fastapi
 uvicorn[standard]
 python-multipart
+httpx
 anthropic>=0.107,<0.120
 openai>=2,<3
 praat-parselmouth
