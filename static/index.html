@@ -877,12 +877,47 @@ function wrBuild(){
   }
 }
 
-/* brush ink — a canvas over the writer renders the live stroke with a
-   pressure-and-speed-shaped width (real pressure on a stylus, speed as the
-   proxy for finger/mouse), so what lands on screen looks like the brush-drawn
-   strokes of the character itself, not a uniform tube. Fades on pen-up, just
-   as hanzi-writer replaces a correct stroke with the real one. */
+/* brush ink — a canvas over the writer renders the live stroke like a loaded
+   brush, not a marker. Three things make the difference from stroked lines:
+   the stroke is STAMPED as overlapping soft-edged dabs (continuous width, no
+   segment ribbing), it opens on a tip taper (a brush touches down on its
+   point and swells as the bristles load), and lifting mid-motion throws a
+   tapering exit flick — the 出锋 every real stroke ends hooks and sweeps
+   with. Width comes from real pressure on a stylus (gamma-curved for range),
+   speed as the proxy for finger/mouse. Fades on pen-up, just as hanzi-writer
+   replaces a correct stroke with the real one. */
 let inkCv = null, inkCx = null, inkPrev = null, inkWd = 0, inkMax = 14, inkFade = 0;
+let inkDab = null, inkDist = 0, inkVx = 0, inkVy = 0, inkSpeed = 0;
+/* Styluses rarely report pressure above ~0.5 in normal writing, and every
+   device tops out somewhere different — mapping raw pressure to width made
+   the pen a thin pencil next to the finger (2026-07-08). So calibrate like
+   the mic's endpoint bias: learn this device's actual ceiling, persist it,
+   and normalize into it. Gamma < 1 so a light hand still lays down real ink. */
+let inkPMax = Math.max(0.35, Math.min(1,
+  parseFloat(localStorage.getItem('lt_ink_pmax')) || 0.6));
+function penW(pressure){
+  if (pressure > inkPMax){
+    inkPMax = Math.min(1, pressure);
+    localStorage.setItem('lt_ink_pmax', inkPMax.toFixed(3));
+  }
+  const p = Math.min(1, pressure / inkPMax);
+  return inkMax * (0.35 + 0.85 * Math.pow(p, 0.6));
+}
+function makeDab(){
+  /* one soft-edged round dab, drawImage-scaled per stamp (a radial gradient
+     per stamp would crawl) — crisp core, ~15% soft rim so overlaps read as
+     wet ink instead of plotter output */
+  const d = document.createElement('canvas');
+  d.width = d.height = 64;
+  const g = d.getContext('2d');
+  const rg = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  rg.addColorStop(0, 'rgba(79,138,106,1)');
+  rg.addColorStop(0.84, 'rgba(79,138,106,0.97)');
+  rg.addColorStop(1, 'rgba(79,138,106,0)');
+  g.fillStyle = rg;
+  g.fillRect(0, 0, 64, 64);
+  return d;
+}
 function wrInk(size){
   inkCv = document.createElement('canvas');
   const dpr = window.devicePixelRatio || 1;
@@ -892,47 +927,81 @@ function wrInk(size){
   $('#wrTarget').appendChild(inkCv);
   inkCx = inkCv.getContext('2d');
   inkCx.scale(dpr, dpr);
-  inkCx.lineCap = inkCx.lineJoin = 'round';
-  inkCx.strokeStyle = inkCx.fillStyle = '#4f8a6a';
-  inkMax = Math.max(10, size * 0.05);
+  inkDab = inkDab || makeDab();
+  inkMax = Math.max(13, size * 0.068);   // sized to the example strokes' weight
   inkPrev = null;
 }
 function inkPoint(e){
   const r = inkCv.getBoundingClientRect();
   return {x: e.clientX - r.left, y: e.clientY - r.top, t: e.timeStamp};
 }
+function inkStamp(x, y, w){
+  inkCx.drawImage(inkDab, x - w / 2, y - w / 2, w, w);
+}
+function inkSeg(p0, w0, p1, w1){
+  /* stamp along the segment at ~quarter-width spacing: dense enough that the
+     silhouette is one continuous variable-width stroke */
+  const d = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+  const steps = Math.max(1, Math.ceil(d / Math.max(0.6, Math.min(w0, w1) * 0.25)));
+  for (let i = 1; i <= steps; i++){
+    const t = i / steps;
+    inkStamp(p0.x + (p1.x - p0.x) * t, p0.y + (p1.y - p0.y) * t, w0 + (w1 - w0) * t);
+  }
+}
 function inkTargetW(e, p0, p1){
   if (e.pointerType === 'pen' && e.pressure > 0)
-    return inkMax * (0.25 + 1.05 * e.pressure);
+    return penW(e.pressure);
   const v = Math.hypot(p1.x - p0.x, p1.y - p0.y) / Math.max(1, p1.t - p0.t);
-  return inkMax * Math.max(0.3, Math.min(1.1, 1.1 - v * 0.5));
+  return inkMax * Math.max(0.3, Math.min(1.05, 1.05 - v * 0.5));
 }
 $('#wrTarget').addEventListener('pointerdown', e=>{
   if (!inkCv || !wrWord || wrPhaseN === 0) return;
   clearTimeout(inkFade);
   inkCv.style.opacity = 1;
   inkPrev = inkPoint(e);
+  inkDist = 0; inkVx = 0; inkVy = 0; inkSpeed = 0;
   inkWd = e.pointerType === 'pen' && e.pressure > 0
-    ? inkMax * (0.25 + 1.05 * e.pressure) : inkMax * 0.45;   // touch a taper on first
-  inkCx.beginPath();
-  inkCx.arc(inkPrev.x, inkPrev.y, inkWd / 2, 0, 7);
-  inkCx.fill();
+    ? Math.max(inkMax * 0.28, penW(e.pressure) * 0.55)
+    : inkMax * 0.3;                                // touch down on the tip
+  inkStamp(inkPrev.x, inkPrev.y, inkWd);
 }, true);
 $('#wrTarget').addEventListener('pointermove', e=>{
   if (!inkCv || !inkPrev) return;
-  for (const ce of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e])){
+  const pen = e.pointerType === 'pen';
+  // some sources (untrusted events, certain webviews) return an EMPTY
+  // coalesced list — fall back to the event itself, never to no ink
+  const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+  for (const ce of (coalesced.length ? coalesced : [e])){
     const p = inkPoint(ce);
-    inkWd = inkWd * 0.65 + inkTargetW(ce, inkPrev, p) * 0.35;  // smooth the width
-    inkCx.lineWidth = inkWd;
-    inkCx.beginPath();
-    inkCx.moveTo(inkPrev.x, inkPrev.y);
-    inkCx.lineTo(p.x, p.y);
-    inkCx.stroke();
+    const d = Math.hypot(p.x - inkPrev.x, p.y - inkPrev.y);
+    if (!d) continue;
+    inkDist += d;
+    /* entry taper: full width only after ~a stroke-width of travel */
+    const load = Math.min(1, 0.45 + inkDist / (inkMax * 1.2));
+    const wt = inkTargetW(ce, inkPrev, p) * load;
+    const w0 = inkWd;
+    inkWd = pen ? inkWd * 0.5 + wt * 0.5           // pressure answers fast,
+                : inkWd * 0.7 + wt * 0.3;          // speed gets smoothed hard
+    inkSeg(inkPrev, w0, p, inkWd);
+    const dt = Math.max(1, p.t - inkPrev.t);
+    inkVx = (p.x - inkPrev.x) / d; inkVy = (p.y - inkPrev.y) / d;
+    inkSpeed = d / dt;
     inkPrev = p;
   }
 }, true);
 function inkUp(){
   if (!inkCv || !inkPrev) return;
+  /* lifted while moving -> exit flick: the stroke runs on past the lift
+     point, thinning to the brush tip along the direction of travel */
+  if (inkSpeed > 0.25 && inkWd > 1.5){
+    const len = Math.min(inkMax * 2.4, inkWd * 1.1 + inkSpeed * 14);
+    const steps = Math.ceil(len / 1.2);
+    for (let i = 1; i <= steps; i++){
+      const t = i / steps;
+      const w = Math.max(0.6, inkWd * (1 - t) * (1 - t));  // quadratic thin-out
+      inkStamp(inkPrev.x + inkVx * len * t, inkPrev.y + inkVy * len * t, w);
+    }
+  }
   inkPrev = null;
   inkCv.style.opacity = 0;
   inkFade = setTimeout(()=>{
