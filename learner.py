@@ -12,6 +12,8 @@ import json
 import os
 import pathlib
 
+import curriculum
+
 DATA = pathlib.Path(os.environ.get("DATA_DIR", pathlib.Path(__file__).parent / "data"))
 STATE_FILE = DATA / "state.json"
 
@@ -22,7 +24,17 @@ _DEFAULT = {
     "sessions": [],       # {date, summary}
     "days": [],           # ISO dates with at least one turn
     "writing": {},        # char -> {times, best (fewest corrections), last}
+    "settings": {         # display prefs — the UI reads these, the brain sees immersion
+        "show_hanzi": True,
+        "show_pinyin": True,
+        "tone_display": "marks",     # marks | numbers
+        "immersion": False,
+    },
+    "placement": None,    # {date, stage_idx, stage, per_stage} once taken
+    "activity": [],       # self-study log: {date, kind, detail, score}
 }
+
+_SETTING_KEYS = set(_DEFAULT["settings"])
 
 
 def _today():
@@ -132,6 +144,82 @@ def record_writing(state, char, mistakes):
     w["last"] = _today()
 
 
+# ── Settings, placement, activity ──────────────────────────────────────────────
+def update_settings(state, patch):
+    s = state["settings"]
+    for k, v in (patch or {}).items():
+        if k not in _SETTING_KEYS:
+            continue
+        if k == "tone_display":
+            s[k] = v if v in ("marks", "numbers") else "marks"
+        else:
+            s[k] = bool(v)
+    return s
+
+
+def set_placement(state, result):
+    state["placement"] = {"date": _today(), **result}
+
+
+def record_activity(state, kind, detail="", score=None):
+    state["activity"].append(
+        {"date": _today(), "kind": kind, "detail": detail, "score": score})
+    state["activity"] = state["activity"][-60:]
+
+
+# ── Stage & recommendations ────────────────────────────────────────────────────
+def learned_count(state):
+    """Words that have survived scheduling — two solid reps and a real interval."""
+    return sum(1 for w in state["vocab"] if w["reps"] >= 2 and w["interval"] >= 3)
+
+
+def speaking_stage(state):
+    """App-derived position: vocab mastery, lifted by placement if higher."""
+    idx = curriculum.stage_for_learned(learned_count(state))
+    if state.get("placement"):
+        idx = max(idx, state["placement"]["stage_idx"])
+    return idx
+
+
+def writing_rung(state):
+    """First rung whose fixed characters aren't all clean passes (best <= 1)."""
+    wr = state["writing"]
+    for r in curriculum.WRITING_RUNGS:
+        if r["chars"] and any(not (wr.get(h) and wr[h]["best"] <= 1)
+                              for h, _, _ in r["chars"]):
+            return r["id"]
+    return "W2"
+
+
+def _did_today(state, *kinds):
+    t = _today()
+    return any(a["date"] == t and a["kind"] in kinds for a in state["activity"])
+
+
+def recommend(state):
+    """The next best activity, deterministically, so 'what should I do?' always
+    has one answer. Order: know where you stand → clear the debt (reviews) →
+    balance the diet (reading/listening/writing) → new material (lesson)."""
+    due = len(due_words(state))
+    if state.get("placement") is None and len(state["vocab"]) < 5:
+        return {"id": "placement", "title": "Take the placement test",
+                "why": "Five minutes to find your level, so lessons start in the right place."}
+    if due > 0:
+        return {"id": "review", "title": f"Review {min(due, 8)} due word{'s' if due > 1 else ''}",
+                "why": "Reviews come first, always — the schedule only works if you clear it."}
+    last_practice = next((a["kind"] for a in reversed(state["activity"])
+                          if a["kind"] in ("reading", "listening")), None)
+    if not _did_today(state, "reading", "listening"):
+        kind = "listening" if last_practice == "reading" else "reading"
+        return {"id": kind, "title": f"{kind.capitalize()} practice",
+                "why": f"No {kind} yet today — a few minutes keeps both channels moving."}
+    if not _did_today(state, "lesson", "turn"):
+        return {"id": "lesson", "title": "Continue the lesson",
+                "why": "Reviews are clear and you've practiced — time for new material with the tutor."}
+    return {"id": "writing", "title": "Writing practice",
+            "why": "Everything else is done today — a few minutes at the pad locks characters in."}
+
+
 # ── Plan & sessions ────────────────────────────────────────────────────────────
 def update_plan(state, focus=None, next_up=None, notes=None):
     if focus is not None:
@@ -158,12 +246,23 @@ def snapshot(state):
     acc = tone_accuracy(state)
     acc_line = "  ".join(
         f"T{t}:{v['correct']}/{v['total']}" for t, v in acc.items() if v["total"])
+    st = curriculum.STAGES[speaking_stage(state)]
     lines = [
         f"Date {_today()} · streak {streak(state)} day(s) · "
         f"{len(state['vocab'])} words tracked · {len(state['sessions'])} sessions so far",
+        f"App-derived position: Speaking {st['id']} ({st['name']}, {st['hsk']}) · "
+        f"Writing {writing_rung(state)}"
+        + (f" · placed by test {state['placement']['date']}" if state.get("placement") else ""),
         f"Plan focus: {state['plan']['focus'] or '(none set — set one!)'}",
         f"Next up: {'; '.join(state['plan']['next_up']) or '(empty)'}",
     ]
+    if state["settings"].get("immersion"):
+        lines.append("Immersion mode is ON — he asked for as much Mandarin as his level allows.")
+    recent = [a for a in state["activity"] if a["kind"] != "turn"][-3:]
+    if recent:
+        lines.append("Recent self-study in the app: " + "; ".join(
+            f"{a['date']} {a['kind']}" + (f" {a['score']}" if a.get("score") else "")
+            + (f" ({a['detail']})" if a.get("detail") else "") for a in recent))
     if state["plan"]["notes"]:
         lines.append(f"Notes to self: {state['plan']['notes']}")
     if due:
@@ -181,6 +280,7 @@ def snapshot(state):
 def api_view(state):
     """Everything the UI panels render."""
     t = _today()
+    stage_idx = speaking_stage(state)
     return {
         "plan": state["plan"],
         "vocab": sorted(state["vocab"], key=lambda w: (w["due"] > t, w["added"]),
@@ -190,11 +290,18 @@ def api_view(state):
             "days_total": len(state["days"]),
             "sessions": len(state["sessions"]),
             "words_total": len(state["vocab"]),
+            "learned": learned_count(state),
             "due_count": len(due_words(state)),
             "tone_accuracy": tone_accuracy(state),
             "confusions": top_confusions(state),
         },
         "sessions": state["sessions"][::-1][:10],
         "writing": state["writing"],
+        "settings": state["settings"],
+        "position": {"stage_idx": stage_idx,
+                     "stage": curriculum.STAGES[stage_idx]["id"],
+                     "writing_rung": writing_rung(state),
+                     "placement": state.get("placement")},
+        "recommend": recommend(state),
         "today": t,
     }

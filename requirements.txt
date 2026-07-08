@@ -8,3 +8,4 @@ openai>=2,<3
 praat-parselmouth
 scikit-learn
 numpy
+pypdf

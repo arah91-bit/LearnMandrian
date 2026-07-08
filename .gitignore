@@ -8,3 +8,5 @@ spike/judge_out.txt
 spike/judge_err.txt
 spike/gemini_verdicts.json
 .api_alert_stamps.json
+/refernce/
+library_index.json

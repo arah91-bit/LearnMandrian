@@ -33,6 +33,8 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+import curriculum
+import ingest
 import learner
 from api_alerts import page_if_billing
 from tone_ear import ToneEar
@@ -374,7 +376,7 @@ def _brain_once(provider, state, system, convo):
     return _run_brain_claude(state, system, convo)
 
 
-def _brain(user_text, ear_line):
+def _brain(user_text, ear_line, activity="turn"):
     convo = _load_convo()
     convo.append({"role": "user", "content": f"{user_text}\n\n{ear_line}"})
     chain = [BRAIN_PROVIDER] + [p for p in BRAIN_CHAIN if p != BRAIN_PROVIDER]
@@ -394,6 +396,7 @@ def _brain(user_text, ear_line):
             last_err = e
             continue
         reply = _EMOJI_RE.sub("", reply).strip() or reply
+        learner.record_activity(state, activity)
         learner.save(state)
         convo.append({"role": "assistant", "content": reply})
         _save_convo(convo)
@@ -404,6 +407,160 @@ def _brain(user_text, ear_line):
 @app.get("/api/state")
 async def get_state():
     return learner.api_view(learner.load())
+
+
+# ── The deterministic learning systems ─────────────────────────────────────────
+# Everything below runs without the tutor brain: the curriculum map, grammar
+# unlocks, self-serve SRS reviews, the placement test, and reading/listening
+# practice are plain functions over the same learner state the brain maintains,
+# so a dead API key never blocks studying — and the brain hears about all of it
+# through the state snapshot (learner.record_activity).
+
+@app.get("/api/curriculum")
+def curriculum_view():
+    state = learner.load()
+    idx = learner.speaking_stage(state)
+    learned = learner.learned_count(state)
+    stages = []
+    for s in curriculum.STAGES:
+        nxt = (curriculum.STAGES[s["idx"] + 1]["threshold"]
+               if s["idx"] + 1 < len(curriculum.STAGES) else None)
+        if s["idx"] < idx:
+            prog = 1.0
+        elif s["idx"] > idx:
+            prog = 0.0
+        else:
+            span = (nxt - s["threshold"]) if nxt else 1
+            prog = min(1.0, max(0.0, (learned - s["threshold"]) / max(1, span)))
+        stages.append({**s, "state": "done" if s["idx"] < idx else
+                       "current" if s["idx"] == idx else "locked",
+                       "progress": round(prog, 3)})
+    return {"stages": stages,
+            "grammar": curriculum.grammar_for(idx),
+            "writing_rungs": curriculum.WRITING_RUNGS,
+            "position": {"stage_idx": idx, "stage": curriculum.STAGES[idx]["id"],
+                         "writing_rung": learner.writing_rung(state),
+                         "learned": learned,
+                         "placement": state.get("placement")}}
+
+
+@app.get("/api/review/queue")
+def review_queue():
+    state = learner.load()
+    due = learner.due_words(state)
+    return {"due": due[:20], "total": len(due)}
+
+
+@app.post("/api/review/grade")
+def review_grade(payload: dict):
+    state = learner.load()
+    hanzi, grade = str(payload.get("hanzi", "")), int(payload.get("grade", -1))
+    if grade not in (0, 1, 2, 3, 4, 5):
+        raise HTTPException(400, "grade must be 0-5")
+    msg = learner.grade_word(state, hanzi, grade)
+    if "not in the vocab list" in msg:
+        raise HTTPException(404, msg)
+    learner.record_activity(state, "review", hanzi, grade)
+    learner.touch_day(state)
+    learner.save(state)
+    return {"result": msg, "remaining": len(learner.due_words(state)),
+            "recommend": learner.recommend(state)}
+
+
+@app.post("/api/placement/start")
+def placement_start():
+    return {"items": curriculum.placement_public(),
+            "pass_per_stage": curriculum.PASS_PER_STAGE}
+
+
+@app.post("/api/placement/submit")
+def placement_submit(payload: dict):
+    answers = payload.get("answers") or {}
+    result = curriculum.score_placement(
+        {str(k): int(v) for k, v in answers.items()})
+    state = learner.load()
+    learner.set_placement(state, result)
+    learner.record_activity(state, "placement", result["stage"])
+    learner.touch_day(state)
+    learner.save(state)
+    return {**result, "recommend": learner.recommend(state)}
+
+
+@app.get("/api/practice/{kind}")
+def practice_items(kind: str, stage: str = ""):
+    if kind not in ("reading", "listening"):
+        raise HTTPException(404, "unknown practice kind")
+    state = learner.load()
+    sid = stage if stage in {s["id"] for s in curriculum.STAGES} \
+        else curriculum.STAGES[learner.speaking_stage(state)]["id"]
+    gen = curriculum.reading_practice if kind == "reading" \
+        else curriculum.listening_practice
+    return gen(state["vocab"], sid)
+
+
+@app.post("/api/practice/result")
+def practice_result(payload: dict):
+    kind = payload.get("kind")
+    if kind not in ("reading", "listening"):
+        raise HTTPException(400, "unknown practice kind")
+    right, total = int(payload.get("right", 0)), int(payload.get("total", 0))
+    state = learner.load()
+    learner.record_activity(state, kind, str(payload.get("stage", "")),
+                            f"{right}/{total}")
+    learner.touch_day(state)
+    learner.save(state)
+    return {"ok": True, "recommend": learner.recommend(state)}
+
+
+@app.get("/api/settings")
+def settings_get():
+    return learner.load()["settings"]
+
+
+@app.post("/api/settings")
+def settings_set(payload: dict):
+    state = learner.load()
+    out = learner.update_settings(state, payload)
+    learner.save(state)
+    return out
+
+
+@app.get("/api/recommend")
+def recommend_view():
+    return learner.recommend(learner.load())
+
+
+# ── Textbook shelf (safe metadata only — see ingest.py) ────────────────────────
+@app.get("/api/library")
+def library_view():
+    index = ingest.load_index()
+    if not index:
+        return {"books": [], "note": "no index yet — run ingest.py on the host "
+                                     "against the refernce/ shelf"}
+    return {"generated": index["generated"],
+            "books": [{**{k: b[k] for k in
+                          ("file", "title", "authors", "isbn13", "format",
+                           "pages", "hsk_volumes", "stages")},
+                       "n_sections": len(b["sections"]),
+                       "sections": b["sections"][:40]}
+                      for b in index["books"]]}
+
+
+@app.get("/api/library/search")
+def library_search(q: str = ""):
+    return {"hits": ingest.search(ingest.load_index(), q)}
+
+
+@app.post("/api/library/reindex")
+def library_reindex():
+    src = HERE / "refernce"
+    if not src.is_dir():
+        raise HTTPException(409, "refernce/ shelf not visible here — run "
+                                 "`python ingest.py` on the host instead")
+    index = ingest.scan(src)
+    (DATA / "library_index.json").write_text(
+        json.dumps(index, ensure_ascii=False, indent=1))
+    return {"ok": True, "books": len(index["books"])}
 
 
 # ── Speech synthesis: Heart + Mandarin, stitched ───────────────────────────────
@@ -653,7 +810,7 @@ def lesson_go():
         "[lesson button] Phil tapped the continue-lesson button. Skip greetings "
         "and don't ask what he wants — say in one short line what today's work "
         "is, then start it (due reviews first). End with something for him to say.",
-        "[button press — no audio this turn]")
+        "[button press — no audio this turn]", activity="lesson")
     return {"reply": reply}
 
 
