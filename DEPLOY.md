@@ -25,7 +25,15 @@ fast-forwards at ship time.
   **prod needs the same dir populated** (rerun the script pointed at prod's
   data dir, or copy the folder over). `REF_VOICE=0` disables it (falls back to
   TTS everywhere). The corpus itself is git- and docker-ignored (305 MB).
-- After editing `app.py`/`tone_ear.py`/`api_alerts.py`: `docker restart languagetutor-test`
+- **Deterministic learning systems** (2026-07-08): `curriculum.py` (stages,
+  grammar unlocks, placement, practice generators) and `ingest.py` (textbook
+  shelf metadata index) are bind-mounted like the other modules. Reviews,
+  placement and practice run with NO API keys — only the tutor brain, STT and
+  TTS need them. The shelf index is built on the HOST (the container can't see
+  `refernce/`): `python ingest.py` with `DATA_DIR` pointed at the data mount;
+  rerun it when the shelf changes. It stores titles/TOCs/page numbers only —
+  never book text — and lives in `/data` (git-ignored), per the textbook rules.
+- After editing `app.py`/`learner.py`/`curriculum.py`/`ingest.py`/`tone_ear.py`/`api_alerts.py`: `docker restart languagetutor-test`
   — single-file bind mounts go stale on atomic-rename saves. `static/` and
   `tutor_prompt.md` hot-reload (dir mount / uvicorn --reload-include).
 - **Same gotcha applies to `/srv/docker/Caddyfile`** (single-file mount into `caddy`):

@@ -204,16 +204,156 @@
   #resetzone{margin-top:6px;text-align:center}
   #reset{background:none;border:0;color:var(--muted);font-size:12px;
          text-decoration:underline}
+
+  /* learn tab */
+  #rec-card{border-color:var(--brand)}
+  #rec-card .rec-title{font-size:19px;line-height:1.35}
+  #rec-card .rec-why{color:var(--dim);font-size:13px;margin-top:4px}
+  #rec-go{margin-top:12px;background:var(--brand);border:0;color:#fff;
+        border-radius:10px;padding:9px 18px;font-size:14px}
+  #rec-go:hover{background:var(--brand-hot)}
+  .stage{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);
+        align-items:baseline}
+  .stage:last-child{border-bottom:0}
+  .stage .sid{font-variant-numeric:tabular-nums;font-weight:650;min-width:30px}
+  .stage.done .sid{color:var(--t1)} .stage.current .sid{color:var(--brand-hot)}
+  .stage.locked{opacity:.55}
+  .stage .smain{flex:1;min-width:0}
+  .stage .sname{font-size:15px}
+  .stage .sname .szh{font-family:var(--hanzi);margin-right:6px}
+  .stage .shsk{color:var(--muted);font-size:12px;margin-left:8px}
+  .stage .scan{color:var(--dim);font-size:13px;margin-top:2px}
+  .stage .sdesc{color:var(--dim);font-size:13px;margin-top:4px}
+  .stage .sbar{height:5px;border-radius:4px;background:var(--raised);
+        overflow:hidden;margin-top:7px}
+  .stage .sbar i{display:block;height:100%;background:var(--brand-hot);border-radius:4px}
+  .stage .sst{flex:none;font-size:12px;color:var(--muted)}
+  .stage.done .sst{color:var(--t1)}
+  .prow{display:flex;gap:8px;flex-wrap:wrap}
+  .pbtn{background:var(--raised);border:1px solid var(--line);color:var(--ink);
+        border-radius:10px;padding:9px 14px;font-size:14px}
+  .pbtn:hover{border-color:var(--brand-hot)}
+  .pbtn .zh{font-family:var(--hanzi);margin-right:6px;color:var(--brand-hot)}
+  .gstage{margin:10px 0 4px;font-size:11px;color:var(--muted);letter-spacing:.12em;
+        text-transform:uppercase}
+  .gpoint{display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+        background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);
+        padding:9px 2px;font-size:14px}
+  .gpoint:hover{color:var(--brand-hot)}
+  .gpoint .gpat{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap;
+        overflow:hidden;text-overflow:ellipsis;max-width:40%}
+  .gpoint.locked{color:var(--muted);pointer-events:none}
+  .gpoint.locked .gpat{font-size:11px}
+  #libq{width:100%;font:inherit;padding:8px 12px;border-radius:10px;margin-top:10px;
+        border:1px solid var(--line);background:var(--raised);color:var(--ink)}
+  .book{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--dim)}
+  .book b{color:var(--ink);font-weight:600}
+  .libhit{padding:6px 0;font-size:13px;color:var(--dim);border-bottom:1px solid var(--line)}
+
+  /* modals (quiz / review / grammar / settings) */
+  .modal{position:fixed;inset:0;background:rgba(10,13,16,.92);display:none;
+        align-items:center;justify-content:center;z-index:60;padding:16px}
+  .modal.on{display:flex}
+  .mbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+        width:min(480px,94vw);max-height:88vh;overflow-y:auto;padding:16px 18px}
+  .mtop{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .mtop .mtitle{font-weight:600}
+  .mtop .mprog{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+  .mtop .mclose{margin-left:auto;background:none;border:0;color:var(--muted);
+        font-size:22px;line-height:1;padding:2px 6px}
+  .qz-passage{font-family:var(--hanzi);font-size:22px;line-height:1.7;margin:6px 0}
+  .qz-py{color:var(--dim);font-size:14px;margin-bottom:6px}
+  .qz-word{font-family:var(--hanzi);font-size:44px;text-align:center;margin:10px 0}
+  .qz-prompt{font-size:15px;margin:10px 0 12px}
+  .qz-choices{display:flex;flex-direction:column;gap:8px}
+  .qz-choices button{background:var(--raised);border:1px solid var(--line);
+        color:var(--ink);border-radius:10px;padding:10px 14px;text-align:left;font-size:15px}
+  .qz-choices button:hover{border-color:var(--brand-hot)}
+  .qz-choices button.right{border-color:var(--t1);color:var(--t1)}
+  .qz-choices button.wrong{border-color:var(--rec);color:var(--rec)}
+  .qz-play{display:block;margin:14px auto;width:64px;height:64px;border-radius:50%;
+        border:0;background:radial-gradient(circle at 32% 30%,var(--brand-hot),var(--brand) 70%);
+        color:#fff;font-size:22px}
+  .qz-note{color:var(--muted);font-size:13px;text-align:center;margin-top:10px;min-height:17px}
+  .qz-score{font-size:19px;text-align:center;margin:16px 0 6px}
+  .rv-front{font-family:var(--hanzi);font-size:56px;text-align:center;margin:18px 0 6px}
+  .rv-back{text-align:center;margin:4px 0 14px}
+  .rv-back .py{font-size:18px;font-weight:600}
+  .rv-back .en{color:var(--dim)}
+  .rv-grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .rv-grades button{border:1px solid var(--line);background:var(--raised);
+        color:var(--ink);border-radius:10px;padding:10px 4px;font-size:13px}
+  .rv-grades .g1{color:var(--rec)} .rv-grades .g5{color:var(--t1)}
+  .rv-reveal{display:block;margin:0 auto 8px;background:var(--brand);border:0;
+        color:#fff;border-radius:10px;padding:10px 22px;font-size:14px}
+  .setrow{display:flex;align-items:center;gap:10px;padding:11px 0;
+        border-bottom:1px solid var(--line)}
+  .setrow:last-child{border-bottom:0}
+  .setrow .sl{flex:1}
+  .setrow .sl .sub{color:var(--muted);font-size:12px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{background:none;border:0;color:var(--dim);padding:6px 12px;font-size:13px}
+  .seg button.on{background:var(--brand);color:#fff}
+  .sw{width:44px;height:26px;border-radius:14px;background:var(--raised);
+        border:1px solid var(--line);position:relative;flex:none}
+  .sw i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+        background:var(--muted);transition:all .15s}
+  .sw.on{background:var(--brand)} .sw.on i{left:20px;background:#fff}
+  #gearbtn{margin-left:12px;background:none;border:0;color:var(--muted);
+        font-size:17px;padding:2px 4px}
+  #gearbtn:hover{color:var(--ink)}
+  .gx{padding:9px 0;border-bottom:1px solid var(--line)}
+  .gx:last-child{border-bottom:0}
+  .gx .zh{font-family:var(--hanzi);font-size:20px}
+  .gx .py{color:var(--dim);font-size:13px}
+  .gx .en{font-size:13px}
+  .gpattern{background:var(--raised);border-radius:9px;padding:8px 12px;
+        font-size:14px;color:var(--brand-hot);margin:8px 0}
+  [data-say]{cursor:pointer}
+  body.immersion nav .en, body.immersion .word .en, body.immersion .gx .en,
+  body.immersion .wordsub{display:none}
 </style>
 </head>
 <body>
 <header>
   <span class="wordmark">语伴</span><span class="wordsub">Language&nbsp;Tutor</span>
   <span id="streak"></span>
+  <button id="gearbtn" aria-label="settings">⚙</button>
 </header>
 
 <main>
-  <section id="view-talk" class="view on">
+  <section id="view-learn" class="view on">
+    <div class="card" id="rec-card">
+      <h2>Up next</h2>
+      <div class="rec-title empty">Loading…</div>
+      <div class="rec-why"></div>
+      <button id="rec-go" hidden></button>
+    </div>
+    <div class="card" id="map-card">
+      <h2>The path — hello to fluency</h2>
+      <div class="stages"><div class="empty">Loading the map…</div></div>
+    </div>
+    <div class="card" id="practice-card">
+      <h2>Practice</h2>
+      <div class="prow">
+        <button class="pbtn" data-practice="reading"><span class="zh">读</span>Reading</button>
+        <button class="pbtn" data-practice="listening"><span class="zh">听</span>Listening</button>
+        <button class="pbtn" id="place-btn"><span class="zh">测</span>Placement test</button>
+      </div>
+    </div>
+    <div class="card" id="grammar-card">
+      <h2>Grammar — unlocks as you climb</h2>
+      <div class="glist"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="card" id="library-card" hidden>
+      <h2>Textbook shelf — private index</h2>
+      <div class="books"></div>
+      <input id="libq" placeholder="search titles and chapters…" autocomplete="off">
+      <div class="libhits"></div>
+    </div>
+  </section>
+
+  <section id="view-talk" class="view">
     <div id="chat"></div>
     <div id="dock">
       <div id="meter" aria-hidden="true"></div>
@@ -293,8 +433,43 @@
   </div>
 </div>
 
+<div id="qzModal" class="modal">
+  <div class="mbox">
+    <div class="mtop"><span class="mtitle" id="qzTitle"></span>
+      <span class="mprog" id="qzProg"></span>
+      <button class="mclose" id="qzClose" aria-label="close">×</button></div>
+    <div id="qzBody"></div>
+  </div>
+</div>
+
+<div id="rvModal" class="modal">
+  <div class="mbox">
+    <div class="mtop"><span class="mtitle">复习 — review</span>
+      <span class="mprog" id="rvProg"></span>
+      <button class="mclose" id="rvClose" aria-label="close">×</button></div>
+    <div id="rvBody"></div>
+  </div>
+</div>
+
+<div id="gramModal" class="modal">
+  <div class="mbox">
+    <div class="mtop"><span class="mtitle" id="gramTitle"></span>
+      <button class="mclose" id="gramClose" aria-label="close">×</button></div>
+    <div id="gramBody"></div>
+  </div>
+</div>
+
+<div id="setModal" class="modal">
+  <div class="mbox">
+    <div class="mtop"><span class="mtitle">Settings</span>
+      <button class="mclose" id="setClose" aria-label="close">×</button></div>
+    <div id="setBody"></div>
+  </div>
+</div>
+
 <nav>
-  <button data-view="talk" class="on"><span class="zh">说</span><span class="en">Talk</span></button>
+  <button data-view="learn" class="on"><span class="zh">学</span><span class="en">Learn</span></button>
+  <button data-view="talk"><span class="zh">说</span><span class="en">Talk</span></button>
   <button data-view="plan"><span class="zh">课</span><span class="en">Plan</span></button>
   <button data-view="words"><span class="zh">词</span><span class="en">Words</span>
     <span class="badge" id="due-badge" hidden></span></button>
@@ -622,8 +797,9 @@ const WR_MAX_REPS = 6;
 const WR_PHASES = ['watch the strokes', 'trace it', 'now from memory'];
 const isHz = c => c >= '㐀' && c <= '鿿';
 
-/* the writing ladder (mirrors curriculum.md W0-W3) */
-const LADDER = [
+/* the writing ladder — hydrated from /api/curriculum (single source of truth);
+   this literal is only the first-paint fallback */
+let LADDER = [
   {id:'W0', title:'Strokes', desc:'The five basic strokes and their order, learned through the simplest real words.',
    chars:[['一','yī','one'],['二','èr','two'],['三','sān','three'],['十','shí','ten'],
           ['人','rén','person'],['大','dà','big'],['小','xiǎo','small'],['口','kǒu','mouth'],
@@ -921,12 +1097,41 @@ $('#reset').onclick = async ()=>{
   statusEl.textContent = 'fresh start — tap the orb and say hello';
 };
 
+/* ── display settings ──
+   Server-persisted (survive devices); S mirrors state.settings. tone_display
+   swaps tone marks for numbers (mǎi -> mai3); immersion hides English via a
+   body class; hanzi/pinyin toggles shape every word row and example line. */
+let S = {show_hanzi:true, show_pinyin:true, tone_display:'marks', immersion:false};
+const PY_MARKS = {'ā':['a',1],'á':['a',2],'ǎ':['a',3],'à':['a',4],
+  'ē':['e',1],'é':['e',2],'ě':['e',3],'è':['e',4],
+  'ī':['i',1],'í':['i',2],'ǐ':['i',3],'ì':['i',4],
+  'ō':['o',1],'ó':['o',2],'ǒ':['o',3],'ò':['o',4],
+  'ū':['u',1],'ú':['u',2],'ǔ':['u',3],'ù':['u',4],
+  'ǖ':['ü',1],'ǘ':['ü',2],'ǚ':['ü',3],'ǜ':['ü',4]};
+function pyNum(py){
+  return py.split(/\s+/).map(syl=>{
+    let tone = 0, out = '';
+    for (const ch of syl){
+      const m = PY_MARKS[ch.toLowerCase()];
+      if (m){ tone = m[1]; out += ch === ch.toLowerCase() ? m[0] : m[0].toUpperCase(); }
+      else out += ch;
+    }
+    return out + (tone || '');
+  }).join(' ');
+}
+function pyDisp(p){ return S.tone_display === 'numbers' ? pyNum(p) : p; }
+function applySettings(s){
+  S = s || S;
+  document.body.classList.toggle('immersion', !!S.immersion);
+}
+
 /* ── state panels ── */
 function pinyinHTML(pinyin, tones){
+  if (!S.show_pinyin) return '';
   const parts = pinyin.split(/[\s']+/);
   if (parts.length === tones.length)
-    return parts.map((p,i)=>`<span class="t${tones[i]||5}">${p}</span>`).join(' ');
-  return `<span class="t${tones[0]||5}">${pinyin}</span>`;
+    return parts.map((p,i)=>`<span class="t${tones[i]||5}">${pyDisp(p)}</span>`).join(' ');
+  return `<span class="t${tones[0]||5}">${pyDisp(pinyin)}</span>`;
 }
 function wordRow(w, today){
   const due = w.due <= today;
@@ -935,8 +1140,11 @@ function wordRow(w, today){
     : `<span class="next-rev">review in ${Math.max(1,Math.round(
         (new Date(w.due)-new Date(today))/864e5))}d</span>`;
   const mastery = Math.min(100, Math.round(w.interval/21*100));
-  return `<div class="word"><span class="hz">${w.hanzi}</span>
-    <span class="mid"><div class="py">${pinyinHTML(w.pinyin,w.tones)}</div>
+  const showHz = S.show_hanzi || !S.show_pinyin;   // never blank both out
+  const py = pinyinHTML(w.pinyin, w.tones);
+  return `<div class="word">${showHz ? `<span class="hz" data-say="${w.hanzi}"
+    title="tap to hear">${w.hanzi}</span>` : ''}
+    <span class="mid">${py ? `<div class="py">${py}</div>` : ''}
     <div class="en">${w.english}</div></span>
     <span class="right">${right}<div class="mastery"><i style="width:${mastery}%"></i></div>
     </span><button class="wr" data-hz="${w.hanzi}" data-py="${w.pinyin}"
@@ -945,9 +1153,24 @@ function wordRow(w, today){
 let lastState = null;
 function render(s){
   lastState = s;
+  applySettings(s.settings);
   const st = s.stats;
   $('#streak').innerHTML = st.streak > 0
     ? `<b>${st.streak}</b> day streak` : 'no streak yet — today counts';
+
+  /* learn: the recommendation card — the one answer to "what now?" */
+  if (s.recommend){
+    const r = s.recommend;
+    const t = $('#rec-card .rec-title');
+    t.classList.remove('empty'); t.textContent = r.title;
+    $('#rec-card .rec-why').textContent = r.why;
+    const go = $('#rec-go');
+    go.hidden = false;
+    go.textContent = ({placement:'测 — take the test', review:'复习 — review now',
+      reading:'读 — start reading', listening:'听 — start listening',
+      lesson:'继续 — continue the lesson', writing:'写 — to the pad'})[r.id] || 'start';
+    go.dataset.act = r.id;
+  }
 
   /* plan */
   if (s.plan.focus){ const f = $('#focus-card .focus');
@@ -969,8 +1192,9 @@ function render(s){
   const rest = s.vocab.filter(w=>w.due > s.today);
   const dueCard = $('#due-card');
   dueCard.hidden = !due.length;
-  if (due.length) dueCard.querySelector('.list').innerHTML =
-    due.map(w=>wordRow(w,s.today)).join('');
+  if (due.length) dueCard.innerHTML = `<h2>Due now</h2>
+    <button id="rvbtn" class="pbtn"><span class="zh">复习</span>review ${due.length} now</button>
+    <div class="list">` + due.map(w=>wordRow(w,s.today)).join('') + `</div>`;
   $('#all-words-card .list').innerHTML = rest.length
     ? rest.slice().reverse().map(w=>wordRow(w,s.today)).join('')
     : (due.length ? '<div class="empty">Everything else is scheduled ahead.</div>'
@@ -1042,7 +1266,313 @@ async function loadState(){
     if (r.ok) render(await r.json());
   }catch(e){ /* panels just stay as they are */ }
 }
+
+/* ── curriculum: the map, grammar unlocks, writing ladder hydration ── */
+let CURR = null;
+async function loadCurriculum(){
+  try{
+    const r = await fetch('/api/curriculum');
+    if (!r.ok) return;
+    CURR = await r.json();
+    if (CURR.writing_rungs) LADDER = CURR.writing_rungs;
+    renderMap(); renderGrammar();
+    if (lastState) render(lastState);        // ladder tiles pick up fresh rungs
+  }catch(e){}
+}
+function renderMap(){
+  $('#map-card .stages').innerHTML = CURR.stages.map(st=>{
+    const bar = st.state === 'current'
+      ? `<div class="sbar"><i style="width:${Math.round(st.progress*100)}%"></i></div>` : '';
+    const desc = st.state === 'current' ? `<div class="sdesc">${st.desc}</div>` : '';
+    const mark = st.state === 'done' ? '✓' : st.state === 'current' ? 'here' : '';
+    return `<div class="stage ${st.state}"><span class="sid">${st.id}</span>
+      <span class="smain"><span class="sname"><span class="szh">${st.zh}</span>
+      ${st.name}<span class="shsk">${st.hsk}</span></span>
+      <div class="scan">${st.can_do}</div>${desc}${bar}</span>
+      <span class="sst">${mark}</span></div>`;
+  }).join('');
+}
+function renderGrammar(){
+  const byStage = {};
+  CURR.grammar.forEach(g=>{ (byStage[g.stage] = byStage[g.stage]||[]).push(g); });
+  $('#grammar-card .glist').innerHTML = Object.keys(byStage).map(sid=>{
+    const st = CURR.stages.find(s=>s.id===sid);
+    return `<div class="gstage">${sid} — ${st ? st.name : ''}</div>` +
+      byStage[sid].map(g=> g.unlocked
+        ? `<button class="gpoint" data-gram="${g.id}">${g.name}
+             <span class="gpat">${g.pattern}</span></button>`
+        : `<button class="gpoint locked">${g.name}
+             <span class="gpat">unlocks at ${g.stage}</span></button>`).join('');
+  }).join('');
+}
+function openGrammar(id){
+  const g = CURR.grammar.find(x=>x.id===id);
+  if (!g) return;
+  $('#gramTitle').textContent = g.name;
+  $('#gramBody').innerHTML = `<div class="gpattern">${g.pattern}</div>
+    <p style="margin:8px 0 12px">${g.explain}</p>` +
+    g.examples.map(([zh,py,en])=>`<div class="gx">
+      <div class="zh" data-say="${zh}" title="tap to hear">${zh} <span class="t5"
+        style="font-size:13px">▶</span></div>
+      ${S.show_pinyin ? `<div class="py">${pyDisp(py)}</div>` : ''}
+      <div class="en">${en}</div></div>`).join('');
+  $('#gramModal').classList.add('on');
+}
+
+/* ── quiz engine — one modal drives placement, reading and listening ──
+   Practice items arrive with answers and grade locally (one aggregate result
+   goes back); placement sends the answer sheet to be scored server-side. */
+let qz = null;
+function openQuiz(kind, title, items, stage){
+  qz = {kind, items, stage, idx:0, right:0, answers:{}, lock:false};
+  $('#qzTitle').textContent = title;
+  $('#qzModal').classList.add('on');
+  qzBuild();
+}
+function qzBuild(){
+  const it = qz.items[qz.idx];
+  $('#qzProg').textContent = `${qz.idx+1} / ${qz.items.length}`;
+  let body = '';
+  if (qz.kind === 'listening'){
+    body += `<button class="qz-play" data-say="${it.zh}" aria-label="play">▶</button>`;
+  } else if (it.kind === 'passage'){
+    body += `<div class="qz-passage" data-say="${it.zh}">${it.zh}</div>`
+          + (it.py && S.show_pinyin ? `<div class="qz-py">${pyDisp(it.py)}</div>` : '');
+  } else if (it.zh){
+    body += `<div class="qz-word" data-say="${it.zh}">${it.zh}</div>`;
+  } else if (it.py){
+    body += `<div class="qz-word">${pyDisp(it.py)}</div>`;
+  }
+  body += `<div class="qz-prompt">${it.prompt}</div>
+    <div class="qz-choices">` + it.choices.map((c,i)=>
+      `<button data-pick="${i}">${c}</button>`).join('') + `</div>
+    <div class="qz-note"></div>`;
+  $('#qzBody').innerHTML = body;
+  if (qz.kind === 'listening') wrSay(it.zh);        // speak it on arrival
+}
+function qzPick(i){
+  if (qz.lock) return;
+  const it = qz.items[qz.idx];
+  if (qz.kind === 'placement'){                     // a test: no per-item reveal
+    qz.answers[it.id] = i;
+    qzAdvance(250);
+    return;
+  }
+  qz.lock = true;
+  const btns = $('#qzBody').querySelectorAll('.qz-choices button');
+  btns[it.a].classList.add('right');
+  if (i === it.a){ qz.right++; }
+  else btns[i].classList.add('wrong');
+  if (qz.kind === 'listening')                      // reveal what was said
+    $('#qzBody .qz-note').textContent = `${it.zh}${S.show_pinyin ? ' · '+pyDisp(it.py) : ''}`;
+  qzAdvance(i === it.a ? 700 : 1600);
+}
+function qzAdvance(ms){
+  setTimeout(()=>{
+    if (!qz) return;
+    qz.lock = false;
+    if (qz.idx < qz.items.length - 1){ qz.idx++; qzBuild(); }
+    else qzFinish();
+  }, ms);
+}
+async function qzFinish(){
+  const q = qz;
+  let html = '';
+  try{
+    if (q.kind === 'placement'){
+      const r = await fetch('/api/placement/submit',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({answers:q.answers})});
+      const j = await r.json();
+      html = `<div class="qz-score">You're at <b>${j.stage}</b> — ${j.stage_name}</div>
+        <div class="qz-note">Lessons, grammar unlocks and practice now start from there.</div>`;
+    } else {
+      const r = await fetch('/api/practice/result',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kind:q.kind, right:q.right, total:q.items.length,
+                             stage:q.stage})});
+      const j = await r.json();
+      html = `<div class="qz-score">${q.right} / ${q.items.length}</div>
+        <div class="qz-note">${j.recommend ? 'Up next: '+j.recommend.title : ''}</div>`;
+    }
+  }catch(e){ html = `<div class="qz-note">couldn't save the result: ${e.message}</div>`; }
+  $('#qzBody').innerHTML = html +
+    `<button class="rv-reveal" id="qzDone" style="margin-top:14px">done</button>`;
+  $('#qzProg').textContent = '';
+  loadState(); loadCurriculum();
+}
+async function startPractice(kind){
+  try{
+    const r = await fetch('/api/practice/'+kind);
+    const j = await r.json();
+    if (!r.ok || !j.items.length){ alert('no practice items yet'); return; }
+    openQuiz(kind, kind === 'reading' ? '读 — reading practice' : '听 — listening practice',
+             j.items, j.stage);
+  }catch(e){ alert('practice failed to load: '+e.message); }
+}
+async function startPlacement(){
+  try{
+    const r = await fetch('/api/placement/start',{method:'POST'});
+    const j = await r.json();
+    openQuiz('placement', '测 — placement test', j.items, null);
+  }catch(e){ alert('placement failed to load: '+e.message); }
+}
+
+/* ── SRS review session — self-serve flashcards over the same schedule the
+   tutor grades into; Again/Hard/Good/Easy map to SM-2 grades 1/3/4/5 ── */
+let rv = null;
+async function openReview(){
+  const r = await fetch('/api/review/queue');
+  const j = await r.json();
+  if (!j.due.length){ alert('nothing due — the schedule is clear'); return; }
+  rv = {queue: j.due.slice(0, 8), idx: 0, flipped: false};
+  $('#rvModal').classList.add('on');
+  rvBuild();
+}
+function rvBuild(){
+  const w = rv.queue[rv.idx];
+  $('#rvProg').textContent = `${rv.idx+1} / ${rv.queue.length}`;
+  const front = S.show_hanzi || !S.show_pinyin ? w.hanzi : pyDisp(w.pinyin);
+  $('#rvBody').innerHTML = `
+    <div class="rv-front" data-say="${w.hanzi}" title="tap to hear">${front}</div>
+    ${rv.flipped ? `<div class="rv-back">
+        ${S.show_pinyin ? `<div class="py">${pinyinHTML(w.pinyin, w.tones)}</div>` : ''}
+        <div class="en">${w.english}</div></div>
+      <div class="rv-grades">
+        <button class="g1" data-grade="1">again</button>
+        <button data-grade="3">hard</button>
+        <button data-grade="4">good</button>
+        <button class="g5" data-grade="5">easy</button></div>`
+      : `<button class="rv-reveal" id="rvFlip">show</button>
+         <div class="qz-note">say it out loud first — retrieval first, always</div>`}`;
+}
+async function rvGrade(g){
+  const w = rv.queue[rv.idx];
+  try{
+    await fetch('/api/review/grade',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({hanzi:w.hanzi, grade:g})});
+  }catch(e){}
+  rv.flipped = false;
+  if (rv.idx < rv.queue.length - 1){ rv.idx++; rvBuild(); }
+  else {
+    $('#rvBody').innerHTML = `<div class="qz-score">复习完了 — done</div>
+      <div class="qz-note">the schedule decides when you see each again</div>
+      <button class="rv-reveal" id="rvDone" style="margin-top:14px">close</button>`;
+    $('#rvProg').textContent = '';
+    loadState(); loadCurriculum();
+  }
+}
+
+/* ── settings ── */
+function renderSettings(){
+  const seg = (k, opts) => `<span class="seg">` + opts.map(([v,l]) =>
+    `<button data-set="${k}" data-val="${v}" class="${S[k]===v?'on':''}">${l}</button>`)
+    .join('') + `</span>`;
+  const sw = k => `<button class="sw ${S[k]?'on':''}" data-set="${k}"
+    role="switch" aria-checked="${!!S[k]}"><i></i></button>`;
+  $('#setBody').innerHTML = `
+    <div class="setrow"><span class="sl">汉字 Hanzi<div class="sub">show characters
+      on word cards</div></span>${sw('show_hanzi')}</div>
+    <div class="setrow"><span class="sl">拼音 Pinyin<div class="sub">show
+      romanization</div></span>${sw('show_pinyin')}</div>
+    <div class="setrow"><span class="sl">Tones<div class="sub">mǎi or mai3</div></span>
+      ${seg('tone_display', [['marks','marks'],['numbers','numbers']])}</div>
+    <div class="setrow"><span class="sl">沉浸 Immersion<div class="sub">hide English
+      where you can manage without it; the tutor leans into Mandarin</div></span>
+      ${sw('immersion')}</div>`;
+}
+async function setSetting(k, v){
+  try{
+    const r = await fetch('/api/settings',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({[k]:v})});
+    const fresh = await r.json();
+    if (lastState) lastState.settings = fresh;   // or render() re-applies the stale copy
+    applySettings(fresh);
+  }catch(e){}
+  renderSettings();
+  if (lastState) render(lastState);
+  if (CURR) renderGrammar();
+}
+
+/* ── textbook shelf (private, metadata-only) ── */
+async function loadLibrary(){
+  try{
+    const r = await fetch('/api/library');
+    const j = await r.json();
+    if (!j.books || !j.books.length) return;
+    $('#library-card').hidden = false;
+    $('#library-card .books').innerHTML = j.books.map(b=>
+      `<div class="book"><b>${b.title}</b> — ${b.authors || 'unknown'}
+       · ${b.format}${b.pages ? ' · '+b.pages+'pp' : ''}
+       ${b.hsk_volumes.length ? ' · HSK '+b.hsk_volumes.join('–') : ''}</div>`).join('');
+  }catch(e){}
+}
+let libT = 0;
+$('#libq').oninput = e=>{
+  clearTimeout(libT);
+  libT = setTimeout(async ()=>{
+    const q = e.target.value.trim();
+    const box = $('#library-card .libhits');
+    if (!q){ box.innerHTML = ''; return; }
+    const r = await fetch('/api/library/search?q='+encodeURIComponent(q));
+    const j = await r.json();
+    box.innerHTML = j.hits.map(h=>`<div class="libhit">${h.section || h.book}
+      ${h.page ? ' — p.'+h.page : ''}<br><span style="font-size:11px;color:var(--muted)">
+      ${h.book}</span></div>`).join('') || '<div class="libhit">no matches</div>';
+  }, 250);
+};
+
+/* ── wiring: recommendation actions, practice buttons, modals, audio taps ── */
+function goTab(name){ document.querySelector(`nav button[data-view="${name}"]`).click(); }
+function runRec(id){
+  if (id === 'placement') startPlacement();
+  else if (id === 'review') openReview();
+  else if (id === 'reading' || id === 'listening') startPractice(id);
+  else if (id === 'writing'){ goTab('write'); startWritingLesson(); }
+  else if (id === 'lesson'){ goTab('talk'); $('#golesson').click(); }
+}
+$('#rec-go').onclick = e=>runRec(e.target.dataset.act);
+$('#place-btn').onclick = startPlacement;
+document.querySelectorAll('[data-practice]').forEach(b=>
+  b.onclick = ()=>startPractice(b.dataset.practice));
+$('#grammar-card').addEventListener('click', e=>{
+  const b = e.target.closest('[data-gram]');
+  if (b) openGrammar(b.dataset.gram);
+});
+$('#view-words').addEventListener('click', e=>{
+  if (e.target.closest('#rvbtn')) openReview();
+});
+$('#qzBody').addEventListener('click', e=>{
+  const p = e.target.closest('[data-pick]');
+  if (p){ qzPick(+p.dataset.pick); return; }
+  if (e.target.closest('#qzDone')){ qz = null; $('#qzModal').classList.remove('on'); }
+});
+$('#rvBody').addEventListener('click', e=>{
+  if (e.target.closest('#rvFlip')){ rv.flipped = true; rvBuild(); return; }
+  const g = e.target.closest('[data-grade]');
+  if (g){ rvGrade(+g.dataset.grade); return; }
+  if (e.target.closest('#rvDone')){ rv = null; $('#rvModal').classList.remove('on'); }
+});
+$('#setBody').addEventListener('click', e=>{
+  const b = e.target.closest('[data-set]');
+  if (!b) return;
+  const k = b.dataset.set;
+  setSetting(k, 'val' in b.dataset ? b.dataset.val : !S[k]);
+});
+$('#qzClose').onclick = ()=>{ qz = null; $('#qzModal').classList.remove('on'); };
+$('#rvClose').onclick = ()=>{ rv = null; $('#rvModal').classList.remove('on'); loadState(); };
+$('#gramClose').onclick = ()=>$('#gramModal').classList.remove('on');
+$('#setClose').onclick = ()=>$('#setModal').classList.remove('on');
+$('#gearbtn').onclick = ()=>{ renderSettings(); $('#setModal').classList.add('on'); };
+document.addEventListener('click', e=>{
+  const s = e.target.closest('[data-say]');
+  if (s && !e.target.closest('.wr')) wrSay(s.dataset.say);
+});
+
 loadState();
+loadCurriculum();
+loadLibrary();
 
 /* installable app: register the worker (network-only; exists for install +
    force-updating stale home-screen shells on each deploy) */
