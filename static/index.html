@@ -271,6 +271,9 @@
   .qz-choices button:hover{border-color:var(--brand-hot)}
   .qz-choices button.right{border-color:var(--t1);color:var(--t1)}
   .qz-choices button.wrong{border-color:var(--rec);color:var(--rec)}
+  .qz-input{width:100%;font:inherit;font-size:20px;padding:10px 12px;
+        border-radius:10px;border:1px solid var(--line);background:var(--raised);
+        color:var(--ink);margin:4px 0 10px}
   .qz-play{display:block;margin:14px auto;width:64px;height:64px;border-radius:50%;
         border:0;background:radial-gradient(circle at 32% 30%,var(--brand-hot),var(--brand) 70%);
         color:#fff;font-size:22px}
@@ -353,6 +356,9 @@
   #rdGloss b{font-family:var(--hanzi);font-size:18px;margin-right:6px;font-weight:600}
   .rd-en p{color:var(--dim);font-size:14px;border-left:3px solid var(--line);
         padding-left:10px;margin:10px 0}
+  .rd-listen{display:flex;align-items:center;gap:10px;padding:9px 0;
+        border-bottom:1px solid var(--line);color:var(--dim)}
+  .rd-listen .n{font-variant-numeric:tabular-nums;color:var(--ink)}
   #rdPy{background:var(--raised);border:1px solid var(--line);color:var(--dim);
         border-radius:8px;padding:3px 10px;font-size:12px;margin-left:auto}
   #rdPy.on{color:#fff;background:var(--brand);border-color:var(--brand)}
@@ -386,6 +392,7 @@
       <div class="prow">
         <button class="pbtn" data-practice="reading"><span class="zh">读</span>Reading</button>
         <button class="pbtn" data-practice="listening"><span class="zh">听</span>Listening</button>
+        <button class="pbtn" data-practice="dictation"><span class="zh">写</span>Dictation</button>
         <button class="pbtn" id="cando-btn"><span class="zh">会</span>Can-do check</button>
         <button class="pbtn" id="place-btn"><span class="zh">测</span>Placement test</button>
       </div>
@@ -471,6 +478,8 @@
       <h2>The four tones — your accuracy</h2>
       <div class="rows"><div class="empty">Say some words in a drill and your
       per-tone accuracy shows up here.</div></div>
+      <button class="pbtn" id="tone-drill-btn" style="margin-top:10px">
+        <span class="zh">声</span>Tone drill</button>
     </div>
     <div class="card" id="confusion-card" hidden>
       <h2>Most common mix-ups</h2><div class="list"></div>
@@ -1313,7 +1322,8 @@ function render(s){
     go.hidden = false;
     go.textContent = ({placement:'测 — take the test', review:'复习 — review now',
       read:'读 — open the text', reading:'读 — start reading',
-      listening:'听 — start listening', lesson:'继续 — continue the lesson',
+      listening:'听 — start listening', dictation:'写 — start dictation',
+      lesson:'继续 — continue the lesson',
       writing:'写 — to the pad', can_do:'会 — start check'})[r.id] || 'start';
     go.dataset.act = r.id;
   }
@@ -1480,6 +1490,30 @@ function qzBuild(){
   const it = qz.items[qz.idx];
   $('#qzProg').textContent = `${qz.idx+1} / ${qz.items.length}`;
   let body = '';
+  if (qz.kind === 'dictation'){
+    body = `<button class="qz-play" data-say="${esc(it.audio)}" aria-label="play">▶</button>
+      <div class="qz-prompt">${esc(it.prompt || 'Type what you hear.')}</div>
+      <input class="qz-input" id="qzText" autocomplete="off" lang="zh-Hans"
+        placeholder="输入汉字">
+      <button class="rv-reveal" id="qzTextGo">check</button>
+      <div class="qz-note"></div>`;
+    $('#qzBody').innerHTML = body;
+    wrSay(it.audio);
+    setTimeout(()=>{ const inp = $('#qzText'); if (inp) inp.focus(); }, 50);
+    return;
+  }
+  if (qz.kind === 'tone_drill'){
+    const tones = (it.expected || []).map(t=>`T${t}`).join(' ');
+    body = `<div class="qz-word" data-say="${esc(it.hanzi)}">${esc(it.hanzi || tones)}</div>
+      ${it.pinyin ? `<div class="qz-py" style="text-align:center">${esc(pyDisp(it.pinyin))}</div>` : ''}
+      <div class="qz-prompt">Say it once. Target: ${esc(tones)}</div>
+      <button class="qz-play" data-say="${esc(it.hanzi)}" aria-label="play">▶</button>
+      <button class="rv-reveal" id="toneRecGo">record</button>
+      <div class="qz-note"></div>`;
+    $('#qzBody').innerHTML = body;
+    if (it.hanzi) wrSay(it.hanzi);
+    return;
+  }
   if (qz.kind === 'listening' || it.kind === 'listening'){
     body += `<button class="qz-play" data-say="${esc(it.zh)}" aria-label="play">▶</button>`;
   } else if (it.kind === 'passage'){
@@ -1546,6 +1580,17 @@ async function qzFinish(){
            <div class="qz-note">Your app position can now lift to ${esc(j.lift_stage)}.</div>`
         : `<div class="qz-score">${j.right} / ${j.total} — targeted review</div>
            <div class="qz-note">${rem || 'Review the missed skill and try again.'}</div>`;
+    } else if (q.kind === 'dictation'){
+      const r = await fetch('/api/dictation/submit',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({stage:q.stage, answers:q.answers})});
+      const j = await r.json();
+      const rem = (j.remediation || []).map(x=>esc(x.label || x.detail || x.kind)).join('<br>');
+      html = `<div class="qz-score">${j.right} / ${j.total}</div>
+        <div class="qz-note">${j.passed ? 'Dictation complete.' : (rem || 'Review and try again.')}</div>`;
+    } else if (q.kind === 'tone_drill'){
+      html = `<div class="qz-score">Tone drill complete</div>
+        <div class="qz-note">Your detailed tone history is updated.</div>`;
     } else {
       const r = await fetch('/api/practice/result',{method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -1563,12 +1608,76 @@ async function qzFinish(){
 }
 async function startPractice(kind){
   try{
+    if (kind === 'dictation'){
+      const r = await fetch('/api/dictation/start');
+      const j = await r.json();
+      if (!r.ok || !j.items.length){ alert(j.detail || 'no dictation items yet'); return; }
+      openQuiz('dictation', '写 — dictation', j.items, j.stage);
+      return;
+    }
     const r = await fetch('/api/practice/'+kind);
     const j = await r.json();
     if (!r.ok || !j.items.length){ alert('no practice items yet'); return; }
     openQuiz(kind, kind === 'reading' ? '读 — reading practice' : '听 — listening practice',
              j.items, j.stage);
   }catch(e){ alert('practice failed to load: '+e.message); }
+}
+
+function qzTextSubmit(){
+  if (!qz || qz.lock || qz.kind !== 'dictation') return;
+  const it = qz.items[qz.idx];
+  qz.answers[it.id] = ($('#qzText') && $('#qzText').value || '').trim();
+  qzAdvance(150);
+}
+
+let toneDrillRec = null, toneDrillStream = null, toneDrillChunks = [];
+async function recordToneDrill(){
+  if (!qz || qz.kind !== 'tone_drill' || qz.lock) return;
+  const it = qz.items[qz.idx];
+  qz.lock = true;
+  const note = $('#qzBody .qz-note');
+  try{
+    toneDrillStream = await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:true, noiseSuppression:true}});
+    toneDrillChunks = [];
+    toneDrillRec = new MediaRecorder(toneDrillStream);
+    toneDrillRec.ondataavailable = e=>{ if (e.data.size) toneDrillChunks.push(e.data); };
+    toneDrillRec.onstop = async ()=>{
+      toneDrillStream.getTracks().forEach(t=>t.stop());
+      const blob = new Blob(toneDrillChunks, {type:toneDrillRec.mimeType || 'audio/webm'});
+      const fd = new FormData();
+      fd.append('audio', blob, 'tone.webm');
+      fd.append('target_hanzi', it.hanzi || '');
+      fd.append('target_pinyin', it.pinyin || '');
+      fd.append('expected', JSON.stringify(it.expected || []));
+      try{
+        const r = await fetch('/api/tone_drill/submit',{method:'POST', body:fd});
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || r.status);
+        const heard = (j.heard || []).map(t=>'T'+t).join(' ') || 'nothing scoreable';
+        note.textContent = 'heard: '+heard;
+        setTimeout(()=>{ qz.lock = false; qzAdvance(450); }, 800);
+      }catch(e){
+        note.textContent = 'could not score: '+e.message;
+        qz.lock = false;
+      }
+    };
+    toneDrillRec.start();
+    note.textContent = 'recording...';
+    setTimeout(()=>{ if (toneDrillRec && toneDrillRec.state === 'recording') toneDrillRec.stop(); }, 2200);
+  }catch(e){
+    note.textContent = 'mic error: '+(e.name || e.message);
+    qz.lock = false;
+  }
+}
+
+async function startToneDrill(){
+  try{
+    const r = await fetch('/api/tone_drill/start');
+    const j = await r.json();
+    if (!r.ok || !j.items.length){ alert(j.detail || 'no tone targets yet'); return; }
+    openQuiz('tone_drill', '声 — tone drill', j.items, null);
+  }catch(e){ alert('tone drill failed to load: '+e.message); }
 }
 async function startPlacement(){
   try{
@@ -1701,7 +1810,20 @@ function rdBuild(){
       <div class="rwgrid">` + t.new_words.map(w=>`<div class="rword" data-say="${esc(w.hanzi)}">
         <span class="h">${esc(w.hanzi)}</span><span class="p">${esc(pyDisp(w.pinyin))}</span>
         <span class="e">${esc(w.english)}</span></div>`).join('') + `</div>
-      <button class="rv-reveal" id="rdStart" style="margin-top:14px">开始 — start reading</button>`;
+      <div class="prow" style="margin-top:14px">
+        <button class="pbtn" id="rdListenFirst"><span class="zh">听</span>listen first</button>
+        <button class="rv-reveal" id="rdStart">开始 — start reading</button></div>`;
+    return;
+  }
+  if (rd.phase === 'listen'){
+    $('#rdBody').innerHTML = `<p class="rintro">Listen sentence by sentence first.
+      Reveal the text when the sound is no longer a blur.</p>` + t.sentences.map((s,i)=>{
+      const zh = s.t.map(x=>x.z).join('');
+      return `<div class="rd-listen"><span class="n">${i+1}</span>
+        <button class="rplay" data-say="${esc(zh)}" aria-label="play">▶</button>
+        <span>sentence ${i+1}</span></div>`;
+    }).join('') + `<button class="rv-reveal" id="rdRevealText" style="margin-top:14px">
+      reveal text</button>`;
     return;
   }
   if (rd.phase === 'read'){
@@ -1774,6 +1896,8 @@ $('#rdBody').addEventListener('click', e=>{
     wrSay(tok.dataset.z);
     return;
   }
+  if (e.target.closest('#rdListenFirst')){ startReaderListenFirst(); return; }
+  if (e.target.closest('#rdRevealText')){ rd.phase = 'read'; rdBuild(); return; }
   if (e.target.closest('#rdStart')){ rd.phase = 'read'; rdBuild(); return; }
   if (e.target.closest('#rdToQuiz')){ rd.phase = 'quiz'; rd.qIdx = 0; rd.right = 0;
     $('#rdGloss').hidden = true; rdBuild(); return; }
@@ -1784,6 +1908,15 @@ $('#rdBody').addEventListener('click', e=>{
   }
   if (e.target.closest('#rdDone')){ rd = null; $('#rdModal').classList.remove('on'); }
 });
+async function startReaderListenFirst(){
+  if (!rd) return;
+  try{
+    await fetch('/api/reader/listen_first',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:rd.t.id})});
+  }catch(e){}
+  rd.phase = 'listen';
+  rdBuild();
+}
 $('#rdPy').onclick = ()=>{ if (rd){ rd.showPy = !rd.showPy; rdBuild(); } };
 $('#rdClose').onclick = ()=>{ rd = null; $('#rdModal').classList.remove('on'); };
 
@@ -1863,7 +1996,7 @@ function runRec(id){
     const tid = lastState && lastState.recommend && lastState.recommend.tid;
     if (tid) openReaderText(tid);
   }
-  else if (id === 'reading' || id === 'listening') startPractice(id);
+  else if (id === 'reading' || id === 'listening' || id === 'dictation') startPractice(id);
   else if (id === 'can_do') startCanDo();
   else if (id === 'writing'){ goTab('write'); startWritingLesson(); }
   else if (id === 'lesson'){ goTab('talk'); $('#golesson').click(); }
@@ -1871,6 +2004,7 @@ function runRec(id){
 $('#rec-go').onclick = e=>runRec(e.target.dataset.act);
 $('#place-btn').onclick = startPlacement;
 $('#cando-btn').onclick = ()=>startCanDo();
+$('#tone-drill-btn').onclick = startToneDrill;
 document.querySelectorAll('[data-practice]').forEach(b=>
   b.onclick = ()=>startPractice(b.dataset.practice));
 $('#grammar-card').addEventListener('click', e=>{
@@ -1881,9 +2015,17 @@ $('#view-words').addEventListener('click', e=>{
   if (e.target.closest('#rvbtn')) openReview();
 });
 $('#qzBody').addEventListener('click', e=>{
+  if (e.target.closest('#qzTextGo')){ qzTextSubmit(); return; }
+  if (e.target.closest('#toneRecGo')){ recordToneDrill(); return; }
   const p = e.target.closest('[data-pick]');
   if (p){ qzPick(+p.dataset.pick); return; }
   if (e.target.closest('#qzDone')){ qz = null; $('#qzModal').classList.remove('on'); }
+});
+$('#qzBody').addEventListener('keydown', e=>{
+  if (e.key === 'Enter' && e.target.closest('#qzText')){
+    e.preventDefault();
+    qzTextSubmit();
+  }
 });
 $('#rvBody').addEventListener('click', e=>{
   if (e.target.closest('#rvFlip')){ rv.flipped = true; rvBuild(); return; }

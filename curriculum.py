@@ -19,6 +19,8 @@ Layout:
   reading_practice()/listening_practice() — self-graded practice generators
 """
 import random
+import re
+import unicodedata
 
 # ── Speaking stages ────────────────────────────────────────────────────────────
 # "threshold": learned-word count (see learner.learned_count) at which the app
@@ -1293,6 +1295,96 @@ def score_can_do(sid, answers):
             "lift_stage_idx": lift_idx, "lift_stage": STAGES[lift_idx]["id"],
             "right": right, "total": total, "ratio": round(ratio, 3),
             "passed": passed, "critical_missed": len(critical_missed),
+            "missed": missed,
+            "remediation": [m["remediation"] for m in missed]}
+
+
+# ── Dictation ─────────────────────────────────────────────────────────────────
+DICTATION_BANK = {
+    "S1": [
+        {"id": "S1-dict-hello", "audio": "你好。", "answers": ["你好"],
+         "prompt": "Type the Hanzi you hear.", "skill": "greetings",
+         "remediate": {"kind": "reader", "detail": "r1-1", "label": "R1 hello text"}},
+        {"id": "S1-dict-name", "audio": "我叫安娜。", "answers": ["我叫安娜"],
+         "prompt": "Type the sentence.", "skill": "self-introduction",
+         "remediate": {"kind": "grammar", "detail": "jiao-name", "label": "叫 name pattern"}},
+        {"id": "S1-dict-good", "audio": "我很好。", "answers": ["我很好"],
+         "prompt": "Type the sentence.", "skill": "basic adjective sentence",
+         "remediate": {"kind": "grammar", "detail": "hen-adjectives", "label": "很 adjective pattern"}},
+    ],
+    "S2": [
+        {"id": "S2-dict-tea", "audio": "我要喝茶。", "answers": ["我要喝茶"],
+         "prompt": "Type the sentence.", "skill": "ordering",
+         "remediate": {"kind": "reader", "detail": "r2-2", "label": "R2 wanting tea text"}},
+        {"id": "S2-dict-school", "audio": "我在学校。", "answers": ["我在学校"],
+         "prompt": "Type the sentence.", "skill": "location",
+         "remediate": {"kind": "grammar", "detail": "zai-location", "label": "在 location pattern"}},
+        {"id": "S2-dict-like", "audio": "你喜欢什么？", "answers": ["你喜欢什么"],
+         "prompt": "Type the question.", "skill": "likes",
+         "remediate": {"kind": "reader", "detail": "r2-4", "label": "R2 liking text"}},
+    ],
+    "S3": [
+        {"id": "S3-dict-work", "audio": "昨天我工作了。", "answers": ["昨天我工作了"],
+         "prompt": "Type the sentence.", "skill": "past narration",
+         "remediate": {"kind": "grammar", "detail": "le-completed", "label": "了 completed action"}},
+        {"id": "S3-dict-weather", "audio": "明天可能下雨。", "answers": ["明天可能下雨"],
+         "prompt": "Type the sentence.", "skill": "weather",
+         "remediate": {"kind": "grammar", "detail": "keneng", "label": "可能 maybe pattern"}},
+        {"id": "S3-dict-directions", "audio": "往左走，再往右走。",
+         "answers": ["往左走再往右走", "往左走然后往右走"],
+         "prompt": "Type the directions. A valid alternate connector is accepted.",
+         "skill": "directions",
+         "remediate": {"kind": "reader", "detail": "r3-5", "label": "R3 directions dialogue"}},
+    ],
+    "S4": [
+        {"id": "S4-dict-finish", "audio": "我吃完了。", "answers": ["我吃完了"],
+         "prompt": "Type the sentence.", "skill": "result complements",
+         "remediate": {"kind": "grammar", "detail": "result-complements", "label": "result complements"}},
+        {"id": "S4-dict-because", "audio": "因为我累，所以我想睡觉。",
+         "answers": ["因为我累所以我想睡觉"],
+         "prompt": "Type the sentence.", "skill": "connectors",
+         "remediate": {"kind": "grammar", "detail": "connectors-1", "label": "connector pairs"}},
+        {"id": "S4-dict-sequence", "audio": "我先吃饭，然后去工作。",
+         "answers": ["我先吃饭然后去工作", "我先吃饭再去工作"],
+         "prompt": "Type the sequence. A valid alternate connector is accepted.",
+         "skill": "sequencing",
+         "remediate": {"kind": "grammar", "detail": "xian-ranhou", "label": "先 / 然后 sequence"}},
+    ],
+}
+
+_DICT_PUNCT = re.compile(r"[\s\.,!?;:'\"`~，。！？；：、“”‘’（）()\[\]{}<>《》\-—_]+")
+
+
+def normalize_dictation_answer(text):
+    text = unicodedata.normalize("NFKC", str(text or "")).strip()
+    return _DICT_PUNCT.sub("", text).lower()
+
+
+def dictation_items(sid):
+    return list(DICTATION_BANK.get(sid, []))
+
+
+def dictation_public(sid):
+    return [{k: v for k, v in it.items() if k not in ("answers", "remediate")}
+            for it in dictation_items(sid)]
+
+
+def score_dictation(sid, answers):
+    items = dictation_items(sid)
+    if not items:
+        raise KeyError(sid)
+    right, missed = 0, []
+    for it in items:
+        got = normalize_dictation_answer((answers or {}).get(it["id"], ""))
+        valid = {normalize_dictation_answer(a) for a in it["answers"]}
+        if got in valid:
+            right += 1
+        else:
+            missed.append({"id": it["id"], "skill": it["skill"],
+                           "remediation": it["remediate"]})
+    total = len(items)
+    return {"stage": sid, "right": right, "total": total,
+            "passed": right == total,
             "missed": missed,
             "remediation": [m["remediation"] for m in missed]}
 

@@ -210,6 +210,23 @@ def test_practice_prefers_learner_vocab():
     assert any(it["zh"] == "猫" for it in out["items"])
 
 
+def test_dictation_normalizes_punctuation_and_accepts_alternates():
+    public = curriculum.dictation_public("S3")
+    assert public and all("answers" not in it for it in public)
+    assert curriculum.normalize_dictation_answer(" 往左走，再往右走。 ") == "往左走再往右走"
+    items = curriculum.dictation_items("S3")
+    full = {it["id"]: it["answers"][0] for it in items}
+    result = curriculum.score_dictation("S3", full)
+    assert result["passed"] is True
+    alt = dict(full)
+    alt["S3-dict-directions"] = "往左走，然后往右走。"
+    assert curriculum.score_dictation("S3", alt)["passed"] is True
+    alt["S3-dict-work"] = "今天我工作了"
+    result = curriculum.score_dictation("S3", alt)
+    assert result["passed"] is False
+    assert result["remediation"][0]["label"]
+
+
 # ── Learner: stage, settings, recommendations ──────────────────────────────────
 def _learn_words(s, n):
     for i in range(n):

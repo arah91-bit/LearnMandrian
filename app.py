@@ -29,7 +29,7 @@ import anthropic
 import httpx
 import openai
 from concurrent.futures import ThreadPoolExecutor
-from fastapi import FastAPI, Request, UploadFile, File, HTTPException
+from fastapi import FastAPI, Request, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -227,6 +227,25 @@ def _webm_to_wav(blob):
         raise HTTPException(400, "could not decode audio: "
                             + r.stderr.decode()[-200:])
     return dst
+
+
+def _audio_debug_path(kind, suffix):
+    root = learner.user_dir() / "audio_debug" / kind / time.strftime("%Y-%m-%d")
+    root.mkdir(parents=True, exist_ok=True)
+    return root / f"{int(time.time() * 1000)}{suffix}"
+
+
+def _rel_user_path(path):
+    try:
+        return str(path.relative_to(learner.user_dir()))
+    except ValueError:
+        return str(path)
+
+
+def _save_debug_audio(kind, blob, suffix=".webm"):
+    path = _audio_debug_path(kind, suffix)
+    path.write_bytes(blob)
+    return path
 
 
 def _stt_local(wav):
@@ -666,6 +685,119 @@ def practice_result(payload: dict):
     return out
 
 
+@app.get("/api/dictation/start")
+def dictation_start(stage: str = ""):
+    state = learner.load()
+    sid = stage if stage in {s["id"] for s in curriculum.STAGES} \
+        else curriculum.STAGES[learner.speaking_stage(state)]["id"]
+    items = curriculum.dictation_public(sid)
+    if not items:
+        raise HTTPException(404, "no dictation items for this stage yet")
+    return {"stage": sid, "items": items}
+
+
+@app.post("/api/dictation/submit")
+def dictation_submit(payload: dict):
+    sid = str(payload.get("stage", ""))
+    if sid not in {s["id"] for s in curriculum.STAGES}:
+        raise HTTPException(400, "unknown stage")
+    try:
+        answers = {str(k): str(v) for k, v in (payload.get("answers") or {}).items()}
+    except (TypeError, ValueError, AttributeError):
+        raise HTTPException(400, "answers must map item ids to text")
+    try:
+        result = curriculum.score_dictation(sid, answers)
+    except KeyError:
+        raise HTTPException(404, "no dictation items for this stage yet")
+    with learner.txn() as state:
+        learner.record_activity(state, "dictation", sid,
+                                f"{result['right']}/{result['total']}")
+        learner.touch_day(state)
+        out = {**result, "recommend": learner.recommend(state)}
+    return out
+
+
+@app.post("/api/reader/listen_first")
+def reader_listen_first(payload: dict):
+    tid = str(payload.get("id", ""))
+    t = reader.text_payload(tid)
+    if not t:
+        raise HTTPException(404, "no such text")
+    with learner.txn() as state:
+        lvl = next(lv for lv in reader.LEVELS if lv["id"] == t["level"])
+        if lvl["idx"] > reader.open_through(state, learner.speaking_stage(state)):
+            raise HTTPException(403, "that level is still locked")
+        learner.record_activity(state, "listen_first", tid)
+        learner.touch_day(state)
+        out = {"ok": True, "recommend": learner.recommend(state)}
+    return out
+
+
+def _fallback_tone_targets(state, n=4):
+    targets = learner.tone_drill_targets(state, n)
+    if targets:
+        return targets
+    pool = []
+    for sid in ("S0", "S1", "S2"):
+        for hz, py, en, tones in curriculum.SEEDS.get(sid, []):
+            if len(tones) == 1 and tones[0] in (1, 2, 3, 4):
+                pool.append({"hanzi": hz, "pinyin": py, "english": en,
+                             "expected": tones, "heard": [], "audio": "",
+                             "source": "fallback"})
+    return pool[:n]
+
+
+@app.get("/api/tone_drill/start")
+def tone_drill_start():
+    state = learner.load()
+    items = []
+    for i, t in enumerate(_fallback_tone_targets(state)):
+        expected = [int(x) for x in (t.get("expected") or []) if int(x) in (1, 2, 3, 4)]
+        if not expected:
+            continue
+        items.append({"id": f"tone-{i}", "hanzi": t.get("hanzi", ""),
+                      "pinyin": t.get("pinyin", ""), "expected": expected,
+                      "heard_before": t.get("heard", []),
+                      "source": t.get("source", "")})
+    if not items:
+        raise HTTPException(404, "no tone targets available")
+    return {"items": items}
+
+
+@app.post("/api/tone_drill/submit")
+def tone_drill_submit(audio: UploadFile = File(...), target_hanzi: str = Form(""),
+                      target_pinyin: str = Form(""), expected: str = Form("[]")):
+    blob = audio.file.read(_MAX_AUDIO + 1)
+    if len(blob) > _MAX_AUDIO:
+        raise HTTPException(413, "audio too large")
+    try:
+        expected_tones = [int(x) for x in json.loads(expected)][:8]
+    except (TypeError, ValueError, json.JSONDecodeError):
+        raise HTTPException(400, "expected must be a JSON tone list")
+    raw_path = _save_debug_audio("tone_drill", blob, ".webm")
+    wav = _webm_to_wav(blob)
+    try:
+        wav_path = raw_path.with_suffix(".wav")
+        wav_path.write_bytes(pathlib.Path(wav).read_bytes())
+        ear = EAR.analyze(wav)
+        heard = [int(s["tone"]) for s in ear.get("syllables", [])][:len(expected_tones)]
+        with learner.txn() as state:
+            learner.log_tone_attempt(state, expected_tones, heard,
+                                     hanzi=target_hanzi, pinyin=target_pinyin,
+                                     audio_path=_rel_user_path(raw_path),
+                                     source="tone_drill")
+            hits = sum(1 for e, h in zip(expected_tones, heard) if e == h)
+            learner.record_activity(state, "tone_drill", target_hanzi or target_pinyin,
+                                    f"{hits}/{len(expected_tones)}")
+            learner.touch_day(state)
+            out = {"ok": True, "heard": heard, "tones": ear,
+                   "audio": _rel_user_path(raw_path),
+                   "recommend": learner.recommend(state)}
+    finally:
+        os.unlink(wav)
+    return out
+
+
 @app.get("/api/settings")
 def settings_get():
     return learner.load()["settings"]
@@ -920,8 +1052,10 @@ def turn(audio: UploadFile = File(...)):
     blob = audio.file.read(_MAX_AUDIO + 1)
     if len(blob) > _MAX_AUDIO:
         raise HTTPException(413, "audio too large")
+    raw_path = _save_debug_audio("turn", blob, ".webm")
     wav = _webm_to_wav(blob)
     try:
+        raw_path.with_suffix(".wav").write_bytes(pathlib.Path(wav).read_bytes())
         heard = _stt(wav)
         if not heard:
             return {"heard": "", "reply": None, "tones": None,
