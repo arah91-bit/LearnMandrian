@@ -77,11 +77,10 @@ def test_reading_passages_have_valid_answer_indices():
 def test_beginner_arc_never_runs_out_of_material():
     """Can't be stuck between levels: the deterministic content available by
     the end of stage k (cumulative seeds + reader words) must cover the entry
-    threshold of stage k+1. Asserted through leaving S3 for Phase 1; PLAN.md WS1
-    extends this through S4 as the database grows — move the cutoff up, never
-    down."""
+    threshold of stage k+1. Phase 2 extends this through leaving S4 — move the
+    cutoff up, never down."""
     import reader
-    covered_through = "S3"
+    covered_through = "S4"
     vocab = set()
     for k, s in enumerate(curriculum.STAGES[:-1]):
         vocab |= {w[0] for w in curriculum.SEEDS.get(s["id"], [])}

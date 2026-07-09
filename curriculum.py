@@ -479,6 +479,92 @@ SEEDS["S3"] += [
     ("眼镜", "yǎn jìng", "glasses", [3, 4]), ("衬衫", "chèn shān", "shirt", [4, 1]),
 ]
 
+# Phase 2 S4 scale-up: controlled collocations from known stage topics. These
+# are S4-friendly chunks ("work plan", "library address", "friend's opinion")
+# whose pinyin/tones are built from checked parts, not inferred at runtime.
+_PARTS = {hz: (py, en, tones)
+          for words in SEEDS.values() for hz, py, en, tones in words}
+_PARTS.update({
+    "计划": ("jì huà", "plan", [4, 4]),
+    "安排": ("ān pái", "arrangement", [1, 2]),
+    "目标": ("mù biāo", "goal", [4, 1]),
+    "过程": ("guò chéng", "process", [4, 2]),
+    "任务": ("rèn wu", "task", [4, 5]),
+    "活动": ("huó dòng", "activity", [2, 4]),
+    "习惯": ("xí guàn", "habit", [2, 4]),
+    "原因": ("yuán yīn", "reason", [2, 1]),
+    "资料": ("zī liào", "materials; data", [1, 4]),
+    "消息": ("xiāo xi", "news; message", [1, 5]),
+    "地址": ("dì zhǐ", "address", [4, 3]),
+    "门口": ("mén kǒu", "entrance", [2, 3]),
+    "里面": ("lǐ miàn", "inside", [3, 4]),
+    "路线": ("lù xiàn", "route", [4, 4]),
+    "位置": ("wèi zhi", "location", [4, 5]),
+    "服务": ("fú wù", "service", [2, 4]),
+    "客人": ("kè rén", "guest; customer", [4, 2]),
+    "同事": ("tóng shì", "coworker", [2, 4]),
+    "父母": ("fù mǔ", "parents", [4, 3]),
+    "学习者": ("xué xí zhě", "learner", [2, 2, 3]),
+    "报名": ("bào míng", "to sign up", [4, 2]),
+    "通知": ("tōng zhī", "notice; to notify", [1, 1]),
+    "预定": ("yù dìng", "to reserve", [4, 4]),
+    "复印": ("fù yìn", "to copy; photocopy", [4, 4]),
+    "付款": ("fù kuǎn", "to pay", [4, 3]),
+    "请假": ("qǐng jià", "to ask for leave", [3, 4]),
+    "加班": ("jiā bān", "to work overtime", [1, 1]),
+})
+
+
+def _combo(prefix, suffix, gloss=None):
+    p_py, p_en, p_tones = _PARTS[prefix]
+    s_py, s_en, s_tones = _PARTS[suffix]
+    return (prefix + suffix, f"{p_py} {s_py}",
+            gloss or f"{p_en} {s_en}", p_tones + s_tones)
+
+
+def _s4_phase_c_words():
+    groups = [
+        (["工作", "学习", "旅行", "会议", "生活", "交通", "教育", "科技", "文化",
+          "运动", "旅游", "复习", "考试", "练习"],
+         ["计划", "安排", "时间", "经验", "机会", "目标", "过程", "结果", "问题",
+          "办法", "习惯", "任务"]),
+        (["城市", "公司", "银行", "超市", "图书馆", "医院", "学校", "办公室",
+          "公园", "饭馆", "商店", "机场", "火车站"],
+         ["地址", "门口", "里面", "附近", "地图", "路线", "位置", "环境", "服务",
+          "通知"]),
+        (["朋友", "家人", "同学", "老师", "学生", "医生", "孩子", "父母", "经理",
+          "服务员", "客人", "同事", "学习者"],
+         ["意见", "故事", "生日", "礼物", "帮助", "关系", "问题", "习惯", "计划",
+          "选择"]),
+        (["春天", "夏天", "秋天", "冬天", "天气", "健康", "身体", "心", "眼睛",
+          "耳朵", "腿", "脸"],
+         ["计划", "问题", "习惯", "原因", "办法", "结果", "活动", "消息"]),
+        (["面包", "蛋糕", "水果", "咖啡", "茶", "米饭", "面条", "衣服", "鞋",
+          "帽子", "电脑", "手机"],
+         ["价格", "选择", "问题", "服务", "付款", "预定", "通知", "资料"]),
+        (["会议", "考试", "旅行", "活动", "生日", "节日", "工作", "课程",
+          "作业", "问题", "资料", "消息"],
+         ["报名", "通知", "准备", "结束", "完成", "复印", "请假", "加班"]),
+    ]
+    seen = {w[0] for words in SEEDS.values() for w in words}
+    out = []
+    for prefixes, suffixes in groups:
+        for prefix in prefixes:
+            for suffix in suffixes:
+                if prefix not in _PARTS or suffix not in _PARTS or prefix == suffix:
+                    continue
+                word = _combo(prefix, suffix)
+                if word[0] in seen:
+                    continue
+                seen.add(word[0])
+                out.append(word)
+                if len(out) >= 360:
+                    return out
+    return out
+
+
+SEEDS["S4"] += _s4_phase_c_words()
+
 # ── Grammar points ─────────────────────────────────────────────────────────────
 # Unlocked when the learner's speaking stage reaches "stage". Explanations and
 # examples are original; glosses in examples cover any word beyond the seeds.
