@@ -43,6 +43,26 @@ def test_reading_passages_have_valid_answer_indices():
                 assert 0 <= q["a"] < len(q["choices"])
 
 
+def test_beginner_arc_never_runs_out_of_material():
+    """Can't be stuck between levels: the deterministic content available by
+    the end of stage k (cumulative seeds + reader words) must cover the entry
+    threshold of stage k+1. Asserted through entering S3 today; PLAN.md WS1
+    extends this through S4 as the database grows — move the cutoff up, never
+    down."""
+    import reader
+    covered_through = "S2"
+    vocab = set()
+    for k, s in enumerate(curriculum.STAGES[:-1]):
+        vocab |= {w[0] for w in curriculum.SEEDS.get(s["id"], [])}
+        vocab |= {w[0] for t in reader.TEXTS
+                  if reader._LEVEL_IDX[t["level"]] <= k for w in t["new_words"]}
+        need = curriculum.STAGES[k + 1]["threshold"]
+        assert len(vocab) >= need, \
+            f"stuck leaving {s['id']}: {len(vocab)} words available, {need} needed"
+        if s["id"] == covered_through:
+            break
+
+
 def test_reading_passages_use_only_characters_taught_by_their_stage():
     """No gaps: a practice passage may only use characters a learner at that
     stage has met — cumulative seed words plus unlocked grammar examples.
