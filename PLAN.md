@@ -12,13 +12,43 @@ bugs, and this repo treats them as test failures.
 
 ## 0. Execution header — the active run, no guesswork
 
-**Active scope (Phase 1):** a gapless beginner arc, judged holistically against
-the full path. Concretely, in order: WS1 phase B (seeds through S3 ≥ 450),
-WS2 (reader R0–R3 to target depth, including the eight sketched texts),
-WS3 (writing W0–W2 filled), WS4 (grammar S1–S3 + coverage test). While doing
-it, keep the whole-path skeleton in view: the HSK Standard Course volumes 1–9
-are the roadmap for everything after the beginner arc — map stages to volumes
-as you go so later phases inherit a coverage outline, not a blank page.
+**Phase 1 — COMPLETE (2026-07-09, reviewed).** The gapless beginner arc
+landed: seeds 618 (S3 exit coverage 512/450), reader 43 texts
+(R0 8 / R1 8 / R2 10 / R3 11), writing W0 18 / W1 18 / W2 40, grammar 46
+S1–S3 points, recycling allowlist ∅, tone-mark↔tone-number consistency
+tested, W2 completion advances to W3. Review pass fixed three filler-quality
+texts (r1-5, r1-6/林子 cut, r2-10, r3-11 rewritten as a coherent scene).
+
+**Active scope (Phase 2): unstick and deepen the post-beginner path.**
+In order:
+
+1. **WS6(b) — can-do stage-exit checks for S1–S4.** A deterministic per-stage
+   quiz (reading + listening mix now; add dictation items once WS5 lands)
+   that, when passed, lifts the derived stage exactly like placement does;
+   failing recommends remediation (due reviews or specific reader texts),
+   never a dead end. This is the formal cure for "stuck" where word-count
+   thresholds stop being the right measure.
+2. **WS5 — listening as a first-class track.** Listen-first mode on reader
+   texts, dictation as a real practice kind (TTS speaks, learner types,
+   deterministic hanzi check), and tone-confusion drills driven by the
+   learner's own `tone_stats`.
+3. **WS7 — tutor teaches from the database.** Stage word-plan line + last
+   reader text title in the snapshot; verify a live lesson turn uses it;
+   watch the brain token logs (budget: < ~150 extra tokens).
+4. **WS1 phase C — seeds through S4 ≥ 900 cumulative**; move the threshold
+   test cutoff from S3 to S4 (never down).
+5. **WS2 continuation — the middle gets depth:** R4 8 / R5 6 / R6 4 texts
+   (R7 ×2 as stretch), so the levels a can-do check newly opens aren't thin.
+
+Per-item stop conditions live in the WS sections (§7). Same rules as Phase 1:
+invariant-first, scratch verification, backup push before substantive work,
+no force-push, `origin/main` untouched.
+
+**Branch/deploy mode:** phase work happens on the feature branch, verified
+against a scratch instance. Deploying to the shared test container
+(`languagetutor-test`) is part of definition-of-done AFTER local verification
+— it is the owner's daily-driver dev instance and how real usage feedback
+happens. Never deploy code with failing tests; never mutate live user data.
 
 **Approved source map** (owner-approved 2026-07-09; paraphrase, never copy):
 
@@ -30,13 +60,20 @@ as you go so later phases inherit a coverage outline, not a blank page.
 | 对外汉语教学理论与实践 (PDF, zh) | Background theory | Optional; no text layer confirmed |
 
 Official HSK word/grammar lists are published facts — use them freely as
-checklists; the shelf is for sequencing and topics. **Never copy or closely
-paraphrase running text** (dialogues, stories, example sentences): read,
-close the source, write your own.
+checklists; the shelf is for sequencing and topics. The 1–9 HSK Standard Course
+set is the primary roadmap unless a clearly newer official/public checklist is
+needed for gap checking. **Never copy or closely paraphrase running text**
+(dialogues, stories, example sentences): read, close the source, write your
+own. The private shelf may guide building, but it is not a code/data citation:
+before any public GitHub handoff, scrub source-shelf filenames, Anna's Archive
+references, scratch extracts, and private metadata from committed files. Code
+and learner-facing data should read as original app content, not as references
+to the shelf.
 
 **Commands:** tests `~/PersonalProjects/LanguageTutor/.venv/bin/python -m
-pytest tests/ -q` · lint `.../bin/ruff check .` (3 pre-existing E702s in
-app.py stay) · JS: extract `<script>` from index.html, `node --check`.
+pytest tests/ -q` · lint `.../bin/ruff check --exclude spike .` (3
+pre-existing E702s in app.py stay; archived spike scripts have additional
+pre-existing lint) · JS: extract `<script>` from index.html, `node --check`.
 
 **Scratch instance (never verify against live data):** write a wrapper script
 in the session scratchpad and a `.claude/launch.json` pointing at it (delete
@@ -61,10 +98,10 @@ agreed migration (document it in the commit message).
 **Deploy target & backup:** target is this directory's live test container
 (`docker restart languagetutor-test` for .py edits; rebuild+recreate for
 Dockerfile/compose changes; smoke-test with `app.cookie_for('arah91')` from
-inside the container). **Before any substantive run: push a backup** —
-remote `origin` is `github-learnmandarin:arah91-bit/LearnMandrian.git`
-(SSH alias in `~/.ssh/config`). Push your branches by name; NEVER force-push
-and never touch `origin/main` (it is an unrelated early snapshot).
+inside the container). **Before any substantive run: push a backup** — remote
+`origin` is `github-learnmandarin:arah91-bit/LearnMandrian.git` (SSH alias in
+`~/.ssh/config`). Push branches by name; NEVER force-push and never touch
+`origin/main` (it is an unrelated early snapshot).
 
 **Tests policy (owner delegated, decided):** invariant-first. If the content
 type has an invariant, extend/point the test at the new target FIRST, then
@@ -73,8 +110,10 @@ their invariant in the same commit. Allowlists only shrink.
 
 **Definition-of-done template:** every workstream ends with (1) named tests
 green, (2) counts hit, (3) a browser walkthrough of the changed flow on the
-scratch instance, (4) deploy + container-internal smoke test, (5) a commit
-whose message says what a learner can now do that they couldn't.
+scratch instance, (4) dev-branch commit(s) whose messages say what a learner
+can now do that they couldn't. Final owner review/handoff adds backup check,
+optional deploy + container-internal smoke test, and public-handoff source
+scrub.
 
 ---
 
@@ -92,7 +131,7 @@ whose message says what a learner can now do that they couldn't.
   content must keep them green; new content TYPES must ship with new
   invariants. Never grow an allowlist to make a test pass — shrink them.
 - **Work on a feature branch**, small commits, run `python -m pytest tests/`
-  and `ruff check .` before committing (venv:
+  and `ruff check --exclude spike .` before committing (venv:
   `~/PersonalProjects/LanguageTutor/.venv`). Verify UI changes in a real
   browser against a scratch instance (see §8), never against the live
   container's data.
@@ -206,35 +245,43 @@ To add (each is a small test + whatever content it takes to go green):
   seed word (writing chars are real vocabulary).
 - **Reader level sizing** (WS2):每 level has ≥ its minimum text count.
 
-## 6. Current inventory (2026-07-09, feature/curriculum-systems @ GitHub)
+## 6. Current inventory (2026-07-09 post-Phase-1, feature/curriculum-systems)
 
-- Seeds: ~385 entries across S0–S6 (cumulative-with-reader: S1 74, S2 200,
-  S6 ≈415). Threshold invariant green through entering S3.
-- Reader: 23 texts, R0(5) R1(4) R2(5) R3(3) R4(3) R5(2) R6(1); ~130 words.
-- Grammar: 33 points, S1–S6, original explanations + examples.
-- Writing rungs: W0 11 chars, W1 8, W2/W3 empty (W2 is "your words", dynamic).
+- Seeds: 618 entries across S0–S6; threshold invariant green through LEAVING
+  S3 (exit coverage 512/450). Tone-mark↔tone-number consistency + cross-stage
+  uniqueness tested.
+- Reader: 43 texts, R0(8) R1(8) R2(10) R3(11) R4(3) R5(2) R6(1); recycling
+  allowlist ∅. R4–R6 depth and R7 are Phase 2 (WS2 continuation).
+- Grammar: 46 points S1–S3 (Phase 1 target met) + 13 S4–S6; example
+  character-coverage tested for S1–S3.
+- Writing rungs: W0 18, W1 18, W2 40 (soundness tested); W3 = composition
+  (dictation engine is Phase 2/WS5); rung fallback advances to W3.
 - Placement: S1–S6, 4 items each, server-scored, contiguous-pass.
 - Practice: reading (passages+word items), listening (tone-ID + meaning).
 - Tutor: full voice loop, tools writing the same state; brain fallback chain.
-- Tests: 42 passing. Multi-user, per-user state, settings, textbook index: done.
+- Tests: 46 passing. Multi-user, per-user state, settings, textbook index: done.
 - Backup remote: `origin` → `arah91-bit/LearnMandrian` (branches `dev`,
   `master`, `feature/curriculum-systems`; `origin/main` is unrelated — leave it).
 
 ## 7. Workstreams (sized, ordered, with acceptance criteria)
 
 **WS1 — Vocabulary database to scale.** Grow SEEDS so the threshold-coverage
-test passes through S4: S2 +≈15 (→ ≥200 cumulative), S3 +≈180 (HSK2/3 scenes:
-directions, transport, house rooms, shopping details, school, nature, body,
-jobs), S4 +≈570, staged by scene. At S4+ scale, curate in review batches:
-frequency-informed lists are facts and fine to consult, but every entry is
-hand-checked for pinyin/tones (the seed test catches syllable-count errors,
-NOT wrong tones — check a sample against a dictionary each batch) and given a
-plain-English gloss. Format: `("汉字", "pīn yīn", "gloss", [tones])`, pinyin
-space-separated per syllable, 5=neutral. Mine scene lists from HSK volumes
-1–3 first (§0 source map). **Done when (phase B):** threshold test asserts
+test passes through S4: S2 is currently at the S3 entry threshold; S3 needs
+about +170 deterministic words to leave S3 cleanly (≥450 cumulative), then S4
+needs the larger S5 entry gap (≥900 cumulative). Use HSK2/3 scenes: directions,
+transport, house rooms, shopping details, school, nature, body, jobs. At S4+
+scale, curate in review batches: frequency-informed lists are facts and fine to
+consult, but every entry is hand-checked for pinyin/tones (the seed test catches
+syllable-count errors, NOT wrong tones) and given a plain-English gloss. Use the
+existing Tone Perfect / `tone_ear.py` path for audio/tone sanity checks and TTS
+spot checks; use dictionary/public-checklist lookup for lexical hanzi→pinyin
+entries. Format: `("汉字", "pīn yīn", "gloss", [tones])`, pinyin space-separated
+per syllable, 5=neutral. Mine scene lists from HSK volumes 1–3 first (§0 source
+map), with newer public/official checklists only as gap checks. **Done when
+(phase B):** threshold test asserts
 through S3 entry→exit (`covered_through = "S3"`, needs cumulative ≥450) and
 is green; no cross-stage duplicate hanzi (add this as a test); a 20-entry
-random sample per batch dictionary-checked and noted in the commit message.
+random sample per batch pinyin/tone-checked and noted in the commit message.
 **Done when (phase C):** same through S4 (≥900).
 
 **WS2 — Reader to full depth.** Targets: R0 8, R1 8, R2 10, R3 10, R4 8,
@@ -306,18 +353,18 @@ right remediation (reviews or reader texts), not a dead end.
 
 **WS7 — Tutor integration.** The tutor should teach from the same database:
 (a) inject a "stage word-plan: not yet taught" line (first ~8 seeds at the
-current stage missing from the deck) into `learner.snapshot` — DONE in the
-in-flight branch, verify it; (b) per-stage session scripts appended to
-`curriculum.md` (opening ritual, drill shapes, can-do role-plays per stage);
-(c) the tutor should be told what the learner just read (activity log
-already carries it — extend the snapshot line with the last reader text
-title). **Done when:** a scratch-instance lesson turn shows the tutor
-teaching a word from the stage plan (transcript in the verification notes);
-snapshot growth stays under ~150 tokens (check the brain token log lines).
+current stage missing from the deck) into `learner.snapshot` — pending in the
+current tree; (b) per-stage session scripts appended to `curriculum.md`
+(opening ritual, drill shapes, can-do role-plays per stage); (c) the tutor
+should be told what the learner just read (activity log already carries it —
+extend the snapshot line with the last reader text title). **Done when:** a
+scratch-instance lesson turn shows the tutor teaching a word from the stage plan
+(transcript in the verification notes); snapshot growth stays under ~150 tokens
+(check the brain token log lines).
 
 **WS8 — Content integrity at scale.** As data grows: split `reader.py` texts
 into `reader_texts.py` (data) vs logic if the file passes ~1500 lines; add a
-`python -m pytest tests/ -q && ruff check .` pre-commit note to DEPLOY.md;
+`python -m pytest tests/ -q && ruff check --exclude spike .` pre-commit note to DEPLOY.md;
 keep placement/practice generators fast (they re-derive per request). Audio
 spot-check batch tool: a script that TTS-synthesizes any new seed batch and
 flags drones (reuse `_synth_zh_guarded` logic) — catches bad pinyin by ear.
@@ -337,19 +384,25 @@ maintenance content lands last.
 ## 8. Verification playbook (every workstream, before "done")
 
 1. `~/PersonalProjects/LanguageTutor/.venv/bin/python -m pytest tests/ -q`
-2. `ruff check .` (three E702s in app.py are pre-existing style; leave them)
+2. `ruff check --exclude spike .` (three E702s in app.py are pre-existing
+   style; leave them)
 3. Frontend touched? Extract inline JS and `node --check` it; then run a
    scratch instance (wrapper script pattern: scratch `DATA_DIR`, dummy
    `TUTOR_PASSWORD`/`TUTOR_USER`, real API keys from `/srv/docker/lifelog.env`,
    `BRAIN_PROVIDER=deepseek`) and click through the changed flow in a real
-   browser. Playwright MCP is broken on this host (needs sudo Chrome install)
-   — use the Claude Preview tools.
-4. Deploy to test: rebuild image if Dockerfile/requirements changed, restart
-   (or recreate for new mounts), then smoke-test endpoints from inside the
-   container with `app.cookie_for('<user>')`.
+   browser. Playwright MCP is broken on this host (needs sudo Chrome install);
+   use whatever browser/preview tooling is available in the session, or a
+   manual browser walkthrough if no browser automation tool is exposed.
+4. During Phase 1, stop at scratch-instance verification and dev-branch commits
+   unless the owner asks for shared-container deploy. Final handoff deploy:
+   rebuild image if Dockerfile/requirements changed, restart (or recreate for
+   new mounts), then smoke-test endpoints from inside the container with
+   `app.cookie_for('<user>')`.
 5. Live user data (`/home/phil/PersonalProjects/LanguageTutor-data`): read
    for insight, never write (full policy in §0).
-6. Before a substantive run: push a backup branch to `origin` (§0).
+6. At completion/handoff, verify the branch backup on `origin` (§0).
+7. Before any public GitHub handoff, scrub private shelf references, extracted
+   source notes, and Anna's Archive metadata from committed files.
 
 ## 9. Authoring reference (formats)
 
