@@ -277,11 +277,14 @@ TOOLS = [
          "required": ["hanzi", "grade"]}},
     {"name": "log_tone_attempt",
      "description": "Record a spoken tone attempt when you know what tones the learner "
-                    "was aiming for: expected tones vs what the tone-ear heard. Feeds "
-                    "the tone accuracy stats on their Progress screen.",
+                    "was aiming for: expected tones vs what the tone-ear heard. Add "
+                    "target hanzi/pinyin when known; detailed misses feed Progress "
+                    "tone drills.",
      "input_schema": {"type": "object", "properties": {
          "expected": {"type": "array", "items": {"type": "integer"}},
-         "heard": {"type": "array", "items": {"type": "integer"}}},
+         "heard": {"type": "array", "items": {"type": "integer"}},
+         "hanzi": {"type": "string"},
+         "pinyin": {"type": "string"}},
          "required": ["expected", "heard"]}},
     {"name": "update_plan",
      "description": "Keep the visible lesson plan current: today's focus, what's coming "
@@ -307,7 +310,9 @@ def _run_tool(state, name, args):
         if name == "grade_word":
             return learner.grade_word(state, args["hanzi"], args["grade"])
         if name == "log_tone_attempt":
-            return learner.log_tone_attempt(state, args["expected"], args["heard"])
+            return learner.log_tone_attempt(state, args["expected"], args["heard"],
+                                            args.get("hanzi", ""), args.get("pinyin", ""),
+                                            source="tutor")
         if name == "update_plan":
             return learner.update_plan(state, args.get("focus"),
                                        args.get("next_up"), args.get("notes"))
@@ -483,6 +488,7 @@ def curriculum_view():
     state = learner.load()
     idx = learner.speaking_stage(state)
     learned = learner.learned_count(state)
+    can_do = state.get("can_do", {})
     stages = []
     for s in curriculum.STAGES:
         nxt = (curriculum.STAGES[s["idx"] + 1]["threshold"]
@@ -496,14 +502,17 @@ def curriculum_view():
             prog = min(1.0, max(0.0, (learned - s["threshold"]) / max(1, span)))
         stages.append({**s, "state": "done" if s["idx"] < idx else
                        "current" if s["idx"] == idx else "locked",
-                       "progress": round(prog, 3)})
+                       "progress": round(prog, 3),
+                       "can_do_result": can_do.get(s["id"])})
     return {"stages": stages,
             "grammar": curriculum.grammar_for(idx),
             "writing_rungs": curriculum.WRITING_RUNGS,
+            "can_do_stages": curriculum.CAN_DO_STAGES,
             "position": {"stage_idx": idx, "stage": curriculum.STAGES[idx]["id"],
                          "writing_rung": learner.writing_rung(state),
                          "learned": learned,
-                         "placement": state.get("placement")}}
+                         "placement": state.get("placement"),
+                         "can_do": can_do}}
 
 
 @app.get("/api/review/queue")
@@ -548,6 +557,41 @@ def placement_submit(payload: dict):
     with learner.txn() as state:
         learner.set_placement(state, result)
         learner.record_activity(state, "placement", result["stage"])
+        learner.touch_day(state)
+        out = {**result, "recommend": learner.recommend(state)}
+    return out
+
+
+@app.post("/api/can_do/{stage}/start")
+def can_do_start(stage: str):
+    sid = stage.upper()
+    if sid not in curriculum.CAN_DO_STAGES:
+        raise HTTPException(404, "unknown can-do stage")
+    state = learner.load()
+    if curriculum.stage(sid)["idx"] > learner.speaking_stage(state):
+        raise HTTPException(403, "that can-do check is still locked")
+    items = curriculum.can_do_public(sid)
+    return {"stage": sid, "items": items,
+            "pass_ratio": curriculum.CAN_DO_PASS_RATIO}
+
+
+@app.post("/api/can_do/{stage}/submit")
+def can_do_submit(stage: str, payload: dict):
+    sid = stage.upper()
+    if sid not in curriculum.CAN_DO_STAGES:
+        raise HTTPException(404, "unknown can-do stage")
+    try:
+        answers = {str(k): int(v) for k, v in (payload.get("answers") or {}).items()}
+    except (TypeError, ValueError, AttributeError):
+        raise HTTPException(400, "answers must map item ids to choice indices")
+    result = curriculum.score_can_do(sid, answers)
+    with learner.txn() as state:
+        if curriculum.stage(sid)["idx"] > learner.speaking_stage(state):
+            raise HTTPException(403, "that can-do check is still locked")
+        if result["passed"]:
+            learner.set_can_do(state, result)
+        learner.record_activity(state, "can_do", sid,
+                                f"{result['right']}/{result['total']}")
         learner.touch_day(state)
         out = {**result, "recommend": learner.recommend(state)}
     return out

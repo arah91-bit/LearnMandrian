@@ -160,6 +160,26 @@ def test_placement_scoring_perfect_blank_and_gap():
     assert curriculum.score_placement(part)["stage"] == "S3"
 
 
+def test_can_do_checks_are_server_scored_and_targeted():
+    for sid in curriculum.CAN_DO_STAGES:
+        public = curriculum.can_do_public(sid)
+        private = curriculum.can_do_items(sid)
+        assert public and len(public) == len(private)
+        assert all("answer" not in it and "remediate" not in it for it in public)
+        assert all(it["kind"] in ("reading", "listening") for it in private)
+        assert any(it.get("critical") for it in private)
+    items = curriculum.can_do_items("S2")
+    full = {it["id"]: it["answer"] for it in items}
+    result = curriculum.score_can_do("S2", full)
+    assert result["passed"] is True and result["lift_stage"] == "S3"
+    critical = next(it for it in items if it["critical"])
+    miss = {**full, critical["id"]: (critical["answer"] + 1) % len(critical["choices"])}
+    result = curriculum.score_can_do("S2", miss)
+    assert result["passed"] is False
+    assert result["critical_missed"] == 1
+    assert result["remediation"] and result["missed"][0]["skill"]
+
+
 # ── Grammar unlocks ────────────────────────────────────────────────────────────
 def test_grammar_unlocks_follow_stage():
     at_s0 = curriculum.grammar_for(0)
@@ -210,6 +230,10 @@ def test_speaking_stage_derives_from_learned_words_and_placement_lifts():
     assert learner.speaking_stage(s) == 3            # placement lifts
     _learn_words(s, 300)
     assert learner.speaking_stage(s) == 3            # 308 learned -> S3 either way
+    learner.set_can_do(s, {"stage": "S3", "passed": True,
+                           "lift_stage_idx": 4, "lift_stage": "S4"})
+    assert learner.speaking_stage(s) == 4            # can-do lifts separately
+    assert s["placement"]["stage_idx"] == 3
 
 
 def test_settings_update_validates_keys_and_values():

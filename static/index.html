@@ -386,6 +386,7 @@
       <div class="prow">
         <button class="pbtn" data-practice="reading"><span class="zh">读</span>Reading</button>
         <button class="pbtn" data-practice="listening"><span class="zh">听</span>Listening</button>
+        <button class="pbtn" id="cando-btn"><span class="zh">会</span>Can-do check</button>
         <button class="pbtn" id="place-btn"><span class="zh">测</span>Placement test</button>
       </div>
     </div>
@@ -1313,7 +1314,7 @@ function render(s){
     go.textContent = ({placement:'测 — take the test', review:'复习 — review now',
       read:'读 — open the text', reading:'读 — start reading',
       listening:'听 — start listening', lesson:'继续 — continue the lesson',
-      writing:'写 — to the pad'})[r.id] || 'start';
+      writing:'写 — to the pad', can_do:'会 — start check'})[r.id] || 'start';
     go.dataset.act = r.id;
   }
 
@@ -1429,7 +1430,8 @@ function renderMap(){
     const bar = st.state === 'current'
       ? `<div class="sbar"><i style="width:${Math.round(st.progress*100)}%"></i></div>` : '';
     const desc = st.state === 'current' ? `<div class="sdesc">${st.desc}</div>` : '';
-    const mark = st.state === 'done' ? '✓' : st.state === 'current' ? 'here' : '';
+    const passed = st.can_do_result && st.can_do_result.passed;
+    const mark = passed ? 'can-do ✓' : st.state === 'done' ? '✓' : st.state === 'current' ? 'here' : '';
     return `<div class="stage ${st.state}"><span class="sid">${st.id}</span>
       <span class="smain"><span class="sname"><span class="szh">${st.zh}</span>
       ${st.name}<span class="shsk">${st.hsk}</span></span>
@@ -1478,7 +1480,7 @@ function qzBuild(){
   const it = qz.items[qz.idx];
   $('#qzProg').textContent = `${qz.idx+1} / ${qz.items.length}`;
   let body = '';
-  if (qz.kind === 'listening'){
+  if (qz.kind === 'listening' || it.kind === 'listening'){
     body += `<button class="qz-play" data-say="${esc(it.zh)}" aria-label="play">▶</button>`;
   } else if (it.kind === 'passage'){
     body += `<div class="qz-passage" data-say="${esc(it.zh)}">${esc(it.zh)}</div>`
@@ -1493,12 +1495,12 @@ function qzBuild(){
       `<button data-pick="${i}">${esc(c)}</button>`).join('') + `</div>
     <div class="qz-note"></div>`;
   $('#qzBody').innerHTML = body;
-  if (qz.kind === 'listening') wrSay(it.zh);        // speak it on arrival
+  if (qz.kind === 'listening' || it.kind === 'listening') wrSay(it.zh); // speak it on arrival
 }
 function qzPick(i){
   if (qz.lock) return;
   const it = qz.items[qz.idx];
-  if (qz.kind === 'placement'){                     // a test: no per-item reveal
+  if (qz.kind === 'placement' || qz.kind === 'can_do'){  // tests: no per-item reveal
     qz.answers[it.id] = i;
     qzAdvance(250);
     return;
@@ -1533,6 +1535,17 @@ async function qzFinish(){
       const j = await r.json();
       html = `<div class="qz-score">You're at <b>${j.stage}</b> — ${j.stage_name}</div>
         <div class="qz-note">Lessons, grammar unlocks and practice now start from there.</div>`;
+    } else if (q.kind === 'can_do'){
+      const r = await fetch('/api/can_do/'+encodeURIComponent(q.stage)+'/submit',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({answers:q.answers})});
+      const j = await r.json();
+      const rem = (j.remediation || []).map(x=>esc(x.label || x.detail || x.kind)).join('<br>');
+      html = j.passed
+        ? `<div class="qz-score">Passed — ${esc(q.stage)} can-do complete</div>
+           <div class="qz-note">Your app position can now lift to ${esc(j.lift_stage)}.</div>`
+        : `<div class="qz-score">${j.right} / ${j.total} — targeted review</div>
+           <div class="qz-note">${rem || 'Review the missed skill and try again.'}</div>`;
     } else {
       const r = await fetch('/api/practice/result',{method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -1563,6 +1576,19 @@ async function startPlacement(){
     const j = await r.json();
     openQuiz('placement', '测 — placement test', j.items, null);
   }catch(e){ alert('placement failed to load: '+e.message); }
+}
+async function startCanDo(stage){
+  const sid = stage || (lastState && lastState.position && lastState.position.stage) || '';
+  if (!sid || !['S1','S2','S3','S4'].includes(sid)){
+    alert('can-do checks are available from S1 through S4');
+    return;
+  }
+  try{
+    const r = await fetch('/api/can_do/'+encodeURIComponent(sid)+'/start',{method:'POST'});
+    const j = await r.json();
+    if (!r.ok || !j.items.length){ alert(j.detail || 'can-do check is locked'); return; }
+    openQuiz('can_do', `会 — ${sid} can-do check`, j.items, sid);
+  }catch(e){ alert('can-do check failed to load: '+e.message); }
 }
 
 /* ── SRS review session — self-serve flashcards over the same schedule the
@@ -1838,11 +1864,13 @@ function runRec(id){
     if (tid) openReaderText(tid);
   }
   else if (id === 'reading' || id === 'listening') startPractice(id);
+  else if (id === 'can_do') startCanDo();
   else if (id === 'writing'){ goTab('write'); startWritingLesson(); }
   else if (id === 'lesson'){ goTab('talk'); $('#golesson').click(); }
 }
 $('#rec-go').onclick = e=>runRec(e.target.dataset.act);
 $('#place-btn').onclick = startPlacement;
+$('#cando-btn').onclick = ()=>startCanDo();
 document.querySelectorAll('[data-practice]').forEach(b=>
   b.onclick = ()=>startPractice(b.dataset.practice));
 $('#grammar-card').addEventListener('click', e=>{

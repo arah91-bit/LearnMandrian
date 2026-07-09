@@ -57,8 +57,10 @@ _DEFAULT = {
         "immersion": False,
     },
     "placement": None,    # {date, stage_idx, stage, per_stage} once taken
+    "can_do": {},         # exit-check results: S1 -> {passed, lift_stage_idx, ...}
     "activity": [],       # self-study log: {date, kind, detail, score}
     "reader": {},         # graded reader: text_id -> {date, score}
+    "tone_attempts": [],  # detailed tone history with target/heard/audio metadata
 }
 
 _SETTING_KEYS = set(_DEFAULT["settings"])
@@ -158,11 +160,22 @@ def due_words(state):
 
 
 # ── Tone production stats ──────────────────────────────────────────────────────
-def log_tone_attempt(state, expected, heard):
+def log_tone_attempt(state, expected, heard, hanzi="", pinyin="", audio_path="", source=""):
     pairs = list(zip([int(t) for t in expected], [int(t) for t in heard]))
     for e, h in pairs:
         k = f"{e}_{h}"
         state["tone_stats"][k] = state["tone_stats"].get(k, 0) + 1
+    if hanzi or pinyin or audio_path or source:
+        state.setdefault("tone_attempts", []).append({
+            "date": _today(),
+            "target_hanzi": str(hanzi or ""),
+            "target_pinyin": str(pinyin or ""),
+            "expected": [e for e, _ in pairs],
+            "heard": [h for _, h in pairs],
+            "audio": str(audio_path or ""),
+            "source": str(source or ""),
+        })
+        state["tone_attempts"] = state["tone_attempts"][-200:]
     hits = sum(1 for e, h in pairs if e == h)
     return f"logged {len(pairs)} syllable(s), {hits} on target"
 
@@ -181,6 +194,30 @@ def top_confusions(state, n=3):
             if k.split("_")[0] != k.split("_")[1]]
     offs.sort(key=lambda x: -x[1])
     return [{"expected": int(e), "heard": int(h), "count": c} for (e, h), c in offs[:n]]
+
+
+def tone_drill_targets(state, n=5):
+    """Recent missed words/syllables first; aggregate confusions as fallback."""
+    out, seen = [], set()
+    for a in reversed(state.get("tone_attempts", [])):
+        expected, heard = a.get("expected") or [], a.get("heard") or []
+        if not any(e != h for e, h in zip(expected, heard)):
+            continue
+        key = (a.get("target_hanzi", ""), tuple(expected), tuple(heard))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"hanzi": a.get("target_hanzi", ""),
+                    "pinyin": a.get("target_pinyin", ""),
+                    "expected": expected, "heard": heard,
+                    "audio": a.get("audio", ""), "source": a.get("source", "")})
+        if len(out) >= n:
+            return out
+    for c in top_confusions(state, n - len(out)):
+        out.append({"hanzi": "", "pinyin": "",
+                    "expected": [c["expected"]], "heard": [c["heard"]],
+                    "count": c["count"], "audio": "", "source": "aggregate"})
+    return out
 
 
 # ── Handwriting-pad results (recorded by the app, not the brain) ──────────────
@@ -208,6 +245,11 @@ def set_placement(state, result):
     state["placement"] = {"date": _today(), **result}
 
 
+def set_can_do(state, result):
+    sid = result["stage"]
+    state.setdefault("can_do", {})[sid] = {"date": _today(), **result}
+
+
 def record_activity(state, kind, detail="", score=None):
     state["activity"].append(
         {"date": _today(), "kind": kind, "detail": detail, "score": score})
@@ -221,10 +263,13 @@ def learned_count(state):
 
 
 def speaking_stage(state):
-    """App-derived position: vocab mastery, lifted by placement if higher."""
+    """App-derived position: vocab mastery, lifted by placement or can-do checks."""
     idx = curriculum.stage_for_learned(learned_count(state))
     if state.get("placement"):
         idx = max(idx, state["placement"]["stage_idx"])
+    for res in state.get("can_do", {}).values():
+        if res.get("passed"):
+            idx = max(idx, int(res.get("lift_stage_idx", 0)))
     return idx
 
 
@@ -308,6 +353,16 @@ def snapshot(state):
         f"Plan focus: {state['plan']['focus'] or '(none set — set one!)'}",
         f"Next up: {'; '.join(state['plan']['next_up']) or '(empty)'}",
     ]
+    have = {w["hanzi"] for w in state["vocab"]}
+    coming = [w for w in curriculum.SEEDS.get(st["id"], []) if w[0] not in have][:8]
+    if coming:
+        lines.append("Stage word-plan not yet taught: " + ", ".join(
+            f"{hz} ({py}, {en})" for hz, py, en, _ in coming))
+    last_read = next((a for a in reversed(state["activity"]) if a["kind"] == "read"), None)
+    if last_read:
+        text = reader.get_text(last_read.get("detail", ""))
+        if text:
+            lines.append(f"Last reader text: {text['title']} — {text['title_en']}")
     if state["settings"].get("immersion"):
         lines.append("Immersion mode is ON — he asked for as much Mandarin as his level allows.")
     recent = [a for a in state["activity"] if a["kind"] != "turn"][-3:]
@@ -346,6 +401,7 @@ def api_view(state):
             "due_count": len(due_words(state)),
             "tone_accuracy": tone_accuracy(state),
             "confusions": top_confusions(state),
+            "tone_targets": tone_drill_targets(state),
         },
         "sessions": state["sessions"][::-1][:10],
         "writing": state["writing"],
@@ -353,7 +409,8 @@ def api_view(state):
         "position": {"stage_idx": stage_idx,
                      "stage": curriculum.STAGES[stage_idx]["id"],
                      "writing_rung": writing_rung(state),
-                     "placement": state.get("placement")},
+                     "placement": state.get("placement"),
+                     "can_do": state.get("can_do", {})},
         "recommend": recommend(state),
         "today": t,
     }

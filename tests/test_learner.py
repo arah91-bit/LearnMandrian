@@ -40,12 +40,16 @@ def test_grade_unknown_word_is_soft():
 def test_tone_stats_and_confusions():
     s = _state()
     learner.log_tone_attempt(s, [3, 4], [2, 4])   # one miss (3->2), one hit
-    learner.log_tone_attempt(s, [3], [2])
+    learner.log_tone_attempt(s, [3], [2], hanzi="马", pinyin="mǎ",
+                             audio_path="audio_debug/test.webm", source="unit")
     acc = learner.tone_accuracy(s)
     assert acc[3] == {"correct": 0, "total": 2}
     assert acc[4] == {"correct": 1, "total": 1}
     top = learner.top_confusions(s)
     assert top[0] == {"expected": 3, "heard": 2, "count": 2}
+    targets = learner.tone_drill_targets(s)
+    assert targets[0]["hanzi"] == "马"
+    assert targets[0]["audio"].endswith("test.webm")
 
 
 def test_streak_counts_back_from_today_or_yesterday():
@@ -65,7 +69,11 @@ def test_plan_sessions_and_snapshot():
     learner.update_plan(s, focus="four tones", next_up=["numbers"], notes="likes drills")
     learner.end_session(s, "learned mā and má")
     learner.add_word(s, "妈", "mā", "mom", [1])
+    s["activity"].append({"date": learner._today(), "kind": "read",
+                          "detail": "r1-1", "score": "2/2"})
     snap = learner.snapshot(s)
     assert "four tones" in snap and "Due for review now" in snap and "mā" in snap
+    assert "Stage word-plan not yet taught" in snap
+    assert "Last reader text: 你好" in snap
     view = learner.api_view(s)
     assert view["stats"]["due_count"] == 1 and view["sessions"][0]["summary"]

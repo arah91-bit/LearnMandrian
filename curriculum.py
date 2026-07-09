@@ -1120,6 +1120,183 @@ def score_placement(answers):
             "stage_name": STAGES[placed]["name"], "per_stage": per}
 
 
+# ── Can-do stage-exit checks ──────────────────────────────────────────────────
+# Server-scored like placement, but stored separately: these are practical
+# exit checks for a stage, not a diagnostic placement history.
+CAN_DO_STAGES = ["S1", "S2", "S3", "S4"]
+CAN_DO_PASS_RATIO = 0.80
+
+CAN_DO_CHECKS = {
+    "S1": [
+        {"id": "S1-greeting-listen", "kind": "listening", "skill": "greetings",
+         "critical": True, "zh": "你好", "py": "nǐ hǎo",
+         "prompt": "Listen. What did you hear?",
+         "choices": ["hello", "thank you", "goodbye", "sorry"], "answer": 0,
+         "remediate": {"kind": "reader", "detail": "r1-1",
+                       "label": "R1 hello text and greeting review"}},
+        {"id": "S1-goodbye-read", "kind": "reading", "skill": "greetings",
+         "critical": False, "zh": "再见", "py": "zài jiàn",
+         "prompt": "What does this mean?",
+         "choices": ["goodbye", "I want this", "very good", "my name is"], "answer": 0,
+         "remediate": {"kind": "review", "detail": "再见",
+                       "label": "review basic greeting words"}},
+        {"id": "S1-name-frame", "kind": "reading", "skill": "self-introduction",
+         "critical": True, "zh": "我叫安娜。", "py": "Wǒ jiào Ānnà.",
+         "prompt": "What does this sentence do?",
+         "choices": ["gives a name", "asks a price", "orders tea", "says goodbye"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "jiao-name",
+                       "label": "叫 name pattern"}},
+        {"id": "S1-ma-question", "kind": "reading", "skill": "yes-no questions",
+         "critical": False, "zh": "你好吗？", "py": "Nǐ hǎo ma?",
+         "prompt": "What makes this a question?",
+         "choices": ["吗 at the end", "我 at the front", "the word 很", "the number 三"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "ma-questions",
+                       "label": "吗 question pattern"}},
+        {"id": "S1-tone-listen", "kind": "listening", "skill": "tone awareness",
+         "critical": False, "zh": "妈", "py": "mā",
+         "prompt": "Which tone did you hear?",
+         "choices": ["Tone 1 — high and flat", "Tone 2 — rising",
+                     "Tone 3 — dipping", "Tone 4 — falling"], "answer": 0,
+         "remediate": {"kind": "listening", "detail": "tone-1",
+                       "label": "tone 1 listening drill"}},
+    ],
+    "S2": [
+        {"id": "S2-order-listen", "kind": "listening", "skill": "ordering",
+         "critical": True, "zh": "我要喝茶。", "py": "Wǒ yào hē chá.",
+         "prompt": "Listen. What does the speaker want?",
+         "choices": ["to drink tea", "to buy clothes", "to go to school", "to call home"], "answer": 0,
+         "remediate": {"kind": "reader", "detail": "r2-2",
+                       "label": "R2 wanting tea text"}},
+        {"id": "S2-family-read", "kind": "reading", "skill": "family",
+         "critical": False, "zh": "我家有三口人。", "py": "Wǒ jiā yǒu sān kǒu rén.",
+         "prompt": "How many people are in the family?",
+         "choices": ["three", "two", "five", "ten"], "answer": 0,
+         "remediate": {"kind": "reader", "detail": "r2-3",
+                       "label": "R2 family text"}},
+        {"id": "S2-price-read", "kind": "reading", "skill": "shopping",
+         "critical": True, "zh": "这个多少钱？", "py": "Zhè ge duōshao qián?",
+         "prompt": "What is this asking?",
+         "choices": ["how much this costs", "where the shop is", "what time it is", "who is coming"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "duoshao-ji",
+                       "label": "多少 / 几 amount questions"}},
+        {"id": "S2-location-listen", "kind": "listening", "skill": "location",
+         "critical": False, "zh": "我在学校。", "py": "Wǒ zài xuéxiào.",
+         "prompt": "Where is the speaker?",
+         "choices": ["at school", "at the restaurant", "inside a shop", "at the hospital"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "zai-location",
+                       "label": "在 location pattern"}},
+        {"id": "S2-like-read", "kind": "reading", "skill": "likes",
+         "critical": False, "zh": "你喜欢什么？", "py": "Nǐ xǐhuan shénme?",
+         "prompt": "What does this ask?",
+         "choices": ["what you like", "what you can write", "where you live", "when you leave"], "answer": 0,
+         "remediate": {"kind": "reader", "detail": "r2-4",
+                       "label": "R2 liking text"}},
+    ],
+    "S3": [
+        {"id": "S3-past-read", "kind": "reading", "skill": "past narration",
+         "critical": True, "zh": "昨天我工作了。", "py": "Zuótiān wǒ gōngzuò le.",
+         "prompt": "When did the work happen?",
+         "choices": ["yesterday", "tomorrow", "right now", "every morning"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "le-completed",
+                       "label": "了 completed-action pattern"}},
+        {"id": "S3-current-listen", "kind": "listening", "skill": "current action",
+         "critical": False, "zh": "她正在做饭。", "py": "Tā zhèngzài zuò fàn.",
+         "prompt": "What is she doing?",
+         "choices": ["cooking", "buying clothes", "waiting for a train", "writing a letter"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "zhengzai",
+                       "label": "正在 right-now pattern"}},
+        {"id": "S3-direction-read", "kind": "reading", "skill": "directions",
+         "critical": True, "zh": "往左走，再往右走。", "py": "Wǎng zuǒ zǒu, zài wǎng yòu zǒu.",
+         "prompt": "Which direction comes first?",
+         "choices": ["left", "right", "straight", "back"], "answer": 0,
+         "remediate": {"kind": "reader", "detail": "r3-5",
+                       "label": "R3 directions dialogue"}},
+        {"id": "S3-weather-listen", "kind": "listening", "skill": "weather",
+         "critical": False, "zh": "明天可能下雨。", "py": "Míngtiān kěnéng xià yǔ.",
+         "prompt": "What may happen tomorrow?",
+         "choices": ["it may rain", "it may snow", "it may be hot", "it may be late"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "keneng",
+                       "label": "可能 maybe pattern"}},
+        {"id": "S3-comparison-read", "kind": "reading", "skill": "comparison",
+         "critical": False, "zh": "今天比昨天热。", "py": "Jīntiān bǐ zuótiān rè.",
+         "prompt": "What comparison is being made?",
+         "choices": ["today is hotter than yesterday", "today is colder than yesterday",
+                     "yesterday was rainy", "tomorrow will be hot"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "bi-comparison",
+                       "label": "比 comparison pattern"}},
+    ],
+    "S4": [
+        {"id": "S4-result-read", "kind": "reading", "skill": "result complements",
+         "critical": True, "zh": "我吃完了。", "py": "Wǒ chī wán le.",
+         "prompt": "What result is expressed?",
+         "choices": ["finished eating", "started eating", "forgot to eat", "wants to eat"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "result-complements",
+                       "label": "result endings 完 / 到 / 见"}},
+        {"id": "S4-connectors-listen", "kind": "listening", "skill": "connectors",
+         "critical": True, "zh": "因为我累，所以我想睡觉。", "py": "Yīnwèi wǒ lèi, suǒyǐ wǒ xiǎng shuìjiào.",
+         "prompt": "Why does the speaker want to sleep?",
+         "choices": ["because they are tired", "because they are hungry",
+                     "because the room is quiet", "because the meeting ended"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "connectors-1",
+                       "label": "because/although connector pairs"}},
+        {"id": "S4-ba-read", "kind": "reading", "skill": "把 pattern",
+         "critical": False, "zh": "请把茶喝完。", "py": "Qǐng bǎ chá hē wán.",
+         "prompt": "What should happen to the tea?",
+         "choices": ["finish drinking it", "buy it", "give it away", "make it cold"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "ba-basics",
+                       "label": "把 object-handling pattern"}},
+        {"id": "S4-sequence-listen", "kind": "listening", "skill": "sequencing",
+         "critical": False, "zh": "我先吃饭，然后去工作。", "py": "Wǒ xiān chī fàn, ránhòu qù gōngzuò.",
+         "prompt": "What happens first?",
+         "choices": ["eat", "go to work", "go shopping", "sleep"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "xian-ranhou",
+                       "label": "先 / 然后 sequencing"}},
+        {"id": "S4-manner-read", "kind": "reading", "skill": "manner complement",
+         "critical": False, "zh": "你说得很好。", "py": "Nǐ shuō de hěn hǎo.",
+         "prompt": "What is being praised?",
+         "choices": ["how well you speak", "how fast you eat", "where you live", "what you bought"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "de-manner",
+                       "label": "得 manner complement"}},
+    ],
+}
+
+
+def can_do_items(sid):
+    return list(CAN_DO_CHECKS.get(sid, []))
+
+
+def can_do_public(sid):
+    return [{k: v for k, v in it.items() if k not in ("answer", "remediate")}
+            for it in can_do_items(sid)]
+
+
+def score_can_do(sid, answers):
+    """answers: {item_id: chosen_index}. Returns pass/fail + targeted remediation."""
+    items = can_do_items(sid)
+    if not items:
+        raise KeyError(sid)
+    missed, right = [], 0
+    for it in items:
+        ok = answers.get(it["id"]) == it["answer"]
+        if ok:
+            right += 1
+        else:
+            missed.append({"id": it["id"], "skill": it["skill"],
+                           "critical": bool(it.get("critical")),
+                           "remediation": it["remediate"]})
+    total = len(items)
+    ratio = right / total if total else 0
+    critical_missed = [m for m in missed if m["critical"]]
+    passed = ratio >= CAN_DO_PASS_RATIO and not critical_missed
+    lift_idx = min(_STAGE_IDX[sid] + 1, len(STAGES) - 1)
+    return {"stage": sid, "stage_idx": _STAGE_IDX[sid],
+            "lift_stage_idx": lift_idx, "lift_stage": STAGES[lift_idx]["id"],
+            "right": right, "total": total, "ratio": round(ratio, 3),
+            "passed": passed, "critical_missed": len(critical_missed),
+            "missed": missed,
+            "remediation": [m["remediation"] for m in missed]}
+
+
 # ── Practice generators ────────────────────────────────────────────────────────
 # Reading and listening items sized to the learner's stage. The learner's own
 # vocabulary is the first-choice material (that's the review that matters);
