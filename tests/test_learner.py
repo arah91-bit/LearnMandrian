@@ -52,6 +52,16 @@ def test_tone_stats_and_confusions():
     assert targets[0]["audio"].endswith("test.webm")
 
 
+def test_tone_attempt_keeps_unheard_targets_for_debugging():
+    s = _state()
+    learner.log_tone_attempt(s, [2, 3], [], hanzi="你好", pinyin="nǐ hǎo",
+                             audio_path="audio_debug/test.webm", source="unit")
+
+    assert s["tone_stats"] == {}
+    assert s["tone_attempts"][0]["expected"] == [2, 3]
+    assert s["tone_attempts"][0]["heard"] == []
+
+
 def test_streak_counts_back_from_today_or_yesterday():
     s = _state()
     today = datetime.date.today()

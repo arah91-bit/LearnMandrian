@@ -161,7 +161,9 @@ def due_words(state):
 
 # ── Tone production stats ──────────────────────────────────────────────────────
 def log_tone_attempt(state, expected, heard, hanzi="", pinyin="", audio_path="", source=""):
-    pairs = list(zip([int(t) for t in expected], [int(t) for t in heard]))
+    expected_tones = [int(t) for t in expected]
+    heard_tones = [int(t) for t in heard]
+    pairs = list(zip(expected_tones, heard_tones))
     for e, h in pairs:
         k = f"{e}_{h}"
         state["tone_stats"][k] = state["tone_stats"].get(k, 0) + 1
@@ -170,8 +172,8 @@ def log_tone_attempt(state, expected, heard, hanzi="", pinyin="", audio_path="",
             "date": _today(),
             "target_hanzi": str(hanzi or ""),
             "target_pinyin": str(pinyin or ""),
-            "expected": [e for e, _ in pairs],
-            "heard": [h for _, h in pairs],
+            "expected": expected_tones,
+            "heard": heard_tones,
             "audio": str(audio_path or ""),
             "source": str(source or ""),
         })
