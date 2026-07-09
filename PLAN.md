@@ -19,43 +19,53 @@ S1–S3 points, recycling allowlist ∅, tone-mark↔tone-number consistency
 tested, W2 completion advances to W3. Review pass fixed three filler-quality
 texts (r1-5, r1-6/林子 cut, r2-10, r3-11 rewritten as a coherent scene).
 
-**Active scope (Phase 2): unstick and deepen the post-beginner path.**
+**Phase 2 — COMPLETE (2026-07-09, reviewed with corrections).** Landed:
+S1–S4 can-do exit checks (server-scored, 80% + critical items, pass lifts the
+derived stage, fail returns per-miss remediation pointing at reader texts /
+grammar / reviews), dictation as a practice kind (NFKC + punctuation-stripped
+answer matching), listen-first reader mode, tone drills fed by a detailed
+per-attempt tone history (capped 200), tutor snapshot gains the stage
+word-plan and last-read text, reader deepened to 57 texts through R7.
+Review corrections: (1) REJECTED 360 machine-generated S4 "words" (cartesian
+noun-pair products like 医生生日) that inflated threshold coverage — replaced
+with ~115 hand-checked real words + 5 lexicalized collocations; S4 now sits at
+an HONEST 673/900 and the threshold test asserts through S3 only. (2) Raw
+learner-audio retention was unconditional — now opt-in via AUDIO_DEBUG=1
+(default off; unbounded disk growth + quiet voice archiving is not a default).
+
+**Standing content-authenticity rule (born from this review):** no
+programmatic content generation. Every seed entry is a dictionary-attested
+word or an explicitly marked lexicalized collocation; every reader sentence is
+written by a person. Coverage numbers must be earned, not synthesized — a
+threshold test that passes on fake words is worse than one that fails.
+
+**Active scope (Phase 3): finish the middle, start the maintenance tier.**
 In order:
 
-1. **WS6(b) — can-do stage-exit checks for S1–S4.** A deterministic per-stage
-   quiz (reading + listening mix now; add dictation items once WS5 lands)
-   that, when passed, lifts the derived stage like placement does. Store can-do
-   results separately from placement (e.g. `state["can_do"]`) so assessment
-   history stays intelligible, but let `learner.speaking_stage()` consider the
-   lift. Use a practical pass rule: about 80% overall plus no miss on a small
-   set of critical items. Failing recommends targeted remediation by failed
-   skill/content (due reviews, specific reader text, listening, dictation,
-   grammar), never a dead end. Build S1–S3 first; S4 can land after enough S4
-   vocab/reader depth exists for a fair check. This is the formal cure for
-   "stuck" where word-count thresholds stop being the right measure.
-2. **WS5 — listening as a first-class track.** Listen-first mode on reader
-   texts, dictation as a real practice kind (TTS speaks, learner types,
-   deterministic hanzi check), and tone-confusion drills driven by the
-   learner's own tone history. Dictation should normalize punctuation/spacing
-   and accept configured alternate valid answers. Listen-first should behave as
-   a reader mode with activity logging, not a separate progress ladder unless
-   implementation proves that separation is cleaner. Expand tone logging beyond
-   pair counts to remember target hanzi/pinyin/tones and heard tones, so drills
-   can use the learner's actual missed words/syllables. In dev, keep raw user
-   audio for tone/dictation debugging.
-3. **WS7 — tutor teaches from the database.** Stage word-plan line + last
-   reader text title in the snapshot; verify a live lesson turn uses it;
-   watch the brain token logs (budget: < ~150 extra tokens). For verification,
-   one or two real DeepSeek calls on a scratch instance are allowed; keep it
-   minimal.
-4. **WS1 phase C — seeds through S4 ≥ 900 cumulative**; move the threshold
-   test cutoff from S3 to S4 (never down).
-5. **WS2 continuation — the middle gets depth:** R4 8 / R5 6 / R6 4 texts
-   (R7 ×2 as stretch), so the levels a can-do check newly opens aren't thin.
+1. **WS1 phase C-real — S4 to 900 with real words.** ~227 more hand-checked
+   entries (HSK3/4 band scenes: emotions, workplace detail, travel, health,
+   nature, quantities). Then move the threshold test cutoff to S4. Batch rule:
+   dictionary spot-check 20 random entries per batch, note it in the commit.
+2. **WS4 continuation — grammar S4–S6 to the full inventory.** From 59 points
+   to ≈120: complements (potential 得/不, degree 极了/得很), 把/被 variants,
+   越…越, 连…都, rhetorical patterns, discourse markers, register pairs.
+   Extend the example character-coverage test to S4–S6 as points land.
+3. **Progress surfacing (small, do early).** The Progress tab should show
+   can-do results, tone-drill history (the data now exists in state), and
+   writing-rung completion — a learner should SEE the ladder they're climbing.
+4. **WS2/WS9 — upper reader + 成语 begin.** R5 6→8, R6 4→6, R7 2→4 chaptered
+   texts; first original 成语 set (each: the idiom, its story retold in our
+   own words at R6 vocabulary, one example) taught through R6/R7 texts.
+5. **WS9 — shadowing (engine).** Play a native-speed sentence (TTS or ref
+   clips), record the learner, compare tone-ear reading + duration; surface as
+   a practice kind for S5+. Reuses the existing tone-drill recording plumbing.
+6. **WS1 phase D (stretch) — S5 vocabulary toward 1800**, phased (target 1300
+   this phase), same authenticity rules.
 
-Per-item stop conditions live in the WS sections (§7). Same rules as Phase 1:
-invariant-first, scratch verification, backup push before substantive work,
-no force-push, `origin/main` untouched.
+Per-item stop conditions follow the Phase 1/2 pattern: named tests green,
+counts hit, one browser walkthrough per new flow, deploy + smoke after the
+whole slice is reviewed. Same guardrails: invariant-first, scratch
+verification, backup push, no force-push, `origin/main` untouched.
 
 **Branch/deploy mode:** phase work happens on the feature branch, verified
 against a scratch instance. Do not deploy after individual Phase 2 workstreams.

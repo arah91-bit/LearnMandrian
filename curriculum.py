@@ -482,88 +482,76 @@ SEEDS["S3"] += [
 # Phase 2 S4 scale-up: controlled collocations from known stage topics. These
 # are S4-friendly chunks ("work plan", "library address", "friend's opinion")
 # whose pinyin/tones are built from checked parts, not inferred at runtime.
-_PARTS = {hz: (py, en, tones)
-          for words in SEEDS.values() for hz, py, en, tones in words}
-_PARTS.update({
-    "计划": ("jì huà", "plan", [4, 4]),
-    "安排": ("ān pái", "arrangement", [1, 2]),
-    "目标": ("mù biāo", "goal", [4, 1]),
-    "过程": ("guò chéng", "process", [4, 2]),
-    "任务": ("rèn wu", "task", [4, 5]),
-    "活动": ("huó dòng", "activity", [2, 4]),
-    "习惯": ("xí guàn", "habit", [2, 4]),
-    "原因": ("yuán yīn", "reason", [2, 1]),
-    "资料": ("zī liào", "materials; data", [1, 4]),
-    "消息": ("xiāo xi", "news; message", [1, 5]),
-    "地址": ("dì zhǐ", "address", [4, 3]),
-    "门口": ("mén kǒu", "entrance", [2, 3]),
-    "里面": ("lǐ miàn", "inside", [3, 4]),
-    "路线": ("lù xiàn", "route", [4, 4]),
-    "位置": ("wèi zhi", "location", [4, 5]),
-    "服务": ("fú wù", "service", [2, 4]),
-    "客人": ("kè rén", "guest; customer", [4, 2]),
-    "同事": ("tóng shì", "coworker", [2, 4]),
-    "父母": ("fù mǔ", "parents", [4, 3]),
-    "学习者": ("xué xí zhě", "learner", [2, 2, 3]),
-    "报名": ("bào míng", "to sign up", [4, 2]),
-    "通知": ("tōng zhī", "notice; to notify", [1, 1]),
-    "预定": ("yù dìng", "to reserve", [4, 4]),
-    "复印": ("fù yìn", "to copy; photocopy", [4, 4]),
-    "付款": ("fù kuǎn", "to pay", [4, 3]),
-    "请假": ("qǐng jià", "to ask for leave", [3, 4]),
-    "加班": ("jiā bān", "to work overtime", [1, 1]),
-})
-
-
-def _combo(prefix, suffix, gloss=None):
-    p_py, p_en, p_tones = _PARTS[prefix]
-    s_py, s_en, s_tones = _PARTS[suffix]
-    return (prefix + suffix, f"{p_py} {s_py}",
-            gloss or f"{p_en} {s_en}", p_tones + s_tones)
-
-
-def _s4_phase_c_words():
-    groups = [
-        (["工作", "学习", "旅行", "会议", "生活", "交通", "教育", "科技", "文化",
-          "运动", "旅游", "复习", "考试", "练习"],
-         ["计划", "安排", "时间", "经验", "机会", "目标", "过程", "结果", "问题",
-          "办法", "习惯", "任务"]),
-        (["城市", "公司", "银行", "超市", "图书馆", "医院", "学校", "办公室",
-          "公园", "饭馆", "商店", "机场", "火车站"],
-         ["地址", "门口", "里面", "附近", "地图", "路线", "位置", "环境", "服务",
-          "通知"]),
-        (["朋友", "家人", "同学", "老师", "学生", "医生", "孩子", "父母", "经理",
-          "服务员", "客人", "同事", "学习者"],
-         ["意见", "故事", "生日", "礼物", "帮助", "关系", "问题", "习惯", "计划",
-          "选择"]),
-        (["春天", "夏天", "秋天", "冬天", "天气", "健康", "身体", "心", "眼睛",
-          "耳朵", "腿", "脸"],
-         ["计划", "问题", "习惯", "原因", "办法", "结果", "活动", "消息"]),
-        (["面包", "蛋糕", "水果", "咖啡", "茶", "米饭", "面条", "衣服", "鞋",
-          "帽子", "电脑", "手机"],
-         ["价格", "选择", "问题", "服务", "付款", "预定", "通知", "资料"]),
-        (["会议", "考试", "旅行", "活动", "生日", "节日", "工作", "课程",
-          "作业", "问题", "资料", "消息"],
-         ["报名", "通知", "准备", "结束", "完成", "复印", "请假", "加班"]),
-    ]
-    seen = {w[0] for words in SEEDS.values() for w in words}
-    out = []
-    for prefixes, suffixes in groups:
-        for prefix in prefixes:
-            for suffix in suffixes:
-                if prefix not in _PARTS or suffix not in _PARTS or prefix == suffix:
-                    continue
-                word = _combo(prefix, suffix)
-                if word[0] in seen:
-                    continue
-                seen.add(word[0])
-                out.append(word)
-                if len(out) >= 360:
-                    return out
-    return out
-
-
-SEEDS["S4"] += _s4_phase_c_words()
+# S4 phase-C vocabulary — REAL words only. An earlier draft generated 360
+# entries by cartesian-producting noun pairs ("医生生日", "蛋糕服务"); that
+# inflated the threshold with non-words the tutor would then have taught.
+# Reverted in review: every entry below is an ordinary dictionary word (or a
+# genuinely lexicalized collocation, marked), hand-checked for pinyin/tones.
+SEEDS["S4"] += [
+    # planning & office life
+    ("计划", "jì huà", "plan", [4, 4]), ("安排", "ān pái", "arrangement; to arrange", [1, 2]),
+    ("目标", "mù biāo", "goal", [4, 1]), ("过程", "guò chéng", "process", [4, 2]),
+    ("任务", "rèn wu", "task", [4, 5]), ("活动", "huó dòng", "activity", [2, 4]),
+    ("原因", "yuán yīn", "reason", [2, 1]), ("资料", "zī liào", "materials; data", [1, 4]),
+    ("消息", "xiāo xi", "news; message", [1, 5]), ("通知", "tōng zhī", "notice; to notify", [1, 1]),
+    ("报名", "bào míng", "to sign up", [4, 2]), ("预定", "yù dìng", "to reserve", [4, 4]),
+    ("复印", "fù yìn", "to photocopy", [4, 4]), ("付款", "fù kuǎn", "to pay", [4, 3]),
+    ("请假", "qǐng jià", "to ask for leave", [3, 4]), ("加班", "jiā bān", "to work overtime", [1, 1]),
+    # places & position
+    ("地址", "dì zhǐ", "address", [4, 3]), ("门口", "mén kǒu", "doorway, entrance", [2, 3]),
+    ("里面", "lǐ miàn", "inside", [3, 4]), ("路线", "lù xiàn", "route", [4, 4]),
+    ("位置", "wèi zhi", "location", [4, 5]), ("服务", "fú wù", "service", [2, 4]), ("街道", "jiē dào", "street", [1, 4]),
+    ("马路", "mǎ lù", "road", [3, 4]), ("国家", "guó jiā", "country", [2, 1]),
+    # people
+    ("客人", "kè rén", "guest; customer", [4, 2]), ("同事", "tóng shì", "coworker", [2, 4]),
+    ("父母", "fù mǔ", "parents", [4, 3]), ("学习者", "xué xí zhě", "learner", [2, 2, 3]),
+    ("阿姨", "ā yí", "aunt; auntie", [1, 2]), ("叔叔", "shū shu", "uncle", [1, 5]),
+    ("邻居", "lín jū", "neighbor", [2, 1]), ("校长", "xiào zhǎng", "headmaster", [4, 3]),
+    # verbs
+    ("帮忙", "bāng máng", "to help out", [1, 2]), ("打扫", "dǎ sǎo", "to clean up", [3, 3]),
+    ("搬", "bān", "to move (things/house)", [1]), ("接", "jiē", "to pick up; to receive", [1]),
+    ("讲", "jiǎng", "to tell, to explain", [3]),
+    ("发现", "fā xiàn", "to discover", [1, 4]), ("出现", "chū xiàn", "to appear", [1, 4]),
+    ("解决", "jiě jué", "to solve", [3, 2]),
+    ("见面", "jiàn miàn", "to meet up", [4, 4]), ("结婚", "jié hūn", "to marry", [2, 1]),
+    ("举行", "jǔ xíng", "to hold (an event)", [3, 2]), ("欢迎", "huān yíng", "to welcome", [1, 2]),
+    ("害怕", "hài pà", "to be afraid", [4, 4]), ("关心", "guān xīn", "to care about", [1, 1]),
+    ("锻炼", "duàn liàn", "to exercise", [4, 4]), ("爬山", "pá shān", "to climb mountains", [2, 1]),
+    ("骑", "qí", "to ride (bike/horse)", [2]), ("画", "huà", "to draw, to paint", [4]), ("起飞", "qǐ fēi", "to take off (plane)", [3, 1]),
+    ("离开", "lí kāi", "to leave", [2, 1]),
+    # school & things
+    ("爱好", "ài hào", "hobby", [4, 4]), ("班", "bān", "class (group)", [1]),
+    ("年级", "nián jí", "grade, year (school)", [2, 2]), ("黑板", "hēi bǎn", "blackboard", [1, 3]), ("电梯", "diàn tī", "elevator", [4, 1]), ("洗手间", "xǐ shǒu jiān", "restroom", [3, 3, 1]),
+    ("空调", "kōng tiáo", "air conditioner", [1, 2]), ("冰箱", "bīng xiāng", "fridge", [1, 1]), ("伞", "sǎn", "umbrella", [3]),
+    ("护照", "hù zhào", "passport", [4, 4]), ("行李箱", "xíng li xiāng", "suitcase", [2, 5, 1]), ("船", "chuán", "boat", [2]), ("羊肉", "yáng ròu", "mutton", [2, 4]), ("筷子", "kuài zi", "chopsticks", [4, 5]),
+    ("盘子", "pán zi", "plate", [2, 5]),
+    ("味道", "wèi dào", "taste, flavor", [4, 4]),
+    ("周末", "zhōu mò", "weekend", [1, 4]), ("刚才", "gāng cái", "just now", [1, 2]),
+    ("声音", "shēng yīn", "sound, voice", [1, 1]), ("信", "xìn", "letter (mail)", [4]), ("照相机", "zhào xiàng jī", "camera", [4, 4, 1]), ("体育", "tǐ yù", "physical education, sports", [3, 4]),
+    ("电子邮件", "diàn zǐ yóu jiàn", "email", [4, 3, 2, 4]),
+    # qualities & function words
+    ("聪明", "cōng ming", "clever", [1, 5]), ("年轻", "nián qīng", "young", [2, 1]),
+    ("可爱", "kě ài", "cute", [3, 4]), ("有名", "yǒu míng", "famous", [3, 2]),
+    ("奇怪", "qí guài", "strange", [2, 4]), ("短", "duǎn", "short (length)", [3]),
+    ("低", "dī", "low", [1]), ("坏", "huài", "bad, broken", [4]), ("差", "chà", "poor, lacking", [4]), ("满意", "mǎn yì", "satisfied", [3, 4]),
+    ("主要", "zhǔ yào", "main", [3, 4]),
+    ("新鲜", "xīn xiān", "fresh", [1, 1]), ("几乎", "jī hū", "almost", [1, 1]),
+    ("经常", "jīng cháng", "often", [1, 2]), ("马上", "mǎ shàng", "right away", [3, 4]),
+    ("终于", "zhōng yú", "finally", [1, 2]), ("一共", "yí gòng", "altogether", [2, 4]),
+    ("一起", "yì qǐ", "together", [4, 3]), ("多么", "duō me", "how (exclaim)", [1, 5]), ("而且", "ér qiě", "moreover", [2, 3]),
+    ("除了", "chú le", "except for, besides", [2, 5]), ("像", "xiàng", "to resemble, like", [4]),
+    ("跟", "gēn", "with; to follow", [1]), ("关于", "guān yú", "about, regarding", [1, 2]),
+    ("根据", "gēn jù", "according to", [1, 4]), ("变化", "biàn huà", "change", [4, 4]),
+    ("比较", "bǐ jiào", "relatively; to compare", [3, 4]),
+    ("差不多", "chà bu duō", "almost the same, about", [4, 5, 1]),
+    ("一般", "yì bān", "ordinary, usually", [4, 1]),
+    # lexicalized collocations (real chunks, worth learning as units)
+    ("工作时间", "gōng zuò shí jiān", "working hours", [1, 4, 2, 1]),
+    ("学习计划", "xué xí jì huà", "study plan", [2, 2, 4, 4]),
+    ("工作经验", "gōng zuò jīng yàn", "work experience", [1, 4, 1, 4]),
+    ("生活习惯", "shēng huó xí guàn", "living habits", [1, 2, 2, 4]),
+    ("旅行计划", "lǚ xíng jì huà", "travel plan", [3, 2, 4, 4]),
+]
 
 # ── Grammar points ─────────────────────────────────────────────────────────────
 # Unlocked when the learner's speaking stage reaches "stage". Explanations and

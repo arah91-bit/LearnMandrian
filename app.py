@@ -229,13 +229,16 @@ def _webm_to_wav(blob):
     return dst
 
 
-def _audio_debug_path(kind, suffix):
-    root = learner.user_dir() / "audio_debug" / kind / time.strftime("%Y-%m-%d")
-    root.mkdir(parents=True, exist_ok=True)
-    return root / f"{int(time.time() * 1000)}{suffix}"
+# Raw-audio retention is a DEBUG tool, opt-in via AUDIO_DEBUG=1 (scratch
+# instances). Off by default: unconditional saving would grow the data mount
+# by 1–2MB per spoken turn forever, and quietly archiving a learner's voice
+# is not a default anyone asked for.
+AUDIO_DEBUG = os.environ.get("AUDIO_DEBUG", "0") == "1"
 
 
 def _rel_user_path(path):
+    if path is None:
+        return ""
     try:
         return str(path.relative_to(learner.user_dir()))
     except ValueError:
@@ -243,9 +246,20 @@ def _rel_user_path(path):
 
 
 def _save_debug_audio(kind, blob, suffix=".webm"):
-    path = _audio_debug_path(kind, suffix)
+    """Persist a copy of learner audio for tone/dictation debugging — returns
+    None when AUDIO_DEBUG is off (the normal case)."""
+    if not AUDIO_DEBUG:
+        return None
+    root = learner.user_dir() / "audio_debug" / kind / time.strftime("%Y-%m-%d")
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / f"{int(time.time() * 1000)}{suffix}"
     path.write_bytes(blob)
     return path
+
+
+def _keep_debug_wav(raw_path, wav):
+    if raw_path is not None:
+        raw_path.with_suffix(".wav").write_bytes(pathlib.Path(wav).read_bytes())
 
 
 def _stt_local(wav):
@@ -780,8 +794,7 @@ def tone_drill_submit(audio: UploadFile = File(...), target_hanzi: str = Form(""
     raw_path = _save_debug_audio("tone_drill", blob, ".webm")
     wav = _webm_to_wav(blob)
     try:
-        wav_path = raw_path.with_suffix(".wav")
-        wav_path.write_bytes(pathlib.Path(wav).read_bytes())
+        _keep_debug_wav(raw_path, wav)
         ear = EAR.analyze(wav)
         heard = [int(s["tone"]) for s in ear.get("syllables", [])][:len(expected_tones)]
         with learner.txn() as state:
@@ -1058,7 +1071,7 @@ def turn(audio: UploadFile = File(...)):
     raw_path = _save_debug_audio("turn", blob, ".webm")
     wav = _webm_to_wav(blob)
     try:
-        raw_path.with_suffix(".wav").write_bytes(pathlib.Path(wav).read_bytes())
+        _keep_debug_wav(raw_path, wav)
         heard = _stt(wav)
         if not heard:
             return {"heard": "", "reply": None, "tones": None,
