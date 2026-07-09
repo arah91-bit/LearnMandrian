@@ -388,7 +388,8 @@ def _run_brain_claude(state, system, convo):
         resp = _claude.messages.create(model=BRAIN_MODEL, max_tokens=900,
                                        thinking={"type": "disabled"},
                                        system=system, messages=msgs, tools=TOOLS)
-        tin += resp.usage.input_tokens; tout += resp.usage.output_tokens
+        tin += resp.usage.input_tokens
+        tout += resp.usage.output_tokens
         if resp.stop_reason != "tool_use":
             reply = "".join(b.text for b in resp.content if b.type == "text").strip()
             break
@@ -404,7 +405,8 @@ def _run_brain_claude(state, system, convo):
                                        thinking={"type": "disabled"},
                                        messages=msgs + [{"role": "user", "content": _NUDGE}],
                                        tools=TOOLS, tool_choice={"type": "none"})
-        tin += resp.usage.input_tokens; tout += resp.usage.output_tokens
+        tin += resp.usage.input_tokens
+        tout += resp.usage.output_tokens
         reply = "".join(b.text for b in resp.content if b.type == "text").strip()
     log.info("brain claude turn: %s in / %s out tokens", tin, tout)
     return reply or "Say that once more for me?"
@@ -423,7 +425,8 @@ def _run_brain_oai(client, model, max_param, label, state, system, convo, extra=
         resp = client.chat.completions.create(model=model, messages=msgs,
                                               tools=oai_tools, **{max_param: 900}, **extra)
         if resp.usage:
-            tin += resp.usage.prompt_tokens; tout += resp.usage.completion_tokens
+            tin += resp.usage.prompt_tokens
+            tout += resp.usage.completion_tokens
         m = resp.choices[0].message
         if not m.tool_calls:
             reply = (m.content or "").strip()
