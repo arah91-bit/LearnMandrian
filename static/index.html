@@ -862,6 +862,10 @@ function wrBuild(){
       showHintAfterMisses: 2,
       onMistake: ()=>{ wrMistakes++; wrCharMistakes++; if (wrPhaseN===2) wrRepMist++; },
       onComplete: ()=>{
+        wrSay(char);                                // every finished write is heard —
+                                                    // sound rides with the stroke, so
+                                                    // the character's shape and its
+                                                    // pronunciation get bound together
         if (wrPhaseN === 2){
           wrRep++;
           wrBestRep = wrBestRep === null ? wrRepMist : Math.min(wrBestRep, wrRepMist);
@@ -873,7 +877,6 @@ function wrBuild(){
             setTimeout(()=>{ if (wrWord) wrBuild(); }, 700);
             return;
           }
-          wrSay(char);                              // hear it after writing it
         }
         $('#wrMsg').textContent = '好! nice';
         setTimeout(wrNext, 800);
@@ -1439,7 +1442,9 @@ function qzPick(i){
   else btns[i].classList.add('wrong');
   if (qz.kind === 'listening')                      // reveal what was said
     $('#qzBody .qz-note').textContent = `${it.zh}${S.show_pinyin ? ' · '+pyDisp(it.py) : ''}`;
-  qzAdvance(i === it.a ? 700 : 1600);
+  if (it.zh) wrSay(it.zh);                           // hear it on every answer —
+                                                     // reading reinforces, listening confirms
+  qzAdvance(i === it.a ? 900 : 1600);
 }
 function qzAdvance(ms){
   setTimeout(()=>{
@@ -1506,6 +1511,7 @@ async function openReview(){
 function rvBuild(){
   const w = rv.queue[rv.idx];
   $('#rvProg').textContent = `${rv.idx+1} / ${rv.queue.length}`;
+  wrSay(w.hanzi);                              // hear every card — on show and on flip
   const front = S.show_hanzi || !S.show_pinyin ? w.hanzi : pyDisp(w.pinyin);
   $('#rvBody').innerHTML = `
     <div class="rv-front" data-say="${esc(w.hanzi)}" title="tap to hear">${esc(front)}</div>
@@ -1554,7 +1560,14 @@ function renderSettings(){
       ${seg('tone_display', [['marks','marks'],['numbers','numbers']])}</div>
     <div class="setrow"><span class="sl">沉浸 Immersion<div class="sub">hide English
       where you can manage without it; the tutor leans into Mandarin</div></span>
-      ${sw('immersion')}</div>`;
+      ${sw('immersion')}</div>
+    <div class="setrow"><span class="sl">Account<div class="sub">progress and
+      settings are saved per user</div></span>
+      <button class="pbtn" id="signout">sign out</button></div>`;
+  $('#signout').onclick = async ()=>{
+    await fetch('/auth/logout',{method:'POST'}).catch(()=>{});
+    location.reload();
+  };
 }
 async function setSetting(k, v){
   try{

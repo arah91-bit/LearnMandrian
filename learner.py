@@ -8,6 +8,7 @@ via /api/state; a compact snapshot is injected into the brain's system prompt
 each turn so it always arrives knowing where Phil is.
 """
 import contextlib
+import contextvars
 import datetime
 import json
 import os
@@ -17,7 +18,29 @@ import threading
 import curriculum
 
 DATA = pathlib.Path(os.environ.get("DATA_DIR", pathlib.Path(__file__).parent / "data"))
-STATE_FILE = DATA / "state.json"
+
+# Which learner this request belongs to. The auth middleware sets it from the
+# session cookie; contextvars ride into uvicorn's thread pool with the
+# request, so two users' turns can overlap without touching each other's
+# files. None (tests, scripts) falls back to the legacy root-level layout.
+_USER = contextvars.ContextVar("tutor_user", default=None)
+
+
+def set_user(username):
+    _USER.set(username)
+
+
+def current_user():
+    return _USER.get()
+
+
+def user_dir():
+    u = _USER.get()
+    return DATA / "users" / u if u else DATA
+
+
+def _state_file():
+    return user_dir() / "state.json"
 
 _DEFAULT = {
     "plan": {"focus": "", "next_up": [], "notes": ""},
@@ -44,8 +67,9 @@ def _today():
 
 
 def load():
-    if STATE_FILE.exists():
-        state = json.loads(STATE_FILE.read_text())
+    f = _state_file()
+    if f.exists():
+        state = json.loads(f.read_text())
         for k, v in _DEFAULT.items():          # older state files gain new keys
             state.setdefault(k, json.loads(json.dumps(v)))
         return state
@@ -56,10 +80,11 @@ _LOCK = threading.RLock()
 
 
 def save(state):
-    DATA.mkdir(parents=True, exist_ok=True)
-    tmp = STATE_FILE.with_suffix(".tmp")     # atomic: a crash never tears the file
+    f = _state_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    tmp = f.with_suffix(".tmp")              # atomic: a crash never tears the file
     tmp.write_text(json.dumps(state, ensure_ascii=False, indent=1))
-    tmp.replace(STATE_FILE)
+    tmp.replace(f)
 
 
 @contextlib.contextmanager

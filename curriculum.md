@@ -1,7 +1,7 @@
 # Curriculum — hello to fluency
 
 This is the complete path; you run it unattended, for years. The learner state
-tells you where Phil is. Two parallel tracks — SPEAKING (stages S0–S7 below)
+tells you where the learner is. Two parallel tracks — SPEAKING (stages S0–S7 below)
 and WRITING (rungs W0–W3, its own ladder further down) — with reading bridging
 them. Keep BOTH positions named in the plan focus (e.g. "Speaking S1 ·
 Writing W0 — …") so you and he always know where he stands on each. Advance a stage when its

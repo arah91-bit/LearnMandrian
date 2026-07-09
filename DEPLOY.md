@@ -39,9 +39,19 @@ fast-forwards at ship time.
 - **Same gotcha applies to `/srv/docker/Caddyfile`** (single-file mount into `caddy`):
   after editing it, `docker restart caddy` — a `caddy reload` inside the container
   re-reads the STALE file and silently no-ops your change.
+- **Accounts** (2026-07-08): multi-user. `users.json` in the data mount holds
+  username → scrypt hash + display name; each user's state/conversation live
+  under `/data/users/<name>/` (stroke cache, ref voice, library index stay
+  shared). First boot with no users.json bootstraps `TUTOR_USER` (display name
+  `TUTOR_USER_NAME`) from `TUTOR_PASSWORD` and adopts the legacy root-level
+  data files — after that, TUTOR_PASSWORD is inert; manage accounts with
+  `docker exec -it languagetutor-test python users.py add|passwd|list|remove`.
+  Changing a password signs that user out everywhere (the cookie MAC binds to
+  the hash).
 - Whole app is behind the auth cookie (`lt_session`): verify endpoints from inside
   the container (`docker exec languagetutor-test python -c "import app; ..."` with
-  `app._cookie_value()`), not by raw curl — unauthenticated paths get the login page.
+  `app.cookie_for('<username>')`), not by raw curl — unauthenticated paths get the
+  login page.
 - **Checks** (repo venv at `~/PersonalProjects/LanguageTutor/.venv`, dev tools
   via `pip install -r requirements-dev.txt`): `python -m pytest tests/` and
   `ruff check .` before shipping.

@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py learner.py curriculum.py ingest.py tone_ear.py api_alerts.py tutor_prompt.md curriculum.md tone_train.json ./
+COPY app.py learner.py curriculum.py ingest.py users.py tone_ear.py api_alerts.py tutor_prompt.md curriculum.md tone_train.json ./
 COPY static ./static
 ENV DATA_DIR=/data
 # run as the host user that owns the /data mount, not root

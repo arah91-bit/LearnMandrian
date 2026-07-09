@@ -37,6 +37,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import curriculum
 import ingest
 import learner
+import users
 from api_alerts import page_if_billing
 from tone_ear import ToneEar
 
@@ -46,10 +47,20 @@ logging.basicConfig(level=logging.INFO)
 HERE = pathlib.Path(__file__).parent
 DATA = pathlib.Path(os.environ.get("DATA_DIR", HERE / "data"))
 DATA.mkdir(parents=True, exist_ok=True)
-CONVO = DATA / "conversation.json"
 
 SECRET = os.environ["TUTOR_SESSION_SECRET"]
-PASSWORD = os.environ["TUTOR_PASSWORD"]
+
+# Accounts live in users.json (see users.py); TUTOR_PASSWORD only matters on
+# the very first boot, when bootstrap() turns the single-user install into
+# TUTOR_USER's account and adopts the legacy data files.
+_boot = users.bootstrap()
+if _boot:
+    log.info("bootstrapped user %s (adopted: %s)",
+             _boot["user"], ", ".join(_boot["adopted"]) or "nothing")
+
+
+def _convo_file():
+    return learner.user_dir() / "conversation.json"
 
 BRAIN_MODEL = "claude-sonnet-5"
 STT_MODEL = "gpt-4o-transcribe"
@@ -66,14 +77,32 @@ VOICE_URL = os.environ.get("VOICE_URL", "http://voice:8001").rstrip("/")
 HEART_VOICE = "k-heart"
 MAX_MESSAGES = 40        # conversation window kept on disk / sent to the brain
 
+# {learner} in the prompt is the display name of whoever is signed in
 SYSTEM = (HERE / "tutor_prompt.md").read_text() + "\n\n" + (HERE / "curriculum.md").read_text()
 EAR = ToneEar()
 _oai = openai.OpenAI()
 _claude = anthropic.Anthropic()
 
 
-def _cookie_value():
-    return hmac.new(SECRET.encode(), b"tutor-v1", hashlib.sha256).hexdigest()
+def _mac(username, pw_hash):
+    """Session MAC binds the username to their CURRENT password hash — change
+    the password (users.py passwd) and every session for that user dies."""
+    return hmac.new(SECRET.encode(), f"tutor-v2:{username}:{pw_hash}".encode(),
+                    hashlib.sha256).hexdigest()
+
+
+def cookie_for(username):
+    """The full cookie value for a user — also the DEPLOY.md smoke-test hook."""
+    return f"{username}:{_mac(username, users.load_users()[username]['pw'])}"
+
+
+def _cookie_user(cookie):
+    """Username for a valid session cookie, else None."""
+    username, _, mac = cookie.partition(":")
+    rec = users.load_users().get(username)
+    if rec and mac and hmac.compare_digest(mac, _mac(username, rec["pw"])):
+        return username
+    return None
 
 
 _PUBLIC = ("/healthz", "/auth/login",
@@ -85,9 +114,11 @@ _PUBLIC = ("/healthz", "/auth/login",
 class Auth(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         path = request.url.path
-        if (path in _PUBLIC
-                or hmac.compare_digest(request.cookies.get("lt_session", ""),
-                                       _cookie_value())):
+        if path in _PUBLIC:
+            return await call_next(request)
+        user = _cookie_user(request.cookies.get("lt_session", ""))
+        if user:
+            learner.set_user(user)     # contextvar: rides into the endpoint's thread
             return await call_next(request)
         if path.startswith("/api/"):
             return JSONResponse({"error": "not authenticated"}, status_code=401)
@@ -120,13 +151,22 @@ async def login(request: Request):
         return HTMLResponse(LOGIN_HTML.replace("<!--err-->",
                             "<p class=err>Too many attempts — try again later.</p>"),
                             status_code=429)
-    if not hmac.compare_digest(str(form.get("password", "")), PASSWORD):
+    username = str(form.get("username", "")).strip().lower()
+    if not users.verify(username, str(form.get("password", ""))):
         _login_fails.append(now)
         return HTMLResponse(LOGIN_HTML.replace("<!--err-->",
-                            "<p class=err>Wrong password.</p>"), status_code=401)
+                            "<p class=err>Wrong username or password.</p>"),
+                            status_code=401)
     resp = RedirectResponse("/", status_code=303)
-    resp.set_cookie("lt_session", _cookie_value(), max_age=90 * 86400,
+    resp.set_cookie("lt_session", cookie_for(username), max_age=90 * 86400,
                     httponly=True, secure=True, samesite="lax")
+    return resp
+
+
+@app.post("/auth/logout")
+async def logout():
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie("lt_session")
     return resp
 
 
@@ -161,13 +201,16 @@ async def sw():
 
 
 def _load_convo():
-    return json.loads(CONVO.read_text()) if CONVO.exists() else []
+    f = _convo_file()
+    return json.loads(f.read_text()) if f.exists() else []
 
 
 def _save_convo(msgs):
-    tmp = CONVO.with_suffix(".tmp")
+    f = _convo_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    tmp = f.with_suffix(".tmp")
     tmp.write_text(json.dumps(msgs[-MAX_MESSAGES:], ensure_ascii=False, indent=1))
-    tmp.replace(CONVO)
+    tmp.replace(f)
 
 
 def _webm_to_wav(blob):
@@ -232,17 +275,17 @@ TOOLS = [
          "hanzi": {"type": "string"}, "grade": {"type": "integer"}},
          "required": ["hanzi", "grade"]}},
     {"name": "log_tone_attempt",
-     "description": "Record a spoken tone attempt when you know what tones Phil was "
-                    "aiming for: expected tones vs what the tone-ear heard. Feeds the "
-                    "tone accuracy stats he sees on his Progress screen.",
+     "description": "Record a spoken tone attempt when you know what tones the learner "
+                    "was aiming for: expected tones vs what the tone-ear heard. Feeds "
+                    "the tone accuracy stats on their Progress screen.",
      "input_schema": {"type": "object", "properties": {
          "expected": {"type": "array", "items": {"type": "integer"}},
          "heard": {"type": "array", "items": {"type": "integer"}}},
          "required": ["expected", "heard"]}},
     {"name": "update_plan",
      "description": "Keep the visible lesson plan current: today's focus, what's coming "
-                    "next (short phrases), and brief notes-to-self. Phil sees this on his "
-                    "Plan screen — keep it in plain learner-facing language.",
+                    "next (short phrases), and brief notes-to-self. The learner sees this "
+                    "on their Plan screen — keep it in plain learner-facing language.",
      "input_schema": {"type": "object", "properties": {
          "focus": {"type": "string"},
          "next_up": {"type": "array", "items": {"type": "string"}},
@@ -403,7 +446,8 @@ def _brain(user_text, ear_line, activity="turn"):
         # half-done tool writes instead of double-applying them on the retry
         state = learner.load()
         learner.touch_day(state)
-        system = SYSTEM + "\n\n# Current learner state\n" + learner.snapshot(state)
+        system = (SYSTEM.replace("{learner}", users.display_name(learner.current_user()))
+                  + "\n\n# Current learner state\n" + learner.snapshot(state))
         try:
             reply = _brain_once(provider, state, system, convo)
         except Exception as e:
@@ -847,10 +891,11 @@ def writing_result(payload: dict):
 def lesson_go():
     """The continue-lesson button: no speech, no typing — the tutor arrives
     already knowing what's next (state note + history) and just starts."""
+    name = users.display_name(learner.current_user())
     reply = _brain(
-        "[lesson button] Phil tapped the continue-lesson button. Skip greetings "
-        "and don't ask what he wants — say in one short line what today's work "
-        "is, then start it (due reviews first). End with something for him to say.",
+        f"[lesson button] {name} tapped the continue-lesson button. Skip greetings "
+        "and don't ask what they want — say in one short line what today's work "
+        "is, then start it (due reviews first). End with something for them to say.",
         "[button press — no audio this turn]", activity="lesson")
     return {"reply": reply}
 
@@ -867,8 +912,9 @@ def turn_text(payload: dict):
 
 @app.post("/api/reset")
 async def reset():
-    if CONVO.exists():
-        CONVO.rename(DATA / "conversation.prev.json")
+    f = _convo_file()
+    if f.exists():
+        f.rename(f.with_name("conversation.prev.json"))
     return {"ok": True}
 
 
@@ -885,5 +931,7 @@ button{background:#3d6b52;color:#fff;border:0;cursor:pointer}
 .err{color:#e07a5f;margin:0}</style></head><body>
 <form method=post action=/auth/login>
 <h1>语伴 LanguageTutor</h1><!--err-->
-<input type=password name=password placeholder="Password" autofocus>
+<input name=username placeholder="Username" autocomplete=username
+ autocapitalize=none spellcheck=false autofocus>
+<input type=password name=password placeholder="Password" autocomplete=current-password>
 <button>Enter</button></form></body></html>"""
