@@ -124,6 +124,7 @@ def test_settings_update_validates_keys_and_values():
 
 
 def test_recommend_cascade():
+    import reader
     s = _state()
     assert learner.recommend(s)["id"] == "placement"     # brand new learner
     learner.set_placement(s, {"stage_idx": 0, "stage": "S0",
@@ -131,7 +132,10 @@ def test_recommend_cascade():
     learner.add_word(s, "妈", "mā", "mom", [1])
     assert learner.recommend(s)["id"] == "review"        # due word outranks all
     learner.grade_word(s, "妈", 5)
-    assert learner.recommend(s)["id"] == "reading"       # first practice today
+    assert learner.recommend(s)["id"] == "read"          # graded reader first
+    s["reader"] = {t["id"]: {"date": "2000-01-01", "score": "1/1"}
+                   for t in reader.TEXTS}                # ladder finished ->
+    assert learner.recommend(s)["id"] == "reading"       # generic practice
     learner.record_activity(s, "reading", "S0", "4/6")
     assert learner.recommend(s)["id"] == "lesson"        # practiced -> new material
     learner.record_activity(s, "lesson")
@@ -141,9 +145,12 @@ def test_recommend_cascade():
 
 
 def test_recommend_alternates_practice_channel():
+    import reader
     s = _state()
     learner.set_placement(s, {"stage_idx": 1, "stage": "S1",
                               "stage_name": "x", "per_stage": {}})
+    s["reader"] = {t["id"]: {"date": "2000-01-01", "score": "1/1"}
+                   for t in reader.TEXTS}                # reader done: quiz practice
     s["activity"] = [{"date": "2000-01-01", "kind": "reading",
                       "detail": "S1", "score": "4/6"}]
     assert learner.recommend(s)["id"] == "listening"     # yesterday was reading

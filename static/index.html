@@ -309,6 +309,52 @@
   .gx .en{font-size:13px}
   .gpattern{background:var(--raised);border-radius:9px;padding:8px 12px;
         font-size:14px;color:var(--brand-hot);margin:8px 0}
+  /* graded reader */
+  .rtext{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;
+        background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);
+        padding:10px 2px;font-size:14px;cursor:pointer}
+  .rtext:last-of-type{border-bottom:0}
+  .rtext:hover .rzh{color:var(--brand-hot)}
+  .rtext:disabled{opacity:.45;pointer-events:none}
+  .rtext .rzh{font-family:var(--hanzi);font-size:18px;white-space:nowrap}
+  .rtext .ren{color:var(--dim);flex:1;min-width:0;overflow:hidden;
+        text-overflow:ellipsis;white-space:nowrap}
+  .rtext .rwords{color:var(--muted);font-size:11px;white-space:nowrap}
+  .rtext .rst{font-size:11px;color:var(--muted);white-space:nowrap}
+  .rtext .rst.done{color:var(--t1)}
+  .rtext .rst.next{color:var(--brand-hot)}
+  .rintro{color:var(--dim);font-size:14px;margin:2px 0 10px}
+  .rwgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+        gap:8px;margin:8px 0 4px}
+  .rword{background:var(--raised);border:1px solid var(--line);border-radius:12px;
+        padding:9px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;
+        cursor:pointer}
+  .rword:hover{border-color:var(--brand-hot)}
+  .rword .h{font-family:var(--hanzi);font-size:26px;line-height:1.2}
+  .rword .p{font-size:12px;color:var(--brand-hot)}
+  .rword .e{font-size:11px;color:var(--dim);text-align:center}
+  .rd-sent{display:flex;gap:8px;align-items:flex-start;margin:12px 0;
+        font-family:var(--hanzi);font-size:22px;line-height:2}
+  .rd-sent.big{font-size:40px;line-height:1.6}
+  .rd-sent .rwho{font-size:13px;color:var(--brand-hot);font-family:system-ui;
+        white-space:nowrap;margin-top:11px}
+  .rplay{flex:none;background:var(--raised);border:1px solid var(--line);color:var(--dim);
+        border-radius:8px;width:28px;height:28px;font-size:11px;margin-top:9px}
+  .rplay:hover{color:var(--ink);border-color:var(--brand)}
+  .rline{flex:1;min-width:0}
+  .tok{cursor:pointer;border-radius:6px;padding:0 1px}
+  .tok:hover,.tok.hot{background:var(--raised)}
+  .tok ruby rt{font-size:10px;color:var(--dim);font-family:system-ui}
+  .rp{color:var(--dim)}
+  #rdGloss{position:sticky;bottom:0;background:var(--raised);border:1px solid var(--line);
+        border-radius:10px;padding:8px 12px;font-size:14px;margin-top:10px}
+  #rdGloss b{font-family:var(--hanzi);font-size:18px;margin-right:6px;font-weight:600}
+  .rd-en p{color:var(--dim);font-size:14px;border-left:3px solid var(--line);
+        padding-left:10px;margin:10px 0}
+  #rdPy{background:var(--raised);border:1px solid var(--line);color:var(--dim);
+        border-radius:8px;padding:3px 10px;font-size:12px;margin-left:auto}
+  #rdPy.on{color:#fff;background:var(--brand);border-color:var(--brand)}
+
   [data-say]{cursor:pointer}
   body.immersion nav .en, body.immersion .word .en, body.immersion .gx .en,
   body.immersion .wordsub{display:none}
@@ -351,6 +397,14 @@
       <input id="libq" placeholder="search titles and chapters…" autocomplete="off">
       <div class="libhits"></div>
     </div>
+  </section>
+
+  <section id="view-read" class="view">
+    <div class="card" id="read-head">
+      <h2>The reading ladder</h2>
+      <div class="focus empty">Loading…</div>
+    </div>
+    <div id="rlevels"></div>
   </section>
 
   <section id="view-talk" class="view">
@@ -467,9 +521,20 @@
   </div>
 </div>
 
+<div id="rdModal" class="modal">
+  <div class="mbox">
+    <div class="mtop"><span class="mtitle" id="rdTitle"></span>
+      <button id="rdPy" title="show or hide pinyin">拼音</button>
+      <button class="mclose" id="rdClose" aria-label="close">×</button></div>
+    <div id="rdBody"></div>
+    <div id="rdGloss" hidden></div>
+  </div>
+</div>
+
 <nav>
   <button data-view="learn" class="on"><span class="zh">学</span><span class="en">Learn</span></button>
   <button data-view="talk"><span class="zh">说</span><span class="en">Talk</span></button>
+  <button data-view="read"><span class="zh">读</span><span class="en">Read</span></button>
   <button data-view="plan"><span class="zh">课</span><span class="en">Plan</span></button>
   <button data-view="words"><span class="zh">词</span><span class="en">Words</span>
     <span class="badge" id="due-badge" hidden></span></button>
@@ -1244,8 +1309,9 @@ function render(s){
     const go = $('#rec-go');
     go.hidden = false;
     go.textContent = ({placement:'测 — take the test', review:'复习 — review now',
-      reading:'读 — start reading', listening:'听 — start listening',
-      lesson:'继续 — continue the lesson', writing:'写 — to the pad'})[r.id] || 'start';
+      read:'读 — open the text', reading:'读 — start reading',
+      listening:'听 — start listening', lesson:'继续 — continue the lesson',
+      writing:'写 — to the pad'})[r.id] || 'start';
     go.dataset.act = r.id;
   }
 
@@ -1544,6 +1610,154 @@ async function rvGrade(g){
   }
 }
 
+/* ── the graded reader — zero to full stories ──
+   Levels list on the Read tab; a text opens into four phases: meet the new
+   words (tap to hear), read (every word tappable — gloss bar + audio; ruby
+   pinyin per level, toggleable), comprehension questions (choices shuffled),
+   done (new words land in the review deck). */
+let RD = null, rd = null;
+async function loadReader(){
+  try{
+    const r = await fetch('/api/reader');
+    if (r.ok){ RD = await r.json(); renderRead(); }
+  }catch(e){}
+}
+function renderRead(){
+  if (!RD) return;
+  $('#read-head').innerHTML = `<h2>The reading ladder</h2><div class="focus">
+    ${RD.read_count} of ${RD.text_count} texts read — single characters up to
+    full stories. Every text adds its new words to your review deck.</div>`;
+  $('#rlevels').innerHTML = RD.levels.map(lv=>{
+    const rows = lv.texts.map(t=>{
+      const st = t.done ? `<span class="rst done">✓ ${esc(t.score||'')}</span>`
+        : lv.open && RD.next === t.id ? `<span class="rst next">next</span>`
+        : lv.open ? `<span class="rst">unread</span>`
+        : `<span class="rst">locked</span>`;
+      return `<button class="rtext" data-rd="${esc(t.id)}" ${lv.open?'':'disabled'}>
+        <span class="rzh">${esc(t.title)}</span><span class="ren">${esc(t.title_en)}</span>
+        <span class="rwords">+${t.words} words</span>${st}</button>`;
+    }).join('');
+    return `<div class="rung ${lv.open && !lv.complete ? 'now':''}">
+      <h3><span class="wid">${esc(lv.id)}</span><span style="font-family:var(--hanzi)">${esc(lv.zh)}</span>
+      — ${esc(lv.name)}${lv.complete?'<span class="rcnt">complete ✓</span>':''}</h3>
+      <p class="rdesc">${esc(lv.desc)}</p>${rows}</div>`;
+  }).join('');
+}
+async function openReaderText(tid){
+  try{
+    const r = await fetch('/api/reader/text/'+encodeURIComponent(tid));
+    const j = await r.json();
+    if (!r.ok){ alert(j.detail || 'that text is locked'); return; }
+    rd = {t: j, phase: 'words', showPy: j.ruby, qIdx: 0, right: 0, order: null};
+    $('#rdTitle').textContent = `${j.title} — ${j.title_en}`;
+    $('#rdGloss').hidden = true;
+    $('#rdModal').classList.add('on');
+    rdBuild();
+  }catch(e){}
+}
+function rdTok(tok){
+  if (!tok.p) return `<span class="rp">${esc(tok.z)}</span>`;    // punctuation
+  const inner = rd.showPy && S.show_pinyin
+    ? `<ruby>${esc(tok.z)}<rt>${esc(pyDisp(tok.p))}</rt></ruby>` : esc(tok.z);
+  return `<span class="tok" data-z="${esc(tok.z)}" data-p="${esc(tok.p)}"
+    data-e="${esc(tok.e)}">${inner}</span>`;
+}
+function rdBuild(){
+  const t = rd.t;
+  $('#rdPy').classList.toggle('on', rd.showPy);
+  $('#rdPy').style.display = rd.phase === 'read' ? '' : 'none';
+  if (rd.phase === 'words'){
+    $('#rdBody').innerHTML = `<p class="rintro">${esc(t.intro)}</p>
+      <div class="qz-note" style="text-align:left">New words in this text — tap to hear:</div>
+      <div class="rwgrid">` + t.new_words.map(w=>`<div class="rword" data-say="${esc(w.hanzi)}">
+        <span class="h">${esc(w.hanzi)}</span><span class="p">${esc(pyDisp(w.pinyin))}</span>
+        <span class="e">${esc(w.english)}</span></div>`).join('') + `</div>
+      <button class="rv-reveal" id="rdStart" style="margin-top:14px">开始 — start reading</button>`;
+    return;
+  }
+  if (rd.phase === 'read'){
+    $('#rdBody').innerHTML = t.sentences.map(s=>{
+      const zh = s.t.map(x=>x.z).join('');
+      return `<div class="rd-sent ${t.level==='R0' ? 'big':''}">
+        ${s.who ? `<span class="rwho" data-say="${esc(s.who)}">${esc(s.who)}</span>` : ''}
+        <button class="rplay" data-say="${esc(zh)}" aria-label="play">▶</button>
+        <span class="rline">${s.t.map(rdTok).join('')}</span></div>`;
+    }).join('') + `
+      <div class="rd-en" id="rdEnBox" hidden><p>${esc(t.en)}</p></div>
+      <div class="prow" style="margin-top:14px">
+        <button class="pbtn" id="rdEn">English</button>
+        <button class="pbtn" id="rdToQuiz"><span class="zh">问</span>questions</button></div>`;
+    return;
+  }
+  if (rd.phase === 'quiz'){
+    const q = t.qs[rd.qIdx];
+    rd.order = q.choices.map((_, i)=>i).sort(()=>Math.random() - 0.5);
+    $('#rdBody').innerHTML = `<div class="qz-prompt">${rd.qIdx+1} / ${t.qs.length} —
+      ${esc(q.q)}</div><div class="qz-choices">` +
+      rd.order.map((ci, i)=>`<button data-rpick="${i}">${esc(q.choices[ci])}</button>`)
+        .join('') + `</div><div class="qz-note"></div>`;
+  }
+}
+function rdPick(i){
+  const q = rd.t.qs[rd.qIdx];
+  const btns = $('#rdBody').querySelectorAll('[data-rpick]');
+  const rightBtn = [...btns][rd.order.indexOf(q.a)];
+  rightBtn.classList.add('right');
+  const ok = rd.order[i] === q.a;
+  if (ok) rd.right++;
+  else btns[i].classList.add('wrong');
+  setTimeout(()=>{
+    if (!rd) return;
+    if (rd.qIdx < rd.t.qs.length - 1){ rd.qIdx++; rdBuild(); }
+    else rdFinish();
+  }, ok ? 700 : 1500);
+}
+async function rdFinish(){
+  let added = [], rec = null;
+  try{
+    const r = await fetch('/api/reader/complete', {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: rd.t.id, right: rd.right, total: rd.t.qs.length})});
+    const j = await r.json();
+    if (r.ok){ added = j.added || []; rec = j.recommend; RD = j.reader; renderRead(); }
+  }catch(e){}
+  $('#rdBody').innerHTML = `<div class="qz-score">读完了 — ${rd.right} / ${rd.t.qs.length}</div>
+    ${added.length ? `<div class="qz-note">joined your review deck:
+      <span style="font-family:var(--hanzi)">${added.map(esc).join(' · ')}</span></div>` : ''}
+    ${rec ? `<div class="qz-note">Up next: ${esc(rec.title)}</div>` : ''}
+    <button class="rv-reveal" id="rdDone" style="margin-top:14px">done</button>`;
+  $('#rdGloss').hidden = true;
+  loadState();
+}
+$('#rlevels').addEventListener('click', e=>{
+  const b = e.target.closest('[data-rd]');
+  if (b) openReaderText(b.dataset.rd);
+});
+$('#rdBody').addEventListener('click', e=>{
+  const tok = e.target.closest('.tok');
+  if (tok){
+    $('#rdBody').querySelectorAll('.tok.hot').forEach(x=>x.classList.remove('hot'));
+    tok.classList.add('hot');
+    const g = $('#rdGloss');
+    g.hidden = false;
+    g.innerHTML = `<b>${esc(tok.dataset.z)}</b>${esc(pyDisp(tok.dataset.p))}
+      — ${esc(tok.dataset.e)}`;
+    wrSay(tok.dataset.z);
+    return;
+  }
+  if (e.target.closest('#rdStart')){ rd.phase = 'read'; rdBuild(); return; }
+  if (e.target.closest('#rdToQuiz')){ rd.phase = 'quiz'; rd.qIdx = 0; rd.right = 0;
+    $('#rdGloss').hidden = true; rdBuild(); return; }
+  if (e.target.closest('#rdEn')){ const b = $('#rdEnBox'); b.hidden = !b.hidden; return; }
+  const p = e.target.closest('[data-rpick]');
+  if (p && !p.classList.contains('right') && !p.classList.contains('wrong')){
+    rdPick(+p.dataset.rpick); return;
+  }
+  if (e.target.closest('#rdDone')){ rd = null; $('#rdModal').classList.remove('on'); }
+});
+$('#rdPy').onclick = ()=>{ if (rd){ rd.showPy = !rd.showPy; rdBuild(); } };
+$('#rdClose').onclick = ()=>{ rd = null; $('#rdModal').classList.remove('on'); };
+
 /* ── settings ── */
 function renderSettings(){
   const seg = (k, opts) => `<span class="seg">` + opts.map(([v,l]) =>
@@ -1615,6 +1829,11 @@ function goTab(name){ document.querySelector(`nav button[data-view="${name}"]`).
 function runRec(id){
   if (id === 'placement') startPlacement();
   else if (id === 'review') openReview();
+  else if (id === 'read'){
+    goTab('read');
+    const tid = lastState && lastState.recommend && lastState.recommend.tid;
+    if (tid) openReaderText(tid);
+  }
   else if (id === 'reading' || id === 'listening') startPractice(id);
   else if (id === 'writing'){ goTab('write'); startWritingLesson(); }
   else if (id === 'lesson'){ goTab('talk'); $('#golesson').click(); }
@@ -1660,6 +1879,7 @@ document.addEventListener('click', e=>{
 loadState();
 loadCurriculum();
 loadLibrary();
+loadReader();
 
 /* installable app: register the worker (network-only; exists for install +
    force-updating stale home-screen shells on each deploy) */

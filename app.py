@@ -37,6 +37,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import curriculum
 import ingest
 import learner
+import reader
 import users
 from api_alerts import page_if_billing
 from tone_ear import ToneEar
@@ -549,6 +550,46 @@ def placement_submit(payload: dict):
         learner.record_activity(state, "placement", result["stage"])
         learner.touch_day(state)
         out = {**result, "recommend": learner.recommend(state)}
+    return out
+
+
+# ── The graded reader — reading from zero to full stories ─────────────────────
+@app.get("/api/reader")
+def reader_index():
+    state = learner.load()
+    return reader.view(state, learner.speaking_stage(state))
+
+
+@app.get("/api/reader/text/{tid}")
+def reader_text(tid: str):
+    t = reader.text_payload(tid)
+    if not t:
+        raise HTTPException(404, "no such text")
+    state = learner.load()
+    lvl = next(lv for lv in reader.LEVELS if lv["id"] == t["level"])
+    if lvl["idx"] > reader.open_through(state, learner.speaking_stage(state)):
+        raise HTTPException(403, "that level is still locked — read the earlier ones first")
+    return t
+
+
+@app.post("/api/reader/complete")
+def reader_complete(payload: dict):
+    tid = str(payload.get("id", ""))
+    try:
+        right, total = int(payload.get("right", 0)), int(payload.get("total", 0))
+    except (TypeError, ValueError):
+        raise HTTPException(400, "right/total must be integers")
+    with learner.txn() as state:
+        words = reader.complete(state, tid, f"{right}/{total}")
+        if words is None:
+            raise HTTPException(404, "no such text")
+        added = [w[0] for w in words
+                 if "added" in learner.add_word(state, w[0], w[1], w[2], w[3])]
+        learner.record_activity(state, "read", tid, f"{right}/{total}")
+        learner.touch_day(state)
+        out = {"ok": True, "added": added,
+               "recommend": learner.recommend(state),
+               "reader": reader.view(state, learner.speaking_stage(state))}
     return out
 
 

@@ -16,6 +16,7 @@ import pathlib
 import threading
 
 import curriculum
+import reader
 
 DATA = pathlib.Path(os.environ.get("DATA_DIR", pathlib.Path(__file__).parent / "data"))
 
@@ -57,6 +58,7 @@ _DEFAULT = {
     },
     "placement": None,    # {date, stage_idx, stage, per_stage} once taken
     "activity": [],       # self-study log: {date, kind, detail, score}
+    "reader": {},         # graded reader: text_id -> {date, score}
 }
 
 _SETTING_KEYS = set(_DEFAULT["settings"])
@@ -252,9 +254,14 @@ def recommend(state):
     if due > 0:
         return {"id": "review", "title": f"Review {min(due, 8)} due word{'s' if due > 1 else ''}",
                 "why": "Reviews come first, always — the schedule only works if you clear it."}
-    last_practice = next((a["kind"] for a in reversed(state["activity"])
-                          if a["kind"] in ("reading", "listening")), None)
-    if not _did_today(state, "reading", "listening"):
+    if not _did_today(state, "reading", "listening", "read"):
+        nxt = reader.next_text(state, speaking_stage(state))
+        if nxt:   # the graded reader outranks generic practice: it BUILDS vocabulary
+            return {"id": "read", "tid": nxt["id"],
+                    "title": f"Read: {nxt['title']} — {nxt['title_en']}",
+                    "why": "The next text on your reading ladder — new words come with it."}
+        last_practice = next((a["kind"] for a in reversed(state["activity"])
+                              if a["kind"] in ("reading", "listening")), None)
         kind = "listening" if last_practice == "reading" else "reading"
         return {"id": kind, "title": f"{kind.capitalize()} practice",
                 "why": f"No {kind} yet today — a few minutes keeps both channels moving."}
