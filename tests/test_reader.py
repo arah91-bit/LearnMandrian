@@ -30,6 +30,49 @@ def test_every_word_token_carries_pinyin_and_gloss():
                     assert len(tok["z"]) <= 2 and not tok["z"].isalnum()
 
 
+NAMES = {"安娜", "王明"}                    # recognized on sight, glossed inline
+
+
+def test_no_gaps_every_word_is_taught_before_use():
+    """The reader is a learner's ENTIRE reading input — a text may only use
+    words that this or an earlier text taught, or (the cumulative-knowledge
+    rule from the pedagogy shelf) compounds whose every character is already
+    known, like 二月 after 二 and 月."""
+    taught_words, taught_chars = set(), set()
+    for t in reader.TEXTS:
+        new = {w[0] for w in t["new_words"]}
+        new_chars = {c for w in new for c in w}
+        for s in t["sentences"]:
+            for tok in s["t"]:
+                if not tok["p"]:
+                    continue
+                z = tok["z"]
+                ok = (z in taught_words or z in new or z in NAMES
+                      or all(c in taught_chars or c in new_chars for c in z))
+                assert ok, f"{t['id']} uses {z} before it is taught"
+        taught_words |= new
+        taught_chars |= new_chars
+
+
+def test_early_words_recur_in_later_texts():
+    """循环练习 — recycling. Every R0/R1 word should be met again in a later
+    text (the SRS deck re-drills them regardless, but recurrence in real text
+    is what cements reading). Allowlist: number characters whose natural
+    recurrence (dates, prices, phone numbers) belongs to texts not yet
+    written — shrink it as content grows, never grow it."""
+    ALLOW = {"六", "七", "九"}      # 八 recurs in r6-1's date; these await new texts
+    early = [(t["id"], w[0]) for t in reader.TEXTS if t["level"] in ("R0", "R1")
+             for w in t["new_words"]]
+    order = [t["id"] for t in reader.TEXTS]
+    for tid, hz in early:
+        if hz in ALLOW:
+            continue
+        later = reader.TEXTS[order.index(tid) + 1:]
+        assert any(tok["z"] == hz or (len(hz) == 1 and hz in tok["z"])
+                   for t in later for s in t["sentences"] for tok in s["t"]), \
+            f"{hz} (taught in {tid}) never recurs"
+
+
 def test_new_words_actually_appear_in_their_text():
     for t in reader.TEXTS:
         toks = {tok["z"] for s in t["sentences"] for tok in s["t"]}

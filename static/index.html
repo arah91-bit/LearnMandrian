@@ -324,6 +324,8 @@
   .rtext .rst.done{color:var(--t1)}
   .rtext .rst.next{color:var(--brand-hot)}
   .rintro{color:var(--dim);font-size:14px;margin:2px 0 10px}
+  .rnote{background:var(--raised);border-left:3px solid var(--brand);border-radius:0 10px 10px 0;
+        padding:8px 12px;font-size:13px;color:var(--dim);margin:0 0 10px}
   .rwgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
         gap:8px;margin:8px 0 4px}
   .rword{background:var(--raised);border:1px solid var(--line);border-radius:12px;
@@ -1668,6 +1670,7 @@ function rdBuild(){
   $('#rdPy').style.display = rd.phase === 'read' ? '' : 'none';
   if (rd.phase === 'words'){
     $('#rdBody').innerHTML = `<p class="rintro">${esc(t.intro)}</p>
+      ${t.note ? `<div class="rnote">${esc(t.note)}</div>` : ''}
       <div class="qz-note" style="text-align:left">New words in this text — tap to hear:</div>
       <div class="rwgrid">` + t.new_words.map(w=>`<div class="rword" data-say="${esc(w.hanzi)}">
         <span class="h">${esc(w.hanzi)}</span><span class="p">${esc(pyDisp(w.pinyin))}</span>

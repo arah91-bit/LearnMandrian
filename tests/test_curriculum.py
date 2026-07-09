@@ -43,6 +43,26 @@ def test_reading_passages_have_valid_answer_indices():
                 assert 0 <= q["a"] < len(q["choices"])
 
 
+def test_reading_passages_use_only_characters_taught_by_their_stage():
+    """No gaps: a practice passage may only use characters a learner at that
+    stage has met — cumulative seed words plus unlocked grammar examples.
+    Proper names are the one exception (recognized, not learned)."""
+    names = "安娜王明"
+    order = [s["id"] for s in curriculum.STAGES]
+    known = set()
+    known_at = {}
+    for sid in order:
+        known |= {c for w in curriculum.SEEDS.get(sid, []) for c in w[0]}
+        known |= {c for g in curriculum.GRAMMAR if g["stage"] == sid
+                  for zh, _, _ in g["examples"] for c in zh if "㐀" <= c <= "鿿"}
+        known_at[sid] = set(known)
+    for sid, passages in curriculum.READING.items():
+        for i, p in enumerate(passages):
+            unk = {c for c in p["zh"]
+                   if "㐀" <= c <= "鿿" and c not in known_at[sid] and c not in names}
+            assert not unk, f"{sid} passage {i} uses untaught characters: {''.join(unk)}"
+
+
 # ── Placement ──────────────────────────────────────────────────────────────────
 def test_placement_is_deterministic_and_scored_server_side():
     a, b = curriculum.placement_items(), curriculum.placement_items()
