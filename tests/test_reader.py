@@ -20,6 +20,16 @@ def test_ids_unique_and_levels_real():
         assert any(t["level"] == lv["id"] for t in reader.TEXTS)
 
 
+def test_phase1_reader_level_counts():
+    counts = {lv["id"]: 0 for lv in reader.LEVELS}
+    for t in reader.TEXTS:
+        counts[t["level"]] += 1
+    assert counts["R0"] >= 8
+    assert counts["R1"] >= 8
+    assert counts["R2"] >= 10
+    assert counts["R3"] >= 10
+
+
 def test_every_word_token_carries_pinyin_and_gloss():
     for t in reader.TEXTS:
         for s in t["sentences"]:
@@ -57,16 +67,11 @@ def test_no_gaps_every_word_is_taught_before_use():
 def test_early_words_recur_in_later_texts():
     """循环练习 — recycling. Every R0/R1 word should be met again in a later
     text (the SRS deck re-drills them regardless, but recurrence in real text
-    is what cements reading). Allowlist: number characters whose natural
-    recurrence (dates, prices, phone numbers) belongs to texts not yet
-    written — shrink it as content grows, never grow it."""
-    ALLOW = {"六", "七", "九"}      # 八 recurs in r6-1's date; these await new texts
+    is what cements reading)."""
     early = [(t["id"], w[0]) for t in reader.TEXTS if t["level"] in ("R0", "R1")
              for w in t["new_words"]]
     order = [t["id"] for t in reader.TEXTS]
     for tid, hz in early:
-        if hz in ALLOW:
-            continue
         later = reader.TEXTS[order.index(tid) + 1:]
         assert any(tok["z"] == hz or (len(hz) == 1 and hz in tok["z"])
                    for t in later for s in t["sentences"] for tok in s["t"]), \

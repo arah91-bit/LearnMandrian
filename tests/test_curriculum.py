@@ -11,6 +11,27 @@ def _state():
     return json.loads(json.dumps(learner._DEFAULT))
 
 
+def _tone_from_pinyin(syllable):
+    marks = {
+        "ā": 1, "ē": 1, "ī": 1, "ō": 1, "ū": 1, "ǖ": 1,
+        "á": 2, "é": 2, "í": 2, "ó": 2, "ú": 2, "ǘ": 2,
+        "ǎ": 3, "ě": 3, "ǐ": 3, "ǒ": 3, "ǔ": 3, "ǚ": 3,
+        "à": 4, "è": 4, "ì": 4, "ò": 4, "ù": 4, "ǜ": 4,
+    }
+    for ch in syllable.lower():
+        if ch in marks:
+            return marks[ch]
+    return 5
+
+
+def _known_chars_through(stage_id):
+    order = [s["id"] for s in curriculum.STAGES]
+    known = set()
+    for sid in order[: order.index(stage_id) + 1]:
+        known |= {c for w in curriculum.SEEDS.get(sid, []) for c in w[0]}
+    return known
+
+
 # ── Data integrity ─────────────────────────────────────────────────────────────
 def test_stage_thresholds_ascend_and_ids_are_consistent():
     ths = [s["threshold"] for s in curriculum.STAGES]
@@ -34,6 +55,16 @@ def test_seed_tones_line_up_with_pinyin_syllables():
         for hz, py, en, tones in words:
             assert len(py.split()) == len(tones), f"{sid} {hz}"
             assert all(1 <= t <= 5 for t in tones)
+            derived = [_tone_from_pinyin(s) for s in py.split()]
+            assert derived == tones, f"{sid} {hz}: {py} marks {derived}, tones {tones}"
+
+
+def test_seed_words_are_unique_across_stages():
+    seen = {}
+    for sid, words in curriculum.SEEDS.items():
+        for hz, *_ in words:
+            assert hz not in seen, f"{hz} appears in both {seen[hz]} and {sid}"
+            seen[hz] = sid
 
 
 def test_reading_passages_have_valid_answer_indices():
@@ -46,11 +77,11 @@ def test_reading_passages_have_valid_answer_indices():
 def test_beginner_arc_never_runs_out_of_material():
     """Can't be stuck between levels: the deterministic content available by
     the end of stage k (cumulative seeds + reader words) must cover the entry
-    threshold of stage k+1. Asserted through entering S3 today; PLAN.md WS1
+    threshold of stage k+1. Asserted through leaving S3 for Phase 1; PLAN.md WS1
     extends this through S4 as the database grows — move the cutoff up, never
     down."""
     import reader
-    covered_through = "S2"
+    covered_through = "S3"
     vocab = set()
     for k, s in enumerate(curriculum.STAGES[:-1]):
         vocab |= {w[0] for w in curriculum.SEEDS.get(s["id"], [])}
@@ -61,6 +92,34 @@ def test_beginner_arc_never_runs_out_of_material():
             f"stuck leaving {s['id']}: {len(vocab)} words available, {need} needed"
         if s["id"] == covered_through:
             break
+
+
+def test_writing_ladder_is_sound_through_w2():
+    fixed = [r for r in curriculum.WRITING_RUNGS if r["id"] in ("W0", "W1", "W2")]
+    counts = {r["id"]: len(r["chars"]) for r in fixed}
+    assert counts["W0"] >= 17
+    assert counts["W1"] >= 16
+    assert counts["W2"] >= 30
+    seen = set()
+    seed_words = {w[0] for words in curriculum.SEEDS.values() for w in words}
+    for rung in fixed:
+        for hz, py, en in rung["chars"]:
+            assert len(hz) == 1 and "㐀" <= hz <= "鿿"
+            assert hz not in seen, f"{hz} appears in multiple writing rungs"
+            assert hz in seed_words, f"{hz} is writable but not a seed word"
+            assert py and en
+            seen.add(hz)
+
+
+def test_grammar_phase1_has_depth_and_covered_examples():
+    phase1 = [g for g in curriculum.GRAMMAR if g["stage"] in ("S1", "S2", "S3")]
+    assert len(phase1) >= 45
+    names = set("安娜王明")
+    for g in phase1:
+        known = _known_chars_through(g["stage"]) | names
+        for zh, _, _ in g["examples"]:
+            unk = {c for c in zh if "㐀" <= c <= "鿿" and c not in known}
+            assert not unk, f"{g['id']} uses untaught characters: {''.join(sorted(unk))}"
 
 
 def test_reading_passages_use_only_characters_taught_by_their_stage():
@@ -205,6 +264,9 @@ def test_writing_rung_walks_the_ladder():
     for h, _, _ in curriculum.WRITING_RUNGS[1]["chars"]:
         learner.record_writing(s, h, 1)
     assert learner.writing_rung(s) == "W2"
+    for h, _, _ in curriculum.WRITING_RUNGS[2]["chars"]:
+        learner.record_writing(s, h, 1)
+    assert learner.writing_rung(s) == "W3"
 
 
 def test_activity_log_caps():

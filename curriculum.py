@@ -74,17 +74,41 @@ WRITING_RUNGS = [
      "chars": [("一", "yī", "one"), ("二", "èr", "two"), ("三", "sān", "three"),
                ("十", "shí", "ten"), ("人", "rén", "person"), ("大", "dà", "big"),
                ("小", "xiǎo", "small"), ("口", "kǒu", "mouth"), ("日", "rì", "sun"),
-               ("月", "yuè", "moon"), ("山", "shān", "mountain")]},
+               ("月", "yuè", "moon"), ("山", "shān", "mountain"), ("四", "sì", "four"),
+               ("五", "wǔ", "five"), ("六", "liù", "six"), ("七", "qī", "seven"),
+               ("八", "bā", "eight"), ("九", "jiǔ", "nine"), ("水", "shuǐ", "water")]},
     {"id": "W1", "title": "Components",
      "desc": "Characters built from pieces with stories — and the 80% trick: one "
              "meaning piece plus one sound piece.",
      "chars": [("女", "nǚ", "woman"), ("子", "zǐ", "child"), ("好", "hǎo", "good"),
                ("马", "mǎ", "horse"), ("妈", "mā", "mom"), ("吗", "ma", "question word"),
-               ("明", "míng", "bright"), ("你", "nǐ", "you")]},
+               ("明", "míng", "bright"), ("你", "nǐ", "you"), ("也", "yě", "also"),
+               ("他", "tā", "he"), ("她", "tā", "she"), ("们", "men", "plural marker"),
+               ("田", "tián", "field"), ("力", "lì", "strength"), ("男", "nán", "male"),
+               ("木", "mù", "wood"), ("林", "lín", "woods"), ("从", "cóng", "from")]},
     {"id": "W2", "title": "Your words",
      "desc": "Words you can already say become writable once their characters are "
              "simple or built from parts you know. Practice from the Words tab (写).",
-     "chars": []},
+     "chars": [("天", "tiān", "day, sky"), ("今", "jīn", "now; this"),
+               ("去", "qù", "to go"), ("来", "lái", "to come"),
+               ("见", "jiàn", "to see"), ("再", "zài", "again"),
+               ("中", "zhōng", "middle"), ("东", "dōng", "east"),
+               ("西", "xī", "west"), ("车", "chē", "vehicle"),
+               ("手", "shǒu", "hand"), ("心", "xīn", "heart"),
+               ("门", "mén", "door"), ("不", "bù", "not"),
+               ("是", "shì", "to be"), ("有", "yǒu", "to have"),
+               ("要", "yào", "to want"), ("家", "jiā", "home"),
+               ("茶", "chá", "tea"), ("喝", "hē", "to drink"),
+               ("吃", "chī", "to eat"), ("买", "mǎi", "to buy"),
+               ("钱", "qián", "money"), ("说", "shuō", "to speak"),
+               ("看", "kàn", "to look"), ("听", "tīng", "to listen"),
+               ("请", "qǐng", "please"), ("问", "wèn", "to ask"),
+               ("叫", "jiào", "to be called"), ("坐", "zuò", "to sit"),
+               ("上", "shàng", "up; on"), ("下", "xià", "down"),
+               ("多", "duō", "many"), ("少", "shǎo", "few"),
+               ("个", "gè", "general measure word"), ("两", "liǎng", "two of something"),
+               ("岁", "suì", "years old"), ("号", "hào", "number"),
+               ("学", "xué", "to learn"), ("写", "xiě", "to write")]},
     {"id": "W3", "title": "Composition",
      "desc": "Dictation, typed sentences, handwritten phrases — writing that says something.",
      "chars": []},
@@ -114,6 +138,7 @@ SEEDS = {
            ("六", "liù", "six", [4]), ("七", "qī", "seven", [1]),
            ("九", "jiǔ", "nine", [3]),        # 八 lives in the S0 tone families
            ("十", "shí", "ten", [2]), ("人", "rén", "person", [2]),
+           ("口", "kǒu", "mouth", [3]), ("子", "zǐ", "child", [3]),
            ("吗", "ma", "question word", [5]), ("呢", "ne", "and…? (bounce-back)", [5]),
            ("很", "hěn", "very", [3]), ("和", "hé", "and; with", [2]),
            ("这", "zhè", "this", [4]), ("那", "nà", "that", [4]),
@@ -126,6 +151,7 @@ SEEDS = {
            ("坐", "zuò", "to sit", [4]), ("看", "kàn", "to look at", [4]),
            ("听", "tīng", "to listen", [1]), ("先生", "xiān sheng", "Mr., sir", [1, 5]),
            ("女", "nǚ", "female, woman", [3]), ("男", "nán", "male, man", [2]),
+           ("们", "men", "plural marker", [5]),
            ("对不起", "duì bu qǐ", "sorry", [4, 5, 3]),
            ("没关系", "méi guān xi", "it's okay", [2, 1, 5]),
            ("请", "qǐng", "please; to invite", [3]), ("问", "wèn", "to ask", [4]),
@@ -140,7 +166,10 @@ SEEDS = {
            ("去", "qù", "to go", [4]), ("中国", "Zhōng guó", "China", [1, 2]),
            ("商店", "shāng diàn", "shop", [1, 4]), ("买", "mǎi", "to buy", [3]),
            ("钱", "qián", "money", [2]), ("多少", "duō shao", "how much", [1, 5]),
-           ("喜欢", "xǐ huan", "to like", [3, 5]), ("说", "shuō", "to speak", [1]),
+           ("喜欢", "xǐ huan", "to like", [3, 5]), ("什么", "shén me", "what", [2, 5]),
+           ("的", "de", "'s; possession marker", [5]), ("几", "jǐ", "how many", [3]),
+           ("在", "zài", "at; in; -ing", [4]),
+           ("说", "shuō", "to speak", [1]),
            ("太", "tài", "too, so", [4]), ("贵", "guì", "expensive", [4]),
            ("汉语", "Hàn yǔ", "Chinese language", [4, 3]),
            # food & drink
@@ -334,6 +363,120 @@ SEEDS["S2"] += [
     ("红", "hóng", "red", [2]),
 ]
 
+# Phase 1 S3 expansion: scene vocabulary for directions, routines, school,
+# shopping, health, nature, narration, work, hobbies and clothes.
+SEEDS["S3"] += [
+    ("了", "le", "completed action marker", [5]), ("过", "guò", "have ever; to pass", [4]),
+    ("比", "bǐ", "than; compare", [3]), ("今", "jīn", "now; this", [1]), ("见", "jiàn", "to see", [4]),
+    ("再", "zài", "again", [4]), ("中", "zhōng", "middle", [1]),
+    ("东", "dōng", "east", [1]), ("西", "xī", "west", [1]),
+    ("心", "xīn", "heart", [1]), ("明", "míng", "bright", [2]),
+    ("田", "tián", "field", [2]),
+    ("力", "lì", "strength", [4]), ("木", "mù", "wood", [4]),
+    ("林", "lín", "woods", [2]), ("从", "cóng", "from", [2]),
+    ("旁边", "páng biān", "beside", [2, 1]), ("对面", "duì miàn", "opposite side", [4, 4]),
+    ("中间", "zhōng jiān", "middle, between", [1, 1]), ("左边", "zuǒ biān", "left side", [3, 1]),
+    ("右边", "yòu biān", "right side", [4, 1]), ("往", "wǎng", "toward", [3]),
+    ("离", "lí", "away from", [2]), ("到", "dào", "to arrive", [4]),
+    ("站", "zhàn", "station; to stand", [4]), ("公共汽车", "gōng gòng qì chē", "bus", [1, 4, 4, 1]),
+    ("地铁", "dì tiě", "subway", [4, 3]), ("自行车", "zì xíng chē", "bicycle", [4, 2, 1]),
+    ("司机", "sī jī", "driver", [1, 1]), ("机场", "jī chǎng", "airport", [1, 3]),
+    ("路口", "lù kǒu", "intersection", [4, 3]), ("公里", "gōng lǐ", "kilometer", [1, 3]),
+    ("方便", "fāng biàn", "convenient", [1, 4]), ("出发", "chū fā", "to set out", [1, 1]),
+    ("到达", "dào dá", "to arrive", [4, 2]), ("入口", "rù kǒu", "entrance", [4, 3]),
+    ("出口", "chū kǒu", "exit", [1, 3]), ("过马路", "guò mǎ lù", "to cross the street", [4, 3, 4]),
+    ("转", "zhuǎn", "to turn", [3]),
+    ("直走", "zhí zǒu", "to go straight", [2, 3]), ("左转", "zuǒ zhuǎn", "to turn left", [3, 3]),
+    ("右转", "yòu zhuǎn", "to turn right", [4, 3]), ("客厅", "kè tīng", "living room", [4, 1]),
+    ("厨房", "chú fáng", "kitchen", [2, 2]), ("卫生间", "wèi shēng jiān", "bathroom", [4, 1, 1]),
+    ("楼", "lóu", "building; floor", [2]), ("层", "céng", "floor; layer", [2]),
+    ("窗户", "chuāng hu", "window", [1, 5]), ("桌", "zhuō", "table", [1]),
+    ("椅", "yǐ", "chair", [3]), ("灯", "dēng", "lamp", [1]),
+    ("起", "qǐ", "to rise", [3]), ("刷牙", "shuā yá", "to brush teeth", [1, 2]),
+    ("洗脸", "xǐ liǎn", "to wash face", [3, 3]), ("休息", "xiū xi", "to rest", [1, 5]),
+    ("上班", "shàng bān", "to go to work", [4, 1]), ("下班", "xià bān", "to get off work", [4, 1]),
+    ("迟", "chí", "late", [2]), ("早", "zǎo", "early", [3]),
+    ("晚", "wǎn", "late; evening", [3]), ("小时", "xiǎo shí", "hour", [3, 2]),
+    ("刻", "kè", "quarter hour", [4]), ("洗手", "xǐ shǒu", "to wash hands", [3, 3]),
+    ("做饭", "zuò fàn", "to cook", [4, 4]), ("出门", "chū mén", "to go out", [1, 2]),
+    ("回来", "huí lái", "to come back", [2, 2]), ("进", "jìn", "to enter", [4]),
+    ("出", "chū", "to go out", [1]), ("打开", "dǎ kāi", "to open", [3, 1]),
+    ("关", "guān", "to close", [1]), ("教室", "jiào shì", "classroom", [4, 4]),
+    ("课", "kè", "class, lesson", [4]), ("上课", "shàng kè", "to attend class", [4, 4]),
+    ("下课", "xià kè", "to finish class", [4, 4]), ("作业", "zuò yè", "homework", [4, 4]),
+    ("题", "tí", "question, problem", [2]), ("懂", "dǒng", "to understand", [3]),
+    ("回答", "huí dá", "to answer", [2, 2]), ("告诉", "gào su", "to tell", [4, 5]),
+    ("练", "liàn", "to practice", [4]), ("预习", "yù xí", "to preview a lesson", [4, 2]),
+    ("中文", "zhōng wén", "Chinese language", [1, 2]), ("英文", "yīng wén", "English language", [1, 2]),
+    ("词典", "cí diǎn", "dictionary", [2, 3]), ("问题", "wèn tí", "question; problem", [4, 2]),
+    ("语法", "yǔ fǎ", "grammar", [3, 3]), ("句子", "jù zi", "sentence", [4, 5]),
+    ("课文", "kè wén", "lesson text", [4, 2]), ("读书", "dú shū", "to read books", [2, 1]),
+    ("写字", "xiě zì", "to write characters", [3, 4]), ("教", "jiào", "to teach", [4]),
+    ("学会", "xué huì", "to learn successfully", [2, 4]), ("市场", "shì chǎng", "market", [4, 3]),
+    ("菜单", "cài dān", "menu", [4, 1]), ("服务员", "fú wù yuán", "server", [2, 4, 2]),
+    ("碗", "wǎn", "bowl", [3]), ("盘", "pán", "plate", [2]),
+    ("瓶", "píng", "bottle", [2]), ("公斤", "gōng jīn", "kilogram", [1, 1]),
+    ("颜色", "yán sè", "color", [2, 4]), ("黄", "huáng", "yellow", [2]),
+    ("蓝", "lán", "blue", [2]), ("绿", "lǜ", "green", [4]),
+    ("收", "shōu", "to receive; charge", [1]), ("找钱", "zhǎo qián", "to give change", [3, 2]),
+    ("信用卡", "xìn yòng kǎ", "credit card", [4, 4, 3]), ("现金", "xiàn jīn", "cash", [4, 1]),
+    ("牛肉", "niú ròu", "beef", [2, 4]), ("鸡肉", "jī ròu", "chicken meat", [1, 4]),
+    ("米", "mǐ", "rice grain", [3]), ("面", "miàn", "noodles; flour", [4]),
+    ("包子", "bāo zi", "steamed bun", [1, 5]), ("饺子", "jiǎo zi", "dumpling", [3, 5]),
+    ("饮料", "yǐn liào", "drink", [3, 4]), ("果汁", "guǒ zhī", "juice", [3, 1]),
+    ("啤酒", "pí jiǔ", "beer", [2, 3]), ("可乐", "kě lè", "cola", [3, 4]),
+    ("甜", "tián", "sweet", [2]), ("咸", "xián", "salty", [2]),
+    ("辣", "là", "spicy", [4]), ("饱", "bǎo", "full from eating", [3]),
+    ("点菜", "diǎn cài", "to order dishes", [3, 4]), ("付钱", "fù qián", "to pay money", [4, 2]),
+    ("丈夫", "zhàng fu", "husband", [4, 5]), ("妻子", "qī zi", "wife", [1, 5]),
+    ("爷爷", "yé ye", "grandpa", [2, 5]), ("奶奶", "nǎi nai", "grandma", [3, 5]),
+    ("外公", "wài gōng", "maternal grandpa", [4, 1]), ("外婆", "wài pó", "maternal grandma", [4, 2]),
+    ("经理", "jīng lǐ", "manager", [1, 3]), ("护士", "hù shi", "nurse", [4, 5]),
+    ("警察", "jǐng chá", "police officer", [3, 2]), ("病人", "bìng rén", "patient", [4, 2]),
+    ("发烧", "fā shāo", "to have a fever", [1, 1]), ("感冒", "gǎn mào", "to catch a cold", [3, 4]),
+    ("疼", "téng", "to hurt", [2]), ("肚子", "dù zi", "belly", [4, 5]),
+    ("耳朵", "ěr duo", "ear", [3, 5]), ("鼻子", "bí zi", "nose", [2, 5]),
+    ("嘴", "zuǐ", "mouth", [3]), ("脸", "liǎn", "face", [3]),
+    ("牙", "yá", "tooth", [2]), ("腿", "tuǐ", "leg", [3]),
+    ("检查", "jiǎn chá", "to examine", [3, 2]), ("口罩", "kǒu zhào", "face mask", [3, 4]),
+    ("河", "hé", "river", [2]), ("湖", "hú", "lake", [2]),
+    ("海", "hǎi", "sea", [3]), ("草", "cǎo", "grass", [3]),
+    ("动物", "dòng wù", "animal", [4, 4]), ("熊猫", "xióng māo", "panda", [2, 1]),
+    ("羊", "yáng", "sheep", [2]), ("牛", "niú", "cow", [2]),
+    ("雪", "xuě", "snow", [3]), ("晴", "qíng", "clear weather", [2]),
+    ("阴", "yīn", "cloudy", [1]), ("春", "chūn", "spring", [1]),
+    ("夏", "xià", "summer", [4]), ("秋", "qiū", "autumn", [1]),
+    ("冬", "dōng", "winter", [1]), ("季节", "jì jié", "season", [4, 2]),
+    ("森林", "sēn lín", "forest", [1, 2]), ("天空", "tiān kōng", "sky", [1, 1]),
+    ("以后", "yǐ hòu", "afterward", [3, 4]), ("第", "dì", "ordinal prefix", [4]),
+    ("第一", "dì yī", "first", [4, 1]), ("第二", "dì èr", "second", [4, 4]),
+    ("第三", "dì sān", "third", [4, 1]), ("最后", "zuì hòu", "finally", [4, 4]),
+    ("如果", "rú guǒ", "if", [2, 3]), ("就", "jiù", "then; just", [4]),
+    ("才", "cái", "only then", [2]), ("又", "yòu", "again", [4]),
+    ("还", "hái", "still; also", [2]), ("自己", "zì jǐ", "self", [4, 3]),
+    ("大家", "dà jiā", "everyone", [4, 1]), ("别人", "bié rén", "other people", [2, 2]),
+    ("拿", "ná", "to take", [2]), ("放", "fàng", "to put", [4]),
+    ("带", "dài", "to bring", [4]), ("忘", "wàng", "to forget", [4]),
+    ("记", "jì", "to remember", [4]), ("借", "jiè", "to borrow", [4]),
+    ("还书", "huán shū", "to return a book", [2, 1]), ("等车", "děng chē", "to wait for a vehicle", [3, 1]),
+    ("换", "huàn", "to change; exchange", [4]), ("试", "shì", "to try", [4]),
+    ("穿衣服", "chuān yī fu", "to put on clothes", [1, 1, 5]), ("搬家", "bān jiā", "to move house", [1, 1]),
+    ("笑", "xiào", "to laugh", [4]), ("哭", "kū", "to cry", [1]),
+    ("脏", "zāng", "dirty", [1]), ("一样", "yí yàng", "same", [2, 4]),
+    ("一边", "yì biān", "one side; while", [4, 1]), ("可能", "kě néng", "maybe; possible", [3, 2]),
+    ("应该", "yīng gāi", "should", [1, 1]), ("必须", "bì xū", "must", [4, 1]),
+    ("选择", "xuǎn zé", "to choose", [3, 2]), ("完成", "wán chéng", "to complete", [2, 2]),
+    ("开始工作", "kāi shǐ gōng zuò", "to start work", [1, 3, 1, 4]),
+    ("公司", "gōng sī", "company", [1, 1]), ("工人", "gōng rén", "worker", [1, 2]),
+    ("农民", "nóng mín", "farmer", [2, 2]), ("商人", "shāng rén", "businessperson", [1, 2]),
+    ("记者", "jì zhě", "reporter", [4, 3]), ("足球", "zú qiú", "soccer", [2, 2]),
+    ("篮球", "lán qiú", "basketball", [2, 2]), ("游戏", "yóu xì", "game", [2, 4]),
+    ("照片", "zhào piān", "photo", [4, 1]), ("照相", "zhào xiàng", "to take a photo", [4, 4]),
+    ("裤子", "kù zi", "pants", [4, 5]), ("裙子", "qún zi", "skirt", [2, 5]),
+    ("鞋", "xié", "shoes", [2]), ("帽子", "mào zi", "hat", [4, 5]),
+    ("眼镜", "yǎn jìng", "glasses", [3, 4]), ("衬衫", "chèn shān", "shirt", [4, 1]),
+]
+
 # ── Grammar points ─────────────────────────────────────────────────────────────
 # Unlocked when the learner's speaking stage reaches "stage". Explanations and
 # examples are original; glosses in examples cover any word beyond the seeds.
@@ -343,36 +486,89 @@ GRAMMAR = [
      "explain": "是 (shì) links two nouns: who or what something IS. It never "
                 "changes form — no am/is/are, no past or future versions. And it "
                 "is not used with adjectives: for 'I'm good' you say 我很好, never 我是好.",
-     "examples": [("我是老师。", "Wǒ shì lǎoshī.", "I am a teacher."),
-                  ("他是我朋友。", "Tā shì wǒ péngyou.", "He is my friend.")]},
+     "examples": [("我是先生。", "Wǒ shì xiānsheng.", "I am Mr. / sir."),
+                  ("她是好人。", "Tā shì hǎo rén.", "She is a good person.")]},
     {"id": "ma-questions", "stage": "S1", "name": "吗 — yes/no questions",
      "pattern": "statement + 吗？",
      "explain": "Any statement becomes a yes/no question by adding 吗 (ma) at the "
                 "end — the word order never changes. Chinese has no word for a bare "
                 "yes or no: you answer by echoing the verb, 是 or 不是, 好 or 不好.",
      "examples": [("你好吗？", "Nǐ hǎo ma?", "How are you? (are you well?)"),
-                  ("你是老师吗？", "Nǐ shì lǎoshī ma?", "Are you a teacher?")]},
+                  ("你是先生吗？", "Nǐ shì xiānsheng ma?", "Are you Mr. / sir?")]},
     {"id": "bu-negation", "stage": "S1", "name": "不 — not",
      "pattern": "不 + verb / adjective",
      "explain": "Put 不 (bù) directly before the verb or adjective to negate it. "
                 "One sound rule: before another falling tone, 不 rises — 不是 is "
                 "said bú shì. (Completed past things use 没 instead — that comes later.)",
-     "examples": [("我不是老师。", "Wǒ bú shì lǎoshī.", "I am not a teacher."),
-                  ("我不要咖啡。", "Wǒ bú yào kāfēi.", "I don't want coffee.")]},
+     "examples": [("我不是先生。", "Wǒ bú shì xiānsheng.", "I am not Mr. / sir."),
+                  ("他不好。", "Tā bù hǎo.", "He is not well / not good.")]},
     {"id": "hen-adjectives", "stage": "S1", "name": "很 — adjectives without 是",
      "pattern": "subject + 很 + adjective",
      "explain": "Adjectives connect straight to the subject — no 是. Plain "
                 "subject-adjective sounds unfinished, so 很 (hěn) fills the beat; "
                 "here it barely means 'very'. 我很好 is simply 'I'm fine'.",
      "examples": [("我很好。", "Wǒ hěn hǎo.", "I'm fine."),
-                  ("茶很热。", "Chá hěn rè.", "The tea is hot. (热 rè = hot)")]},
+                  ("他很好。", "Tā hěn hǎo.", "He is fine.")]},
     {"id": "yao-want", "stage": "S1", "name": "要 — want / going to",
      "pattern": "要 + noun, or 要 + verb",
      "explain": "要 (yào) with a noun means you want that thing — the all-purpose "
                 "ordering word. With a verb it means you want to do it, or are "
                 "about to. One little word, half of daily life.",
-     "examples": [("我要茶。", "Wǒ yào chá.", "I want tea."),
-                  ("我要买米饭。", "Wǒ yào mǎi mǐfàn.", "I want to buy rice.")]},
+     "examples": [("我要这个。", "Wǒ yào zhè ge.", "I want this one."),
+                  ("你要坐吗？", "Nǐ yào zuò ma?", "Do you want to sit?")]},
+    {"id": "basic-word-order", "stage": "S1", "name": "Basic order — who does what",
+     "pattern": "subject + verb / adjective",
+     "explain": "The plain sentence order is steady: who first, then what they do "
+                "or how they are. You do not move the verb for questions, and you "
+                "do not add endings for I/you/he. Build the small sentence first; "
+                "particles like 吗 and 呢 attach after it.",
+     "examples": [("我坐。", "Wǒ zuò.", "I sit."),
+                  ("她很好。", "Tā hěn hǎo.", "She is fine.")]},
+    {"id": "pronoun-set", "stage": "S1", "name": "我 你 他 她 — people in sentences",
+     "pattern": "pronoun + predicate",
+     "explain": "我, 你, 他 and 她 sit where English I, you, he and she sit. The "
+                "spoken sound for 他 and 她 is identical, so meaning comes from "
+                "context when listening and from the character when reading. Keep "
+                "the pronoun in place; Chinese usually does not hide the subject "
+                "until the context is obvious.",
+     "examples": [("我是我。", "Wǒ shì wǒ.", "I am me."),
+                  ("他和她很好。", "Tā hé tā hěn hǎo.", "He and she are fine.")]},
+    {"id": "ne-bounce", "stage": "S1", "name": "呢 — bounce-back questions",
+     "pattern": "noun/pronoun + 呢？",
+     "explain": "呢 (ne) sends the same topic back to the other person. If someone "
+                "asks how you are and you answer, 你呢 means 'and you?' It is short, "
+                "natural, and depends on the previous sentence for its meaning.",
+     "examples": [("我很好，你呢？", "Wǒ hěn hǎo, nǐ ne?", "I'm fine. And you?"),
+                  ("他坐，你呢？", "Tā zuò, nǐ ne?", "He sits. What about you?")]},
+    {"id": "ye-also", "stage": "S1", "name": "也 — also",
+     "pattern": "subject + 也 + verb/adjective",
+     "explain": "也 (yě) comes before the verb or adjective and adds 'also / too'. "
+                "It follows the subject, not the end of the sentence. 我也很好 is "
+                "the compact answer after someone else says they are fine.",
+     "examples": [("我也很好。", "Wǒ yě hěn hǎo.", "I'm also fine."),
+                  ("她也要这个。", "Tā yě yào zhè ge.", "She also wants this one.")]},
+    {"id": "you-exists-s1", "stage": "S1", "name": "有 — have / there is",
+     "pattern": "A + 有 + B",
+     "explain": "有 (yǒu) says someone has something, and it also says something "
+                "exists. At this stage, keep it simple: 我有… means I have; 这有… "
+                "means here/this has. Later you will learn its special negative "
+                "没有.",
+     "examples": [("我有这个。", "Wǒ yǒu zhè ge.", "I have this one."),
+                  ("这有三个人。", "Zhè yǒu sān ge rén.", "There are three people here.")]},
+    {"id": "jiao-name", "stage": "S1", "name": "叫 — names",
+     "pattern": "person + 叫 + name",
+     "explain": "叫 (jiào) introduces what someone is called. It is the beginner "
+                "name verb: 我叫… means 'I am called…' or simply 'my name is…'. "
+                "When you ask, keep the normal word order and add 什么 for the name.",
+     "examples": [("我叫安娜。", "Wǒ jiào Ānnà.", "My name is Anna."),
+                  ("她叫王明。", "Tā jiào Wáng Míng.", "Her name is Wang Ming.")]},
+    {"id": "age-with-sui", "stage": "S1", "name": "岁 — age",
+     "pattern": "person + number + 岁",
+     "explain": "Age is a number plus 岁 (suì), with no 是 in the middle. The "
+                "sentence is literally 'I eight years-old.' Ask with 几岁 when the "
+                "number is expected to be small.",
+     "examples": [("我九岁。", "Wǒ jiǔ suì.", "I am nine years old."),
+                  ("她十岁。", "Tā shí suì.", "She is ten years old.")]},
     # S2
     {"id": "you-have", "stage": "S2", "name": "有 / 没有 — to have",
      "pattern": "A + 有 + B  ·  negation: 没有",
@@ -424,6 +620,76 @@ GRAMMAR = [
                 "whole is normal here; no 'to' or '-ing' machinery needed.",
      "examples": [("我喜欢喝茶。", "Wǒ xǐhuan hē chá.", "I like drinking tea."),
                   ("他喜欢中国。", "Tā xǐhuan Zhōngguó.", "He likes China.")]},
+    {"id": "question-words-stay-put", "stage": "S2", "name": "Question words stay in place",
+     "pattern": "question word in the answer slot",
+     "explain": "Chinese question words do not jump to the front. Put 什么, 谁, "
+                "哪里 or 几 exactly where the answer would go. 你喝什么 means 'you "
+                "drink what?' and that is the normal question.",
+     "examples": [("你喝什么？", "Nǐ hē shénme?", "What are you drinking?"),
+                  ("谁去商店？", "Shéi qù shāngdiàn?", "Who is going to the shop?")]},
+    {"id": "zai-location", "stage": "S2", "name": "在 — location",
+     "pattern": "subject + 在 + place",
+     "explain": "在 (zài) before a place means 'is at / in'. This is not the "
+                "progressive 在 yet; it simply locates someone or something. Keep "
+                "the place after 在: 我在家, I am at home.",
+     "examples": [("我在家。", "Wǒ zài jiā.", "I am at home."),
+                  ("老师在学校。", "Lǎoshī zài xuéxiào.", "The teacher is at school.")]},
+    {"id": "qu-place", "stage": "S2", "name": "去 — going places",
+     "pattern": "去 + place",
+     "explain": "去 (qù) points away from where you are now, toward a place. The "
+                "place comes right after it: 去商店, go to the shop. Add a time "
+                "word before the verb when you need one.",
+     "examples": [("我去商店。", "Wǒ qù shāngdiàn.", "I go to the shop."),
+                  ("明天我去学校。", "Míngtiān wǒ qù xuéxiào.", "Tomorrow I go to school.")]},
+    {"id": "he-with-and", "stage": "S2", "name": "和 — and / with",
+     "pattern": "A + 和 + B",
+     "explain": "和 (hé) joins nouns and people: 我和你, tea and coffee. It can "
+                "also mean 'with' when two people do an action together. Do not use "
+                "和 to join whole sentences; it is for pieces inside one sentence.",
+     "examples": [("我和你喝茶。", "Wǒ hé nǐ hē chá.", "You and I drink tea."),
+                  ("茶和咖啡很好。", "Chá hé kāfēi hěn hǎo.", "Tea and coffee are good.")]},
+    {"id": "tai-degree", "stage": "S2", "name": "太 — too / so",
+     "pattern": "太 + adjective",
+     "explain": "太 (tài) before an adjective means 'too' or an emotional 'so'. "
+                "It often pairs with 了 later, but beginners can already use 太贵, "
+                "too expensive, and 太好了, great.",
+     "examples": [("咖啡太贵。", "Kāfēi tài guì.", "Coffee is too expensive."),
+                  ("这个太好！", "Zhè ge tài hǎo!", "This one is great!")]},
+    {"id": "duo-shao-adjectives", "stage": "S2", "name": "多 / 少 — many and few",
+     "pattern": "很 + 多/少  ·  多少 asks amount",
+     "explain": "多 means many or much; 少 means few or little. Together, 多少 asks "
+                "how much or how many. In money questions, 多少钱 is the whole "
+                "phrase you need.",
+     "examples": [("我有很多书。", "Wǒ yǒu hěn duō shū.", "I have many books."),
+                  ("这个多少钱？", "Zhè ge duōshao qián?", "How much is this one?")]},
+    {"id": "qing-requests", "stage": "S2", "name": "请 — polite requests",
+     "pattern": "请 + verb phrase",
+     "explain": "请 (qǐng) before an action makes a request polite: please sit, "
+                "please drink tea, please ask. It can also invite someone to do "
+                "something. The action still keeps normal word order.",
+     "examples": [("请坐。", "Qǐng zuò.", "Please sit."),
+                  ("请喝水。", "Qǐng hē shuǐ.", "Please drink water.")]},
+    {"id": "ge-default-measure", "stage": "S2", "name": "个 — default measure",
+     "pattern": "number + 个 + noun",
+     "explain": "个 (gè) is the safe default measure word for people and many "
+                "things. It is not the only measure word, but it lets you form "
+                "useful sentences early. Remember: number, then measure, then noun.",
+     "examples": [("一个人", "yí gè rén", "one person"),
+                  ("两个学生", "liǎng ge xuésheng", "two students.")]},
+    {"id": "gei-give", "stage": "S2", "name": "给 — give",
+     "pattern": "给 + person + thing",
+     "explain": "给 (gěi) is the basic give word. Put the receiver right after 给, "
+                "then the thing. Later 给 also marks 'for someone', but first learn "
+                "the concrete handoff pattern.",
+     "examples": [("我给你水。", "Wǒ gěi nǐ shuǐ.", "I give you water."),
+                  ("老师给学生书。", "Lǎoshī gěi xuésheng shū.", "The teacher gives the student a book.")]},
+    {"id": "dui-cuo", "stage": "S2", "name": "对 / 错 — correct and wrong",
+     "pattern": "subject + 对/错",
+     "explain": "对 (duì) and 错 (cuò) are compact judgment words: right/correct "
+                "and wrong. They are useful in drills because you can answer with "
+                "just 对 or 不对, yes-correct or not-correct.",
+     "examples": [("你对。", "Nǐ duì.", "You are right."),
+                  ("我不对。", "Wǒ bú duì.", "I am not right.")]},
     # S3
     {"id": "le-completed", "stage": "S3", "name": "了 — completed action",
      "pattern": "verb + 了",
@@ -478,6 +744,76 @@ GRAMMAR = [
                 "to unlearn.",
      "examples": [("我今天不工作。", "Wǒ jīntiān bù gōngzuò.", "I'm not working today."),
                   ("明天我去中国。", "Míngtiān wǒ qù Zhōngguó.", "Tomorrow I'm going to China.")]},
+    {"id": "mei-you-past", "stage": "S3", "name": "没有 — didn't happen",
+     "pattern": "没有 + verb",
+     "explain": "没有 can deny possession, and it can deny that an event happened. "
+                "When the action did not happen, do not use 了. 我没有去 is enough: "
+                "I did not go.",
+     "examples": [("我昨天没有去学校。", "Wǒ zuótiān méiyǒu qù xuéxiào.", "I did not go to school yesterday."),
+                  ("他没有喝咖啡。", "Tā méiyǒu hē kāfēi.", "He did not drink coffee.")]},
+    {"id": "mei-dou", "stage": "S3", "name": "每…都 — every",
+     "pattern": "每 + time/person + 都 + verb/adjective",
+     "explain": "每 marks each one, and 都 gathers all of them together. The pair "
+                "turns 'day' into every day, or 'person' into everyone. 都 comes "
+                "before the verb or adjective.",
+     "examples": [("我每天都学习。", "Wǒ měitiān dōu xuéxí.", "I study every day."),
+                  ("我们都很忙。", "Wǒmen dōu hěn máng.", "We are all busy.")]},
+    {"id": "cong-dao", "stage": "S3", "name": "从…到… — from…to…",
+     "pattern": "从 + start + 到 + end",
+     "explain": "从 names the starting point and 到 names the endpoint. Use it for "
+                "places, times, or ranges: from home to school, from morning to "
+                "evening. The whole phrase normally comes before the main action.",
+     "examples": [("我从家到学校。", "Wǒ cóng jiā dào xuéxiào.", "I go from home to school."),
+                  ("从早上到晚上，我很忙。", "Cóng zǎoshang dào wǎnshang, wǒ hěn máng.", "From morning to evening, I'm busy.")]},
+    {"id": "li-distance", "stage": "S3", "name": "离 — distance from",
+     "pattern": "A + 离 + B + 近/远",
+     "explain": "离 (lí) measures distance from a reference point. A 离 B 近 means "
+                "A is near B; A 离 B 远 means A is far from B. It is the standard "
+                "distance frame for places.",
+     "examples": [("我家离学校很近。", "Wǒ jiā lí xuéxiào hěn jìn.", "My home is close to school."),
+                  ("商店离医院很远。", "Shāngdiàn lí yīyuàn hěn yuǎn.", "The shop is far from the hospital.")]},
+    {"id": "wang-direction", "stage": "S3", "name": "往 — toward",
+     "pattern": "往 + direction/place + verb",
+     "explain": "往 (wǎng) points the action in a direction. In directions, it is "
+                "the word before left, right, front, or a place: 往左走, walk toward "
+                "the left. It tells the path, not just the destination.",
+     "examples": [("往左走。", "Wǎng zuǒ zǒu.", "Walk to the left."),
+                  ("往前面走。", "Wǎng qiánmiàn zǒu.", "Walk forward.")]},
+    {"id": "yibian-yibian", "stage": "S3", "name": "一边…一边 — doing two things",
+     "pattern": "一边 + verb, 一边 + verb",
+     "explain": "一边…一边 links two actions happening at the same time. It is not "
+                "for every pair of verbs, only actions that overlap: walking while "
+                "talking, eating while watching.",
+     "examples": [("我一边走一边说汉语。", "Wǒ yìbiān zǒu yìbiān shuō Hànyǔ.", "I walk while speaking Chinese."),
+                  ("她一边吃饭一边看书。", "Tā yìbiān chī fàn yìbiān kàn shū.", "She eats while reading.")]},
+    {"id": "keneng", "stage": "S3", "name": "可能 — maybe",
+     "pattern": "可能 + sentence",
+     "explain": "可能 (kěnéng) softens a statement into maybe or possibly. It goes "
+                "before the verb phrase or before the whole sentence. It is useful "
+                "when you are guessing without pretending to know.",
+     "examples": [("明天可能下雨。", "Míngtiān kěnéng xià yǔ.", "It may rain tomorrow."),
+                  ("他可能在家。", "Tā kěnéng zài jiā.", "He may be at home.")]},
+    {"id": "yinggai", "stage": "S3", "name": "应该 — should",
+     "pattern": "应该 + verb phrase",
+     "explain": "应该 (yīnggāi) says what should happen or what would be sensible. "
+                "It is advice, expectation, or mild obligation. Put it before the "
+                "main action.",
+     "examples": [("你应该休息。", "Nǐ yīnggāi xiūxi.", "You should rest."),
+                  ("我应该预习。", "Wǒ yīnggāi yùxí.", "I should preview the lesson.")]},
+    {"id": "bixu", "stage": "S3", "name": "必须 — must",
+     "pattern": "必须 + verb phrase",
+     "explain": "必须 (bìxū) is stronger than 应该: must, have to. Use it when the "
+                "action is required, not merely a good idea. The negative is usually "
+                "不用 or 不必 later; for now keep 必须 for positive requirements.",
+     "examples": [("我必须去医院。", "Wǒ bìxū qù yīyuàn.", "I must go to the hospital."),
+                  ("学生必须写作业。", "Xuésheng bìxū xiě zuòyè.", "Students must do homework.")]},
+    {"id": "zhengzai", "stage": "S3", "name": "正在 — right now",
+     "pattern": "正在 + verb",
+     "explain": "正在 is a stronger, clearer version of progressive 在. It says the "
+                "action is underway right now. Use it when the timing matters: I am "
+                "in the middle of doing this.",
+     "examples": [("我正在上课。", "Wǒ zhèngzài shàng kè.", "I am in class right now."),
+                  ("妈妈正在做饭。", "Māma zhèngzài zuò fàn.", "Mom is cooking right now.")]},
     # S4
     {"id": "result-complements", "stage": "S4", "name": "Result endings — 完 到 见",
      "pattern": "verb + 完/到/见 (+ 了)",
@@ -604,11 +940,11 @@ READING = {
          "qs": [{"q": "What does Anna say about herself?",
                  "choices": ["She's doing well", "She's tired", "She's a teacher", "She wants tea"],
                  "a": 0}]},
-        {"zh": "他是我朋友。他要茶，我要咖啡。", "py": "Tā shì wǒ péngyou. Tā yào chá, wǒ yào kāfēi.",
-         "qs": [{"q": "What does the friend want?",
-                 "choices": ["Tea", "Coffee", "Water", "Rice"], "a": 0},
-                {"q": "What does the speaker want?",
-                 "choices": ["Coffee", "Tea", "Nothing", "Soup"], "a": 0}]},
+        {"zh": "他是先生。他要坐，我也要坐。", "py": "Tā shì xiānsheng. Tā yào zuò, wǒ yě yào zuò.",
+         "qs": [{"q": "Who is he?",
+                 "choices": ["Mr. / sir", "A child", "Anna", "A shopkeeper"], "a": 0},
+                {"q": "What does the speaker also want to do?",
+                 "choices": ["Sit", "Leave", "Ask", "Look"], "a": 0}]},
     ],
     "S2": [
         {"zh": "我家有四个人。爸爸喜欢喝茶，妈妈喜欢喝咖啡。",

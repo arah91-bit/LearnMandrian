@@ -235,7 +235,7 @@ def writing_rung(state):
         if r["chars"] and any(not (wr.get(h) and wr[h]["best"] <= 1)
                               for h, _, _ in r["chars"]):
             return r["id"]
-    return "W2"
+    return "W3"
 
 
 def _did_today(state, *kinds):
