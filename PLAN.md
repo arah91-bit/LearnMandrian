@@ -24,17 +24,30 @@ In order:
 
 1. **WS6(b) — can-do stage-exit checks for S1–S4.** A deterministic per-stage
    quiz (reading + listening mix now; add dictation items once WS5 lands)
-   that, when passed, lifts the derived stage exactly like placement does;
-   failing recommends remediation (due reviews or specific reader texts),
-   never a dead end. This is the formal cure for "stuck" where word-count
-   thresholds stop being the right measure.
+   that, when passed, lifts the derived stage like placement does. Store can-do
+   results separately from placement (e.g. `state["can_do"]`) so assessment
+   history stays intelligible, but let `learner.speaking_stage()` consider the
+   lift. Use a practical pass rule: about 80% overall plus no miss on a small
+   set of critical items. Failing recommends targeted remediation by failed
+   skill/content (due reviews, specific reader text, listening, dictation,
+   grammar), never a dead end. Build S1–S3 first; S4 can land after enough S4
+   vocab/reader depth exists for a fair check. This is the formal cure for
+   "stuck" where word-count thresholds stop being the right measure.
 2. **WS5 — listening as a first-class track.** Listen-first mode on reader
    texts, dictation as a real practice kind (TTS speaks, learner types,
    deterministic hanzi check), and tone-confusion drills driven by the
-   learner's own `tone_stats`.
+   learner's own tone history. Dictation should normalize punctuation/spacing
+   and accept configured alternate valid answers. Listen-first should behave as
+   a reader mode with activity logging, not a separate progress ladder unless
+   implementation proves that separation is cleaner. Expand tone logging beyond
+   pair counts to remember target hanzi/pinyin/tones and heard tones, so drills
+   can use the learner's actual missed words/syllables. In dev, keep raw user
+   audio for tone/dictation debugging.
 3. **WS7 — tutor teaches from the database.** Stage word-plan line + last
    reader text title in the snapshot; verify a live lesson turn uses it;
-   watch the brain token logs (budget: < ~150 extra tokens).
+   watch the brain token logs (budget: < ~150 extra tokens). For verification,
+   one or two real DeepSeek calls on a scratch instance are allowed; keep it
+   minimal.
 4. **WS1 phase C — seeds through S4 ≥ 900 cumulative**; move the threshold
    test cutoff from S3 to S4 (never down).
 5. **WS2 continuation — the middle gets depth:** R4 8 / R5 6 / R6 4 texts
@@ -45,10 +58,11 @@ invariant-first, scratch verification, backup push before substantive work,
 no force-push, `origin/main` untouched.
 
 **Branch/deploy mode:** phase work happens on the feature branch, verified
-against a scratch instance. Deploying to the shared test container
-(`languagetutor-test`) is part of definition-of-done AFTER local verification
-— it is the owner's daily-driver dev instance and how real usage feedback
-happens. Never deploy code with failing tests; never mutate live user data.
+against a scratch instance. Do not deploy after individual Phase 2 workstreams.
+Deploying to the shared test container (`languagetutor-test`) happens only
+after the whole Phase 2 slice is reviewed and local verification is green. It
+is the owner's daily-driver dev instance and how real usage feedback happens.
+Never deploy code with failing tests; never mutate live user data.
 
 **Approved source map** (owner-approved 2026-07-09; paraphrase, never copy):
 
@@ -111,9 +125,10 @@ their invariant in the same commit. Allowlists only shrink.
 **Definition-of-done template:** every workstream ends with (1) named tests
 green, (2) counts hit, (3) a browser walkthrough of the changed flow on the
 scratch instance, (4) dev-branch commit(s) whose messages say what a learner
-can now do that they couldn't. Final owner review/handoff adds backup check,
-optional deploy + container-internal smoke test, and public-handoff source
-scrub.
+can now do that they couldn't. Final Phase 2 owner review/handoff adds backup
+check, deploy + container-internal smoke test if approved, and public-handoff
+source scrub. `PLAN.md` is private working context and should be excluded from
+any public GitHub handoff rather than scrubbed into a public artifact.
 
 ---
 
@@ -225,25 +240,28 @@ Existing (all in `tests/`, all green as of 2026-07-09):
 - **Reader taught-before-used**: every word token is taught in its own or an
   earlier text, is a proper name, or is a compound of known characters.
 - **Reader new-words-shown**: a text actually uses every word it teaches.
-- **Reader recycling**: every R0/R1 word recurs in a later text (allowlist
-  currently `{六,七,九}` — shrink it, never grow it).
+- **Reader recycling**: every R0/R1 word recurs in a later text; allowlist is
+  empty and must stay empty.
 - **Practice-passage coverage**: quiz passages may only use characters a
   learner at that stage has met (seeds + unlocked grammar examples).
-- **Placement determinism**, seed pinyin/tone alignment, question validity.
+- **Placement determinism**, seed pinyin/tone alignment, tone-mark↔tone-number
+  consistency, question validity.
+- **Phase 1 coverage**: deterministic content covers leaving S3; S1–S3 grammar
+  examples are stage-covered; W0–W2 writing ladder is sound; R0–R3 reader
+  sizing is enforced.
 
 To add (each is a small test + whatever content it takes to go green):
 
 - **Threshold coverage** (WS1): cumulative deterministic vocabulary (seeds ∪
   reader words) at stage k ≥ the entry threshold of stage k+1, through S4.
-  Current counts: S0 33, S1 74 (need 60 ✓), S2 189 (need 200 — 11 short),
-  S3 270 (need 450), S4 327 (need 900). Beyond S4, fluency is measured by
-  can-do checks, extensive reading, and the tutor — not word counts (§WS6).
-- **Grammar example coverage** (WS4): grammar examples use only seed words
-  from ≤ their stage, or carry inline glosses.
-- **Writing-ladder soundness** (WS3): every rung char has stroke data in the
-  hanzi cache; no duplicate chars across rungs; every W0–W2 char is also a
-  seed word (writing chars are real vocabulary).
-- **Reader level sizing** (WS2):每 level has ≥ its minimum text count.
+  Current Phase 2 gap: leaving S4 must reach S5 entry (≥900 cumulative);
+  post-Phase-1 count is 566/900.
+- **Can-do checks** (WS6): deterministic S1–S4 stage-exit items, pass/fail
+  scoring, stage lift, and targeted remediation.
+- **Dictation/listen-first/confusion drills** (WS5): payload formats, scoring,
+  activity logging, recommendation rotation, and tone-attempt detail history.
+- **Reader level sizing continuation** (WS2): R4 ≥8, R5 ≥6, R6 ≥4, R7 ≥2 if
+  the stretch goal is accepted.
 
 ## 6. Current inventory (2026-07-09 post-Phase-1, feature/curriculum-systems)
 
@@ -265,24 +283,23 @@ To add (each is a small test + whatever content it takes to go green):
 
 ## 7. Workstreams (sized, ordered, with acceptance criteria)
 
-**WS1 — Vocabulary database to scale.** Grow SEEDS so the threshold-coverage
-test passes through S4: S2 is currently at the S3 entry threshold; S3 needs
-about +170 deterministic words to leave S3 cleanly (≥450 cumulative), then S4
-needs the larger S5 entry gap (≥900 cumulative). Use HSK2/3 scenes: directions,
-transport, house rooms, shopping details, school, nature, body, jobs. At S4+
-scale, curate in review batches: frequency-informed lists are facts and fine to
-consult, but every entry is hand-checked for pinyin/tones (the seed test catches
+**WS1 — Vocabulary database to scale.** Phase B is done. Phase C grows SEEDS so
+the threshold-coverage test passes through S4: post-Phase-1 cumulative content
+leaves S4 at 566/900, so add roughly 335+ deterministic S4 words. Use HSK3/4
+scenes: plans, work, city life, travel, social occasions, seasons/weather,
+health, opinions, connectors, study/work routines, and story sequencing. Curate
+in review batches: frequency-informed lists are facts and fine to consult, but
+every entry is hand-checked for pinyin/tones (the seed test catches
 syllable-count errors, NOT wrong tones) and given a plain-English gloss. Use the
 existing Tone Perfect / `tone_ear.py` path for audio/tone sanity checks and TTS
 spot checks; use dictionary/public-checklist lookup for lexical hanzi→pinyin
 entries. Format: `("汉字", "pīn yīn", "gloss", [tones])`, pinyin space-separated
-per syllable, 5=neutral. Mine scene lists from HSK volumes 1–3 first (§0 source
+per syllable, 5=neutral. Mine scene lists from HSK volumes 3–4 first (§0 source
 map), with newer public/official checklists only as gap checks. **Done when
-(phase B):** threshold test asserts
-through S3 entry→exit (`covered_through = "S3"`, needs cumulative ≥450) and
-is green; no cross-stage duplicate hanzi (add this as a test); a 20-entry
-random sample per batch pinyin/tone-checked and noted in the commit message.
-**Done when (phase C):** same through S4 (≥900).
+(phase C):** threshold test asserts through S4 (`covered_through = "S4"`,
+needs cumulative ≥900) and is green; cross-stage duplicate hanzi test remains
+green; a 20-entry random sample per batch is pinyin/tone-checked and noted in
+the commit message.
 
 **WS2 — Reader to full depth.** Targets: R0 8, R1 8, R2 10, R3 10, R4 8,
 R5 6, R6 4, new R7 "长篇" (chaptered stories, 300–600 chars/chapter, 2–3
@@ -297,70 +314,76 @@ from r3-3), r2-7 this/that (这/那/个/东西), r3-4 ages (岁/问), r3-5 where
 (哪儿/学校/走), r4-4 my day (早上/晚上/睡觉/学习/汉语 — move 汉语 here from
 r6-1), r5-3 birthday (生日/快乐/蛋糕/唱歌, sister turns 六 岁 → shrink the
 recycling allowlist), r6-2 the horse's birthday (一起/月亮/星星). Keep texts
-in ladder order in `TEXTS` (order IS the curriculum). **Done when:** level
-counts hit R0 8 / R1 8 / R2 10 / R3 10 / R4 8 / R5 6 / R6 4 / R7 2 (add the
-sizing test first, phased: beginner counts R0–R3 for Phase 1); all reader
-invariants green; recycling allowlist = ∅; browser proof on the scratch
-instance: open one NEW text per level, complete one end-to-end and watch its
-words land in the due deck and the recommendation advance.
+in ladder order in `TEXTS` (order IS the curriculum). **Done when (Phase 2
+continuation):** level counts hit R4 8 / R5 6 / R6 4 (R7 2 as stretch); all
+reader invariants green; recycling allowlist remains ∅; browser proof on the
+scratch instance: open one NEW text per level, complete one end-to-end and watch
+its words land in the due deck and the recommendation advance.
 
-**WS3 — Writing ladder completion.** W0 += 四五六七八九水 (stroke-simple);
-W1 += 也他她们田力男木林从 (each with a component story in the tile's
-teaching flow); W2 becomes a curated ~40-char set of high-frequency word-
-completers (天今去来见再中东西车手心门不是有…), each ≤8 strokes or built
-from known parts; W3 stays composition but gets ENGINE support: dictation
-exercises (TTS speaks a known phrase, learner types it, deterministic
-check against hanzi) as a new practice kind. Also: `learner.writing_rung`
-fallback should become "W3" once W0–W2 are all clean. **Done when:**
-ladder-soundness test green (stroke data present, no dup chars across rungs,
-every W0–W2 char is also a seed word); W0 ≥ 17 chars, W1 ≥ 16, W2 ≥ 30;
-browser proof: a writing lesson queues new chars with audio, and one
-dictation item completes end-to-end and records to the activity log.
+**WS3 — Writing ladder completion.** Phase 1 completed the W0–W2 soundness
+slice and the W3 fallback. Do not reopen those rungs unless a content change
+requires it. The remaining W3 engine work is now part of WS5: dictation
+exercises where TTS speaks a known phrase, the learner types hanzi, and the
+server checks a normalized answer plus configured alternate valid answers.
+**Done when (future W3 polish):** ladder-soundness remains green; dictation
+shares the WS5 activity-log/recommendation path; browser proof shows a known
+phrase played, answered with an accepted variant, and recorded.
 
-**WS4 — Grammar to a complete inventory.** Target ≈120–150 points covering
-the standard HSK1–5 grammar inventory (use the shelf's grammar chapter list
-as the coverage map: measure words, 的/得/地, complements — result,
-direction, potential, degree — comparisons, 把/被, questions, conjunction
-pairs, aspect 了/过/着, discourse markers, register). Each point: pattern,
-2–4 sentence explanation in the app's voice, 2–3 examples using only ≤stage
-seed vocabulary (add the coverage test first, then write to it). Stage
-mapping mirrors §4. **Done when (Phase 1 slice):** S1–S3 hold ≥ 45 points
-total, mirroring the HSK1–2 grammar inventory (checklist from the Routledge
-grammar TOC + HSK volume structure); the example-coverage test exists and is
-green; browser proof: three new points open from the Learn tab with playable
-examples; placement grammar items still generate and score.
+**WS4 — Grammar to a complete inventory.** Phase 1 completed the S1–S3 slice.
+The future target remains ≈120–150 points covering the standard HSK1–5 grammar
+inventory (use the shelf's grammar chapter list as the coverage map: measure
+words, 的/得/地, complements — result, direction, potential, degree —
+comparisons, 把/被, questions, conjunction pairs, aspect 了/过/着, discourse
+markers, register). Each point: pattern, 2–4 sentence explanation in the app's
+voice, 2–3 examples using only ≤stage seed vocabulary or explicit inline
+glossing until the stage has the vocabulary. Stage mapping mirrors §4. **Done
+when (future full inventory):** the grammar checklist is represented through
+S5; example-coverage tests stay green; browser proof shows new points opening
+from the Learn tab with playable examples; placement grammar items still
+generate and score.
 
 **WS5 — Listening as a first-class track.** Now: generated tone-ID/meaning
-items. Add: (a) listen-first mode for reader texts (hide text, play sentence
-by sentence, then reveal and read — one flag in the reader UI, huge value);
-(b) dictation (see WS3); (c) minimal-pair drills driven by the learner's own
-tone-confusion stats (`tone_stats` already tracks them; Tone Perfect clips
-already exist for all syllables). **Done when:** listen-first mode works on
-one reader text in the browser; a dictation item completes; a confusion
-drill launches from Progress; all three record to the activity log and the
-recommendation engine rotates them.
+items. Add: (a) listen-first mode for reader texts as a reader mode flag with
+activity logging (hide text, play sentence by sentence, then reveal and read);
+(b) dictation (see WS3) with punctuation/spacing normalization and structured
+alternate valid answers; (c) minimal-pair drills driven by the learner's own
+tone-confusion history. Expand tone logging beyond pair counts: keep target
+hanzi, pinyin, expected tones, heard tones, and enough context to pick the next
+target word/syllable, and retain raw user audio in dev for tone/dictation
+debugging. **Done when:** listen-first mode works on one reader text in the
+browser; a dictation item accepts an alternate valid answer; a confusion drill
+launches from Progress using a remembered target syllable/word; all three
+record to the activity log and the recommendation engine rotates them.
 
 **WS6 — Assessment beyond word counts.** (a) Placement: extend to 6 items
-per stage and add an S7 section (成语, register, discourse). (b) Stage-exit
-"can-do checks": a deterministic per-stage quiz (reading + listening +
-dictation mix) that, when passed, lifts the derived stage the same way
-placement does — this is the formal cure for "stuck between levels" at S4+
-where word-count thresholds stop being the right measure. (c) Writing
-assessment: per-rung clean-pass percentage already tracked; surface it in
-Progress. **Done when:** a can-do check passes end-to-end in the browser and
-the derived stage lifts; scoring has tests; failing the check recommends the
-right remediation (reviews or reader texts), not a dead end.
+per stage and add an S7 section (成语, register, discourse) as a later polish
+step. (b) Phase 2 priority: stage-exit "can-do checks", a deterministic
+per-stage quiz for S1–S4. Store results separately from placement, let the
+derived stage consider a pass, and use a practical scoring rule: about 80%
+overall plus no missed critical items. Start with reading + listening items;
+add dictation items after WS5 lands. A failed check must return targeted
+remediation keyed to the failed skill/content (reviews, specific reader text,
+listening, dictation, grammar), not just "try again." Build S1–S3 first; hold
+S4 until WS1/WS2 create enough S4 content for a fair check if needed. (c)
+Writing assessment: per-rung clean-pass percentage already tracked; surface it
+in Progress when it becomes load-bearing. **Done when:** S1–S3 can-do checks
+pass/fail end-to-end in the browser; scoring and remediation have tests; a pass
+lifts the derived stage without overwriting placement history; S4 is either
+implemented against sufficient S4 content or explicitly deferred until after
+WS1/WS2 in the same Phase 2 slice.
 
 **WS7 — Tutor integration.** The tutor should teach from the same database:
 (a) inject a "stage word-plan: not yet taught" line (first ~8 seeds at the
-current stage missing from the deck) into `learner.snapshot` — pending in the
-current tree; (b) per-stage session scripts appended to `curriculum.md`
-(opening ritual, drill shapes, can-do role-plays per stage); (c) the tutor
-should be told what the learner just read (activity log already carries it —
-extend the snapshot line with the last reader text title). **Done when:** a
-scratch-instance lesson turn shows the tutor teaching a word from the stage plan
-(transcript in the verification notes); snapshot growth stays under ~150 tokens
-(check the brain token log lines).
+current stage missing from the deck) into `learner.snapshot`; (b) per-stage
+session scripts appended to `curriculum.md` (opening ritual, drill shapes,
+can-do role-plays per stage); (c) the tutor should be told what the learner
+just read (activity log already carries it — extend the snapshot line with the
+last reader text title). Verification may use one or two real DeepSeek calls on
+a scratch instance, but keep them minimal and do not let LLM checks replace
+deterministic tests. **Done when:** a scratch-instance lesson turn shows the
+tutor teaching a word from the stage plan and acknowledging the last reader
+text when relevant (transcript in the verification notes); snapshot growth
+stays under ~150 tokens (check the brain token log lines).
 
 **WS8 — Content integrity at scale.** As data grows: split `reader.py` texts
 into `reader_texts.py` (data) vs logic if the file passes ~1500 lines; add a
@@ -376,10 +399,12 @@ exercises (play a sentence at natural speed, record, tone-ear + duration
 compare). This is the "no finish line" tier — the app must keep offering
 material forever.
 
-**Order**: WS1(S2/S3 part) → WS2 → WS3 → WS4 → WS6(b) → WS5 → WS7 → WS1(S4)
-→ WS9/WS8 as they become load-bearing. Rationale: the beginner arc must be
-gapless first (that's where learners quit), assessments unstick the middle,
-maintenance content lands last.
+**Order**: Phase 1 is complete. Phase 2 order is WS6(b) S1–S3 can-do checks →
+WS5 core listening/dictation/tone-history → WS7 tutor snapshot integration →
+WS1 phase C S4 vocabulary → WS6(b) S4 can-do check if held back → WS2 R4–R6
+depth (R7 stretch) → WS8/WS9 only as they become load-bearing. Rationale: first
+unstick deterministic progression, then deepen the content those new checks
+open.
 
 ## 8. Verification playbook (every workstream, before "done")
 
@@ -393,16 +418,18 @@ maintenance content lands last.
    browser. Playwright MCP is broken on this host (needs sudo Chrome install);
    use whatever browser/preview tooling is available in the session, or a
    manual browser walkthrough if no browser automation tool is exposed.
-4. During Phase 1, stop at scratch-instance verification and dev-branch commits
-   unless the owner asks for shared-container deploy. Final handoff deploy:
-   rebuild image if Dockerfile/requirements changed, restart (or recreate for
-   new mounts), then smoke-test endpoints from inside the container with
-   `app.cookie_for('<user>')`.
+4. During Phase 2, stop at scratch-instance verification and dev-branch commits
+   after each workstream. Deploy to `languagetutor-test` only after the whole
+   Phase 2 slice is reviewed and local verification is green. Final handoff
+   deploy: rebuild image if Dockerfile/requirements changed, restart (or
+   recreate for new mounts), then smoke-test endpoints from inside the
+   container with `app.cookie_for('<user>')`.
 5. Live user data (`/home/phil/PersonalProjects/LanguageTutor-data`): read
    for insight, never write (full policy in §0).
 6. At completion/handoff, verify the branch backup on `origin` (§0).
-7. Before any public GitHub handoff, scrub private shelf references, extracted
-   source notes, and Anna's Archive metadata from committed files.
+7. Before any public GitHub handoff, exclude `PLAN.md` and scrub private shelf
+   references, extracted source notes, and Anna's Archive metadata from
+   committed files.
 
 ## 9. Authoring reference (formats)
 
