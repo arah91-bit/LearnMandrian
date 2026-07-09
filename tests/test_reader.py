@@ -20,7 +20,7 @@ def test_ids_unique_and_levels_real():
         assert any(t["level"] == lv["id"] for t in reader.TEXTS)
 
 
-def test_phase1_reader_level_counts():
+def test_reader_level_counts_cover_phase2_depth():
     counts = {lv["id"]: 0 for lv in reader.LEVELS}
     for t in reader.TEXTS:
         counts[t["level"]] += 1
@@ -28,6 +28,10 @@ def test_phase1_reader_level_counts():
     assert counts["R1"] >= 8
     assert counts["R2"] >= 10
     assert counts["R3"] >= 10
+    assert counts["R4"] >= 8
+    assert counts["R5"] >= 6
+    assert counts["R6"] >= 4
+    assert counts["R7"] >= 2
 
 
 def test_every_word_token_carries_pinyin_and_gloss():
