@@ -406,6 +406,7 @@ def api_view(state):
             "tone_targets": tone_drill_targets(state),
         },
         "sessions": state["sessions"][::-1][:10],
+        "tone_recent": state.get("tone_attempts", [])[-6:][::-1],
         "writing": state["writing"],
         "settings": state["settings"],
         "position": {"stage_idx": stage_idx,

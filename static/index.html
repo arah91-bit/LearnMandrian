@@ -484,6 +484,15 @@
     <div class="card" id="confusion-card" hidden>
       <h2>Most common mix-ups</h2><div class="list"></div>
     </div>
+    <div class="card" id="cando-card">
+      <h2>Can-do checks — your ladder</h2><div class="list"></div>
+    </div>
+    <div class="card" id="tonehist-card" hidden>
+      <h2>Recent tone attempts</h2><div class="list"></div>
+    </div>
+    <div class="card" id="wprog-card">
+      <h2>Writing ladder</h2><div class="rows"></div>
+    </div>
     <div id="resetzone"><button id="reset">start the conversation over</button></div>
   </section>
 </main>
@@ -1415,6 +1424,46 @@ function render(s){
       <span class="tag" style="background:${TONES[c.expected].hex}">T${c.expected}</span>
       → came out <span class="tag" style="background:${TONES[c.heard].hex}">T${c.heard}</span>
       <span style="margin-left:auto">×${c.count}</span></div>`).join('');
+
+  /* can-do ladder: one row per checkable stage — passed, or a button to try */
+  const cd = (s.position && s.position.can_do) || {};
+  $('#cando-card .list').innerHTML = ['S1','S2','S3','S4'].map(sid=>{
+    const r = cd[sid];
+    const state = r && r.passed
+      ? `<span class="t1">passed ✓ ${esc(r.date||'')}</span>`
+      : r ? `<span class="t3">tried ${esc(r.date||'')} — ${esc(String(r.right))}/${esc(String(r.total))}</span>`
+          : `<span class="t5">not yet taken</span>`;
+    return `<div class="confusion"><b style="min-width:32px">${sid}</b> ${state}
+      <button class="pbtn" data-cando="${sid}" style="margin-left:auto;
+      padding:4px 12px;font-size:12px">${r && r.passed ? 'retake' : 'take it'}</button></div>`;
+  }).join('');
+
+  /* recent tone attempts — the detailed history behind the drills */
+  const th = $('#tonehist-card');
+  const recent = s.tone_recent || [];
+  th.hidden = !recent.length;
+  if (recent.length) th.querySelector('.list').innerHTML = recent.map(a=>{
+    const chips = a.expected.map((e,i)=>{
+      const h = a.heard[i];
+      const hit = h === e;
+      return `<span class="tag" style="background:${(TONES[e]||TONES[5]).hex};
+        opacity:${hit?1:.55}">T${e}${hit?'':'→'+(h?'T'+h:'?')}</span>`;
+    }).join(' ');
+    return `<div class="confusion"><span style="font-family:var(--hanzi)">
+      ${esc(a.target_hanzi || a.target_pinyin || '—')}</span> ${chips}
+      <span style="margin-left:auto" class="t5">${esc(a.date)}</span></div>`;
+  }).join('');
+
+  /* writing ladder progress bars */
+  const wrp = s.writing || {};
+  $('#wprog-card .rows').innerHTML = LADDER.filter(r=>r.chars.length).map(r=>{
+    const done = r.chars.filter(([h])=> wrp[h] && wrp[h].best <= 1).length;
+    const pct = Math.round(done / r.chars.length * 100);
+    return `<div class="tone-row"><span class="name"><b>${esc(r.id)}</b></span>
+      <span class="name">${esc(r.title)}</span>
+      <span class="meter"><i style="width:${pct}%;background:var(--brand-hot)"></i></span>
+      <span class="n">${done}/${r.chars.length}</span></div>`;
+  }).join('');
 }
 async function loadState(){
   try{
@@ -2004,6 +2053,10 @@ function runRec(id){
 $('#rec-go').onclick = e=>runRec(e.target.dataset.act);
 $('#place-btn').onclick = startPlacement;
 $('#cando-btn').onclick = ()=>startCanDo();
+$('#view-progress').addEventListener('click', e=>{
+  const b = e.target.closest('[data-cando]');
+  if (b) startCanDo(b.dataset.cando);
+});
 $('#tone-drill-btn').onclick = startToneDrill;
 document.querySelectorAll('[data-practice]').forEach(b=>
   b.onclick = ()=>startPractice(b.dataset.practice));
