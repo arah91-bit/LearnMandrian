@@ -111,11 +111,17 @@ def test_writing_ladder_is_sound_through_w2():
             seen.add(hz)
 
 
-def test_grammar_phase1_has_depth_and_covered_examples():
-    phase1 = [g for g in curriculum.GRAMMAR if g["stage"] in ("S1", "S2", "S3")]
-    assert len(phase1) >= 45
+def test_grammar_has_depth_and_covered_examples():
+    """Full-inventory coverage: every grammar example at every stage uses only
+    characters from seed words of that stage or earlier (proper names exempt).
+    Counts: Phase 1 floor for S1–S3, Phase 3 floor for the whole inventory."""
+    by_stage = {}
+    for g in curriculum.GRAMMAR:
+        by_stage.setdefault(g["stage"], []).append(g)
+    assert sum(len(by_stage.get(s, [])) for s in ("S1", "S2", "S3")) >= 45
+    assert len(curriculum.GRAMMAR) >= 95
     names = set("安娜王明")
-    for g in phase1:
+    for g in curriculum.GRAMMAR:
         known = _known_chars_through(g["stage"]) | names
         for zh, _, _ in g["examples"]:
             unk = {c for c in zh if "㐀" <= c <= "鿿" and c not in known}

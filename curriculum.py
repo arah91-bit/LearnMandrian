@@ -317,7 +317,13 @@ SEEDS = {
            ("经验", "jīng yàn", "experience", [1, 4]), ("环境", "huán jìng", "environment", [2, 4]),
            ("麻烦", "má fan", "trouble; to bother", [2, 5]),
            # opinions & studying
-           ("建议", "jiàn yì", "to suggest; suggestion", [4, 4]), ("意思", "yì si", "meaning", [4, 5]),
+           ("被", "bèi", "(passive marker: by)", [4]), ("吧", "ba", "(suggestion particle)", [5]),
+    ("极了", "jí le", "extremely (after adjectives)", [2, 5]),
+    ("成功", "chéng gōng", "to succeed; success", [2, 1]),
+    ("好像", "hǎo xiàng", "to seem, as if", [3, 4]), ("左右", "zuǒ yòu", "around, approximately", [3, 4]),
+    ("可是", "kě shì", "but", [3, 4]), ("英语", "Yīng yǔ", "English language", [1, 3]),
+    ("病", "bìng", "illness; to fall ill", [4]),
+    ("建议", "jiàn yì", "to suggest; suggestion", [4, 4]), ("意思", "yì si", "meaning", [4, 5]),
            ("办法", "bàn fǎ", "way, method", [4, 3]), ("机会", "jī huì", "opportunity", [1, 4]),
            ("关系", "guān xi", "relationship", [1, 5]), ("感觉", "gǎn jué", "feeling; to feel", [3, 2]),
            ("记得", "jì de", "to remember", [4, 5]), ("忘记", "wàng jì", "to forget", [4, 4]),
@@ -340,7 +346,12 @@ SEEDS = {
            ("手机", "shǒu jī", "mobile phone", [3, 1]), ("改变", "gǎi biàn", "to change", [3, 4]),
            ("生活", "shēng huó", "life", [1, 2]), ("总是", "zǒng shì", "always", [3, 4]),
            # the wide world
-           ("世界", "shì jiè", "world", [4, 4]), ("历史", "lì shǐ", "history", [4, 3]),
+           ("与", "yǔ", "and, with (formal)", [3]), ("啊", "a", "(exclamation particle)", [5]),
+    ("连", "lián", "even (连…都)", [2]),
+    ("既然", "jì rán", "since (that's so)", [4, 2]), ("即使", "jí shǐ", "even if", [2, 3]),
+    ("不仅", "bù jǐn", "not only (formal)", [4, 3]), ("由于", "yóu yú", "owing to (formal)", [2, 2]),
+    ("却", "què", "however, yet", [4]), ("难道", "nán dào", "don't tell me… (disbelief)", [2, 4]),
+    ("世界", "shì jiè", "world", [4, 4]), ("历史", "lì shǐ", "history", [4, 3]),
            ("艺术", "yì shù", "art", [4, 4]), ("音乐", "yīn yuè", "music", [1, 4]),
            ("报纸", "bào zhǐ", "newspaper", [4, 3]), ("网站", "wǎng zhàn", "website", [3, 4]),
            ("上网", "shàng wǎng", "to go online", [4, 3]), ("科学", "kē xué", "science", [1, 2]),
@@ -348,7 +359,7 @@ SEEDS = {
            ("保护", "bǎo hù", "to protect", [3, 4]), ("污染", "wū rǎn", "pollution", [1, 3]),
            ("交通", "jiāo tōng", "traffic", [1, 1]), ("习惯", "xí guàn", "habit", [2, 4]),
            ("文章", "wén zhāng", "article, essay", [2, 1]), ("作家", "zuò jiā", "writer", [4, 1]),
-           ("比赛", "bǐ sài", "competition", [3, 4]), ("成功", "chéng gōng", "to succeed", [2, 1]),
+           ("比赛", "bǐ sài", "competition", [3, 4]),
            ("失败", "shī bài", "to fail", [1, 4]),
            ("发展", "fā zhǎn", "to develop", [1, 3])],
     "S7": [],
@@ -1150,6 +1161,291 @@ GRAMMAR = [
                 "signs long before you'd ever write them.",
      "examples": [("中国与美国", "Zhōngguó yǔ Měiguó", "China and the U.S. (formal 和; 美国 Měiguó = U.S.)"),
                   ("无糖", "wú táng", "sugar-free (formal 没有)")]},
+    # ── Phase 3 additions: the S4–S6 inventory ────────────────────────────────
+    # S4
+    {"id": "potential-de-bu", "stage": "S4", "name": "得/不 — can and can't manage it",
+     "pattern": "verb + 得/不 + result",
+     "explain": "Slip 得 or 不 between a verb and its result to say whether the "
+                "result is ACHIEVABLE: 听得懂, can understand (by listening); "
+                "听不懂, can't. It answers a different question than 会 — not "
+                "whether you learned it, but whether it can succeed here and now.",
+     "examples": [("我听得懂。", "Wǒ tīng de dǒng.", "I can understand (it)."),
+                  ("太远了，我看不到。", "Tài yuǎn le, wǒ kàn bu dào.", "It's too far — I can't see it.")]},
+    {"id": "zhe-continuous", "stage": "S4", "name": "着 — a state that stays",
+     "pattern": "verb + 着",
+     "explain": "着 (zhe) marks a state that continues after the action: 门开着 "
+                "— the door stands open. Compare 在, which marks an action in "
+                "progress; 着 is for the lasting result you can still see.",
+     "examples": [("门开着。", "Mén kāi zhe.", "The door is open."),
+                  ("他手里拿着一本书。", "Tā shǒu li ná zhe yì běn shū.", "He's holding a book in his hand.")]},
+    {"id": "jiu-cai", "stage": "S4", "name": "就 / 才 — earlier vs later than expected",
+     "pattern": "time + 就/才 + verb",
+     "explain": "Both mark timing, with attitude. 就 says it happened sooner or "
+                "more easily than expected: 他六点就来了 — he came as early as "
+                "six. 才 says later or harder: 他十点才来 — he didn't come until "
+                "ten. Same facts, opposite eyebrows.",
+     "examples": [("他六点就来了。", "Tā liù diǎn jiù lái le.", "He came as early as six."),
+                  ("他十点才来。", "Tā shí diǎn cái lái.", "He didn't come until ten.")]},
+    {"id": "youdianr-yidianr", "stage": "S4", "name": "有点儿 / 一点儿 — two kinds of a little",
+     "pattern": "有点(儿) + adjective · adjective + 一点(儿)",
+     "explain": "有点 comes BEFORE the adjective and carries a complaint: 有点贵, "
+                "a bit expensive (and I don't love it). 一点 comes AFTER and "
+                "compares or requests: 便宜一点 — a little cheaper, please.",
+     "examples": [("这个有点贵。", "Zhè ge yǒu diǎn guì.", "This one is a bit expensive."),
+                  ("请便宜一点。", "Qǐng pián yi yì diǎn.", "A little cheaper, please.")]},
+    {"id": "shi-de-focus", "stage": "S4", "name": "是…的 — spotlighting the detail",
+     "pattern": "是 + detail + verb + 的",
+     "explain": "For a past event both people know happened, 是…的 spotlights "
+                "the WHEN, WHERE or HOW: 我是昨天来的 — it was yesterday that I "
+                "came. The event is old news; the framed detail is the answer.",
+     "examples": [("我是昨天来的。", "Wǒ shì zuó tiān lái de.", "It was yesterday that I came."),
+                  ("你是怎么来的？", "Nǐ shì zěn me lái de?", "How did you get here?")]},
+    {"id": "duo-questions", "stage": "S4", "name": "多 + adjective — how long, how far",
+     "pattern": "多 + 长/远/重/大…?",
+     "explain": "Measure questions are 多 plus the adjective: 多远 how far, 多长 "
+                "how long, 多重 how heavy, 多大 how old (or big). The answer just "
+                "replaces the question word with a number.",
+     "examples": [("火车站多远？", "Huǒ chē zhàn duō yuǎn?", "How far is the train station?"),
+                  ("你多大？", "Nǐ duō dà?", "How old are you?")]},
+    {"id": "gei-for", "stage": "S4", "name": "给 — doing something FOR someone",
+     "pattern": "给 + person + verb",
+     "explain": "Before a verb, 给 marks who benefits: 给我打电话 — call me; "
+                "我给你做饭 — I'll cook for you. The gift meaning of 给 is still "
+                "there, just abstracted: the action is handed to the person.",
+     "examples": [("请给我打电话。", "Qǐng gěi wǒ dǎ diàn huà.", "Please call me."),
+                  ("妈妈给我们做饭。", "Māma gěi wǒ men zuò fàn.", "Mom cooks for us.")]},
+    {"id": "haishi-huozhe", "stage": "S4", "name": "还是 / 或者 — two kinds of or",
+     "pattern": "A 还是 B？ · A 或者 B",
+     "explain": "还是 is the ASKING or — it builds choice questions: 茶还是咖啡？ "
+                "或者 is the STATING or — either is fine: 茶或者咖啡都可以. Swap "
+                "them and the sentence stops sounding native.",
+     "examples": [("你要茶还是咖啡？", "Nǐ yào chá hái shi kā fēi?", "Tea or coffee?"),
+                  ("茶或者咖啡都可以。", "Chá huò zhě kā fēi dōu kě yǐ.", "Tea or coffee — either works.")]},
+    {"id": "yixia-softener", "stage": "S4", "name": "一下 — soften the verb",
+     "pattern": "verb + 一下",
+     "explain": "一下 after a verb makes it brief and friendly: 看一下, take a "
+                "quick look; 等一下, hold on a moment. It's the difference "
+                "between an order and a nudge — requests almost always want it.",
+     "examples": [("请等一下。", "Qǐng děng yí xià.", "One moment, please."),
+                  ("我看一下菜单。", "Wǒ kàn yí xià cài dān.", "Let me take a quick look at the menu.")]},
+    {"id": "duration-after-verb", "stage": "S4", "name": "Duration follows the verb",
+     "pattern": "verb + (了) + time span",
+     "explain": "How LONG something lasted comes after the verb, not before: "
+                "我学了两年汉语 — I studied Chinese for two years. Time WHEN "
+                "goes before the verb; time HOW LONG goes after. Two slots, "
+                "never swapped.",
+     "examples": [("我学了两年汉语。", "Wǒ xué le liǎng nián Hàn yǔ.", "I studied Chinese for two years."),
+                  ("他睡了十个小时。", "Tā shuì le shí gè xiǎo shí.", "He slept ten hours.")]},
+    {"id": "ci-bian", "stage": "S4", "name": "次 / 遍 — times, and times through",
+     "pattern": "verb + number + 次/遍",
+     "explain": "Counting repetitions also lives after the verb: 去过三次, been "
+                "three times. 遍 is a 次 that runs start to finish — 再说一遍 "
+                "means say the WHOLE thing again, which is why teachers love it.",
+     "examples": [("我去过三次中国。", "Wǒ qù guo sān cì Zhōng guó.", "I've been to China three times."),
+                  ("请再说一遍。", "Qǐng zài shuō yí biàn.", "Please say it once more, from the top.")]},
+    {"id": "yiqian-yihou", "stage": "S4", "name": "以前 / 以后 — before and after, clause-sized",
+     "pattern": "clause + 以前/以后",
+     "explain": "Hang 以前 or 以后 on the END of a clause to time another one: "
+                "吃饭以前洗手 — wash hands before eating. English puts 'before' "
+                "first; Chinese puts it after the thing it times. Flip your "
+                "instinct.",
+     "examples": [("吃饭以前，我洗手。", "Chī fàn yǐ qián, wǒ xǐ shǒu.", "Before eating, I wash my hands."),
+                  ("下课以后，我们去打篮球。", "Xià kè yǐ hòu, wǒ men qù dǎ lán qiú.", "After class we go play basketball.")]},
+    {"id": "ruguo-jiu", "stage": "S4", "name": "如果…就 — if… then",
+     "pattern": "如果 A，(B) 就 …",
+     "explain": "如果 opens the condition, 就 answers it: 如果下雨，我们就不去 "
+                "— if it rains, then we won't go. Like 因为…所以, keep both "
+                "halves; the 就 is what makes the consequence click.",
+     "examples": [("如果明天下雨，我们就不去了。", "Rú guǒ míng tiān xià yǔ, wǒ men jiù bú qù le.",
+                   "If it rains tomorrow, we won't go."),
+                  ("如果你累，就休息一下。", "Rú guǒ nǐ lèi, jiù xiū xi yí xià.", "If you're tired, rest a bit.")]},
+    {"id": "weile-purpose", "stage": "S4", "name": "为了 — in order to",
+     "pattern": "为了 + goal，+ action",
+     "explain": "为了 fronts the purpose: 为了健康，我每天跑步 — for my health, "
+                "I run every day. The goal comes first and colors everything "
+                "after it; it's how plans and resolutions sound.",
+     "examples": [("为了健康，我每天跑步。", "Wèi le jiàn kāng, wǒ měi tiān pǎo bù.",
+                   "For my health, I run every day."),
+                  ("为了学好汉语，她去了中国。", "Wèi le xué hǎo Hàn yǔ, tā qù le Zhōng guó.",
+                   "To master Chinese, she went to China.")]},
+    {"id": "zenme-how", "stage": "S4", "name": "怎么 — how (and how come)",
+     "pattern": "怎么 + verb",
+     "explain": "怎么 before a verb asks how to do it: 怎么去 — how do I get "
+                "there? 怎么写 — how is it written? With surprise in your voice "
+                "it shades into 'how come': 你怎么来了？— how come you're here?",
+     "examples": [("火车站怎么去？", "Huǒ chē zhàn zěn me qù?", "How do I get to the station?"),
+                  ("这个字怎么写？", "Zhè ge zì zěn me xiě?", "How is this character written?")]},
+    {"id": "bang-help-verb", "stage": "S4", "name": "帮 — help someone do",
+     "pattern": "帮 + person + verb",
+     "explain": "帮 takes the person, then the action you do for them: 帮我拿 "
+                "— hold this for me; 帮妈妈做饭 — help mom cook. No 'to' "
+                "between: the helped person sits right inside the verb phrase.",
+     "examples": [("请帮我拿一下。", "Qǐng bāng wǒ ná yí xià.", "Please hold this for me a second."),
+                  ("我帮妈妈做饭。", "Wǒ bāng māma zuò fàn.", "I help mom cook.")]},
+    # S5
+    {"id": "budan-erqie", "stage": "S5", "name": "不但…而且 — not only… but also",
+     "pattern": "不但 A，而且 B",
+     "explain": "The escalation pair: 不但 sets the floor, 而且 raises it — "
+                "他不但会说汉语，而且说得很好. If both halves share a subject it "
+                "goes before 不但; if not, each half keeps its own.",
+     "examples": [("他不但会说汉语，而且说得很好。", "Tā bú dàn huì shuō Hàn yǔ, ér qiě shuō de hěn hǎo.",
+                   "He not only speaks Chinese — he speaks it well.")]},
+    {"id": "zhiyao-jiu", "stage": "S5", "name": "只要…就 — as long as",
+     "pattern": "只要 A，就 B",
+     "explain": "A generous condition: meet the minimum and the result follows. "
+                "只要每天练习，你就会进步 — as long as you practice daily, "
+                "you'll improve. Compare 只有…才, its strict sibling.",
+     "examples": [("只要每天练习，你就会进步。", "Zhǐ yào měi tiān liàn xí, nǐ jiù huì jìn bù.",
+                   "As long as you practice every day, you'll improve.")]},
+    {"id": "zhiyou-cai", "stage": "S5", "name": "只有…才 — only if",
+     "pattern": "只有 A，才 B",
+     "explain": "The strict condition: nothing but A produces B. 只有努力，才能 "
+                "成功 — only through hard work can you succeed. 才 here carries "
+                "its 'later/harder than hoped' flavor from 就/才.",
+     "examples": [("只有努力，才能成功。", "Zhǐ yǒu nǔ lì, cái néng chéng gōng.",
+                   "Only with effort can you succeed.")]},
+    {"id": "degree-jile", "stage": "S5", "name": "极了 / 得很 — dialed to the top",
+     "pattern": "adjective + 极了 / 得很",
+     "explain": "Two after-the-adjective intensifiers: 好极了 — fantastic; "
+                "多得很 — loads. They replace 很/非常 rather than stack with "
+                "them; one intensifier per adjective is the rule.",
+     "examples": [("今天天气好极了！", "Jīn tiān tiān qì hǎo jí le!", "The weather today is fantastic!"),
+                  ("那儿的人多得很。", "Nàr de rén duō de hěn.", "There are loads of people there.")]},
+    {"id": "haoxiang", "stage": "S5", "name": "好像 — it seems",
+     "pattern": "好像 + clause",
+     "explain": "好像 (hǎoxiàng) hedges a guess from evidence: 他好像病了 — he "
+                "seems to be sick. Soft, common, and polite: it lets you notice "
+                "things about people without declaring them.",
+     "examples": [("他好像病了。", "Tā hǎo xiàng bìng le.", "He seems to be sick. (病 bìng = ill)"),
+                  ("好像要下雨了。", "Hǎo xiàng yào xià yǔ le.", "Looks like rain is coming.")]},
+    {"id": "gen-yiyang", "stage": "S5", "name": "跟…一样 — the same as",
+     "pattern": "A 跟 B 一样 (+ adjective)",
+     "explain": "Equality comparison: A 跟 B 一样 — A is the same as B; add an "
+                "adjective to say in what way: 跟我一样高, as tall as me. "
+                "Negate the 一样: 不一样.",
+     "examples": [("他跟我一样高。", "Tā gēn wǒ yí yàng gāo.", "He's as tall as me."),
+                  ("这个跟那个不一样。", "Zhè ge gēn nà ge bù yí yàng.", "This one isn't the same as that one.")]},
+    {"id": "chule-yiwai", "stage": "S5", "name": "除了…(以外) — besides, except",
+     "pattern": "除了 A(以外)，都/也/还…",
+     "explain": "The follow-up word decides the meaning: with 都, A is the "
+                "exception (everyone but A); with 也/还, A is included and "
+                "more is added (besides A, also…). Watch that second word.",
+     "examples": [("除了他，我们都去。", "Chú le tā, wǒ men dōu qù.", "Everyone is going except him."),
+                  ("除了汉语，她还会说英语。", "Chú le Hàn yǔ, tā hái huì shuō Yīng yǔ.",
+                   "Besides Chinese, she also speaks English. (英语 Yīngyǔ = English)")]},
+    {"id": "verb-redup", "stage": "S5", "name": "看看 / 试一试 — doubling softens",
+     "pattern": "VV · V一V · V了V",
+     "explain": "Doubling a verb makes it light and casual: 看看 have a look, "
+                "试一试 give it a try. It suggests briefness and zero pressure — "
+                "the spoken language runs on it.",
+     "examples": [("我看看。", "Wǒ kàn kan.", "Let me have a look."),
+                  ("你试一试吧。", "Nǐ shì yi shì ba.", "Give it a try.")]},
+    {"id": "zuoyou-approx", "stage": "S5", "name": "左右 / 多 — around and something",
+     "pattern": "number + 左右 · number + 多",
+     "explain": "Approximation without apology: 三十块左右 — around thirty "
+                "kuai; 三十多块 — thirty-something. 左右 wraps the number from "
+                "both sides (left-right, literally); 多 only rounds up.",
+     "examples": [("三十块左右。", "Sān shí kuài zuǒ yòu.", "Around thirty kuai."),
+                  ("他四十多岁。", "Tā sì shí duō suì.", "He's forty-something.")]},
+    {"id": "yijing-hai", "stage": "S5", "name": "已经…了 / 还没…呢 — done vs not yet",
+     "pattern": "已经 + verb + 了 · 还没 + verb (+呢)",
+     "explain": "A matched pair for progress reports: 我已经吃了 — I've already "
+                "eaten; 我还没吃呢 — I haven't yet. The 呢 softens the not-yet "
+                "into 'give me time' instead of a confession.",
+     "examples": [("我已经买了。", "Wǒ yǐ jīng mǎi le.", "I already bought it."),
+                  ("我还没看呢。", "Wǒ hái méi kàn ne.", "I haven't read it yet.")]},
+    {"id": "ba-location", "stage": "S5", "name": "把…放在 — putting things places",
+     "pattern": "把 + thing + verb + 在/到 + place",
+     "explain": "When an action moves something somewhere, 把 is nearly "
+                "mandatory: 把书放在桌子上 — put the book on the table. The "
+                "place lands after 在/到, glued to the verb.",
+     "examples": [("请把书放在桌子上。", "Qǐng bǎ shū fàng zài zhuō zi shàng.", "Please put the book on the table."),
+                  ("我把钱包忘在家里了。", "Wǒ bǎ qián bāo wàng zài jiā li le.", "I left my wallet at home.")]},
+    {"id": "separable-verbs", "stage": "S5", "name": "见面 / 帮忙 — verbs that split",
+     "pattern": "V + stuff + O (离合词)",
+     "explain": "Some two-syllable verbs are secretly verb+object and split "
+                "open: 见面 → 见个面 (meet up briefly), 帮忙 → 帮个忙 (do a "
+                "favor). You can't say 见面他 — the person goes with 跟: "
+                "跟他见面.",
+     "examples": [("我们明天见个面吧。", "Wǒ men míng tiān jiàn ge miàn ba.", "Let's meet up tomorrow."),
+                  ("你能帮我一个忙吗？", "Nǐ néng bāng wǒ yí ge máng ma?", "Could you do me a favor?")]},
+    {"id": "buguo-keshi", "stage": "S5", "name": "不过 / 可是 — softer buts",
+     "pattern": "…，不过/可是 …",
+     "explain": "Both mean 'but' with less push than 但是: 可是 is everyday "
+                "spoken; 不过 is the gentlest — it half-apologizes for "
+                "disagreeing. Stack from soft to firm: 不过 → 可是 → 但是.",
+     "examples": [("我想去，不过没有时间。", "Wǒ xiǎng qù, bú guò méi yǒu shí jiān.",
+                   "I'd like to go — it's just that I don't have time.")]},
+    # S6
+    {"id": "aabb-redup", "stage": "S6", "name": "干干净净 — AABB color",
+     "pattern": "AB → AABB",
+     "explain": "Doubling both syllables of an adjective turns description into "
+                "texture: 干干净净 spotless, 高高兴兴 happily. It adds warmth "
+                "and vividness — storyteller's language, not report language.",
+     "examples": [("房间干干净净。", "Fáng jiān gān gān jìng jìng.", "The room is spotless."),
+                  ("他高高兴兴地回家了。", "Tā gāo gāo xìng xìng de huí jiā le.", "He headed home happy as can be.")]},
+    {"id": "jiran-jiu", "stage": "S6", "name": "既然…就 — since that's so",
+     "pattern": "既然 A，就 B",
+     "explain": "既然 accepts a fact both of you know, 就 draws the conclusion: "
+                "既然你累了，就早点睡吧 — since you're tired, sleep early. "
+                "Unlike 因为, it doesn't explain — it concedes and moves on.",
+     "examples": [("既然你累了，就早点睡吧。", "Jì rán nǐ lèi le, jiù zǎo diǎn shuì ba.",
+                   "Since you're tired, go to bed early.")]},
+    {"id": "jishi-ye", "stage": "S6", "name": "即使…也 — even if",
+     "pattern": "即使 A，也 B",
+     "explain": "The hypothetical concession: even if A were true, B still "
+                "holds. 即使下雨，我也去 — even if it rains, I'm going. Where "
+                "连…都 spotlights a real extreme, 即使…也 invents one.",
+     "examples": [("即使下雨，我也去。", "Jí shǐ xià yǔ, wǒ yě qù.", "Even if it rains, I'm going.")]},
+    {"id": "bujin-hai", "stage": "S6", "name": "不仅…还 — the formal escalation",
+     "pattern": "不仅 A，还/而且 B",
+     "explain": "The written-register sibling of 不但…而且: 不仅 reads a notch "
+                "more formal, at home in news and essays. Recognize it reading; "
+                "reach for 不但 when speaking.",
+     "examples": [("他不仅会说汉语，还会写文章。", "Tā bù jǐn huì shuō Hàn yǔ, hái huì xiě wén zhāng.",
+                   "He not only speaks Chinese — he writes essays.")]},
+    {"id": "youyu-que", "stage": "S6", "name": "由于 / 却 — formal cause, quiet but",
+     "pattern": "由于 A，… · S 却 …",
+     "explain": "由于 is 因为 in a suit — written causes. 却 is a 'but' that "
+                "lives INSIDE the second clause, after its subject: 我想去，他却 "
+                "不想 — I want to go; he, however, doesn't. 却 never starts the "
+                "clause.",
+     "examples": [("由于下雨，比赛结束了。", "Yóu yú xià yǔ, bǐ sài jié shù le.",
+                   "Owing to rain, the match was ended."),
+                  ("我想去，他却不想去。", "Wǒ xiǎng qù, tā què bù xiǎng qù.", "I want to go — he, however, does not.")]},
+    {"id": "topic-comment", "stage": "S6", "name": "Topic first — 这本书我看过",
+     "pattern": "topic + comment",
+     "explain": "Mandarin loves fronting the thing under discussion: 这本书，"
+                "我看过 — this book, I've read. No passive needed, no 'as for' "
+                "machinery; the topic takes the stage and the comment follows.",
+     "examples": [("这本书我看过。", "Zhè běn shū wǒ kàn guo.", "This book I've read."),
+                  ("汉字，我写得还不好。", "Hàn zì, wǒ xiě de hái bù hǎo.", "Characters — I still don't write them well.")]},
+    {"id": "nandao", "stage": "S6", "name": "难道 — you don't mean…?",
+     "pattern": "难道 …吗？",
+     "explain": "难道 loads a question with disbelief: 难道你不知道吗？ — don't "
+                "tell me you didn't know? It expects pushback, not information. "
+                "Reserve it for real surprise; it's strong.",
+     "examples": [("难道你不知道吗？", "Nán dào nǐ bù zhī dào ma?", "Don't tell me you didn't know?")]},
+    {"id": "budebu", "stage": "S6", "name": "不得不 — no way around it",
+     "pattern": "不得不 + verb",
+     "explain": "A double negative that lands on reluctant必-yes: 我不得不走 — "
+                "I have no choice but to go. Stronger and more resigned than "
+                "必须; the speaker wishes it were otherwise.",
+     "examples": [("时间到了，我不得不走。", "Shí jiān dào le, wǒ bù dé bù zǒu.",
+                   "Time's up — I have no choice but to go.")]},
+    {"id": "yuelaiyue-clause", "stage": "S6", "name": "越 A 越 B — linked slopes",
+     "pattern": "越 + verb/adj + 越 + verb/adj",
+     "explain": "The paired form of 越来越 ties two variables together: 越忙越 "
+                "乱 — the busier, the messier; 越说越快 — the more he talks, "
+                "the faster he gets. One slope drives the other.",
+     "examples": [("我越忙越累。", "Wǒ yuè máng yuè lèi.", "The busier I am, the more tired I get."),
+                  ("他越说越快。", "Tā yuè shuō yuè kuài.", "The more he talks, the faster he goes.")]},
+    {"id": "duome-a", "stage": "S6", "name": "多么…啊 — the exclamation frame",
+     "pattern": "多么 + adjective + 啊",
+     "explain": "For open admiration: 多么好的天气啊！ — what fantastic "
+                "weather! Written and slightly theatrical; in daily speech 真 "
+                "does the same job smaller: 天气真好.",
+     "examples": [("多么好的天气啊！", "Duō me hǎo de tiān qì a!", "What wonderful weather!")]},
 ]
 
 # ── Reading passages ───────────────────────────────────────────────────────────
