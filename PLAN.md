@@ -39,40 +39,33 @@ word or an explicitly marked lexicalized collocation; every reader sentence is
 written by a person. Coverage numbers must be earned, not synthesized — a
 threshold test that passes on fake words is worse than one that fails.
 
-**Active scope (Phase 3): finish the middle, start the maintenance tier.**
-In order:
+**Phase 3 — COMPLETE (2026-07-09, executed with honest remainders).** Landed:
+(1) S4 vocabulary to 900+ cumulative with hand-checked words only — threshold
+invariant now asserts through leaving S4; (2) grammar inventory 59 → 99 points
+(S1–S6: 12/17/17/22/18/13) with the example-coverage test extended to every
+stage — it caught that pattern function words (被/吧/连/既然/即使/由于/却/
+难道/好像/左右/极了 …) were themselves unseeded, so they became vocabulary;
+(3) Progress tab surfaces the ladders: can-do per stage with take-it buttons,
+recent tone attempts (expected→heard chips), writing-rung bars; (4) shadowing
+engine: sentences from completed texts (open-level fallback — a real-data bug
+where one single-character text completed starved the picker was found in
+browser verification and fixed), native-vs-learner pace from cached TTS PCM,
+honest tone-ear feedback, full loop verified with synthesized audio;
+(5) 成语 enter the reader: 马马虎虎 and 入乡随俗 texts at R6, 一石二鸟 in an
+R7 sequel, plus a full-circle R7 finale — reader at 61 texts, R6=6, R7=4.
 
-1. **WS1 phase C-real — S4 to 900 with real words.** ~227 more hand-checked
-   entries (HSK3/4 band scenes: emotions, workplace detail, travel, health,
-   nature, quantities). Then move the threshold test cutoff to S4. Batch rule:
-   dictionary spot-check 20 random entries per batch, note it in the commit.
-2. **WS4 continuation — grammar S4–S6 to the full inventory.** From 59 points
-   to ≈120: complements (potential 得/不, degree 极了/得很), 把/被 variants,
-   越…越, 连…都, rhetorical patterns, discourse markers, register pairs.
-   Extend the example character-coverage test to S4–S6 as points land.
-3. **Progress surfacing (small, do early).** The Progress tab should show
-   can-do results, tone-drill history (the data now exists in state), and
-   writing-rung completion — a learner should SEE the ladder they're climbing.
-4. **WS2/WS9 — upper reader + 成语 begin.** R5 6→8, R6 4→6, R7 2→4 chaptered
-   texts; first original 成语 set (each: the idiom, its story retold in our
-   own words at R6 vocabulary, one example) taught through R6/R7 texts.
-5. **WS9 — shadowing (engine).** Play a native-speed sentence (TTS or ref
-   clips), record the learner, compare tone-ear reading + duration; surface as
-   a practice kind for S5+. Reuses the existing tone-drill recording plumbing.
-6. **WS1 phase D (stretch) — S5 vocabulary toward 1800**, phased (target 1300
-   this phase), same authenticity rules.
-
-Per-item stop conditions follow the Phase 1/2 pattern: named tests green,
-counts hit, one browser walkthrough per new flow, deploy + smoke after the
-whole slice is reviewed. Same guardrails: invariant-first, scratch
-verification, backup push, no force-push, `origin/main` untouched.
+**Phase 3 remainders (→ Phase 4):** R5 depth stayed at 6 texts (target 8);
+grammar at 99 (aspiration ≈120 — the remaining points are S5/S6 nuance);
+S5 vocabulary stretch (→1300) not attempted. Next phase also inherits: WS1
+phase D (S5 → 1800 eventually), themed tutor conversation menus (WS9),
+成语-of-the-day feed, and R7 chaptered long-form growth.
 
 **Branch/deploy mode:** phase work happens on the feature branch, verified
-against a scratch instance. Do not deploy after individual Phase 2 workstreams.
-Deploying to the shared test container (`languagetutor-test`) happens only
-after the whole Phase 2 slice is reviewed and local verification is green. It
-is the owner's daily-driver dev instance and how real usage feedback happens.
-Never deploy code with failing tests; never mutate live user data.
+against a scratch instance; deploy to the shared test container
+(`languagetutor-test`) after the whole phase slice is reviewed and local
+verification is green. It is the owner's daily-driver dev instance and how
+real usage feedback happens. Never deploy failing tests; never mutate live
+user data.
 
 **Approved source map** (owner-approved 2026-07-09; paraphrase, never copy):
 

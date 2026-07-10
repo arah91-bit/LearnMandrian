@@ -985,20 +985,26 @@ def shadow_sentences(state, stage_idx, n=5):
     a text so the drill has substance. Falls back to open-level texts."""
     done = state.get("reader", {})
     limit = open_through(state, stage_idx)
-    pool = [t for t in TEXTS if t["id"] in done]
-    if not pool:
-        pool = [t for t in TEXTS if _LEVEL_IDX[t["level"]] <= limit]
-    pool = pool[::-1][:6]                            # newest completed texts
-    out = []
-    for t in pool:
-        sents = sorted(t["sentences"], key=lambda s: -len(s["t"]))
-        for s in sents[:2]:
-            zh = "".join(tok["z"] for tok in s["t"])
-            tones = sentence_tones(s["t"])
-            if len(tones) < 3:                       # too short to shadow
-                continue
-            out.append({"id": f"{t['id']}:{zh[:12]}", "zh": zh,
-                        "text": t["title"], "tones": tones})
-            if len(out) >= n:
-                return out
-    return out
+
+    def collect(pool):
+        out = []
+        for t in pool[::-1][:6]:                     # newest first
+            sents = sorted(t["sentences"], key=lambda s: -len(s["t"]))
+            for s in sents[:2]:
+                zh = "".join(tok["z"] for tok in s["t"])
+                tones = sentence_tones(s["t"])
+                if len(tones) < 3:                   # too short to shadow
+                    continue
+                out.append({"id": f"{t['id']}:{zh[:12]}", "zh": zh,
+                            "text": t["title"], "tones": tones})
+                if len(out) >= n:
+                    return out
+        return out
+
+    # completed texts first (know the words, then the prosody); if they yield
+    # nothing shadow-able (e.g. only single-character R0 texts read), fall
+    # back to anything at the open levels
+    items = collect([t for t in TEXTS if t["id"] in done])
+    if not items:
+        items = collect([t for t in TEXTS if _LEVEL_IDX[t["level"]] <= limit])
+    return items
