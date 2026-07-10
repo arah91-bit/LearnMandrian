@@ -119,7 +119,7 @@ def test_grammar_has_depth_and_covered_examples():
     for g in curriculum.GRAMMAR:
         by_stage.setdefault(g["stage"], []).append(g)
     assert sum(len(by_stage.get(s, [])) for s in ("S1", "S2", "S3")) >= 45
-    assert len(curriculum.GRAMMAR) >= 95
+    assert len(curriculum.GRAMMAR) >= 115
     names = set("安娜王明")
     for g in curriculum.GRAMMAR:
         known = _known_chars_through(g["stage"]) | names

@@ -317,7 +317,10 @@ SEEDS = {
            ("经验", "jīng yàn", "experience", [1, 4]), ("环境", "huán jìng", "environment", [2, 4]),
            ("麻烦", "má fan", "trouble; to bother", [2, 5]),
            # opinions & studying
-           ("被", "bèi", "(passive marker: by)", [4]), ("吧", "ba", "(suggestion particle)", [5]),
+           ("使", "shǐ", "to make, to cause (formal)", [3]), ("不如", "bù rú", "not as good as", [4, 2]),
+    ("到底", "dào dǐ", "in the end; on earth (emphatic)", [4, 3]), ("恐怕", "kǒng pà", "I'm afraid (that)", [3, 4]),
+    ("千万", "qiān wàn", "whatever you do…", [1, 4]), ("不管", "bù guǎn", "no matter", [4, 3]),
+    ("被", "bèi", "(passive marker: by)", [4]), ("吧", "ba", "(suggestion particle)", [5]),
     ("极了", "jí le", "extremely (after adjectives)", [2, 5]),
     ("成功", "chéng gōng", "to succeed; success", [2, 1]),
     ("好像", "hǎo xiàng", "to seem, as if", [3, 4]), ("左右", "zuǒ yòu", "around, approximately", [3, 4]),
@@ -346,7 +349,10 @@ SEEDS = {
            ("手机", "shǒu jī", "mobile phone", [3, 1]), ("改变", "gǎi biàn", "to change", [3, 4]),
            ("生活", "shēng huó", "life", [1, 2]), ("总是", "zǒng shì", "always", [3, 4]),
            # the wide world
-           ("与", "yǔ", "and, with (formal)", [3]), ("啊", "a", "(exclamation particle)", [5]),
+           ("无论", "wú lùn", "regardless of", [2, 4]), ("尽管", "jǐn guǎn", "even though", [3, 3]),
+    ("除非", "chú fēi", "unless", [2, 1]), ("难免", "nán miǎn", "hard to avoid", [2, 3]),
+    ("是否", "shì fǒu", "whether or not (formal)", [4, 3]), ("之一", "zhī yī", "one of…", [1, 1]),
+    ("与", "yǔ", "and, with (formal)", [3]), ("啊", "a", "(exclamation particle)", [5]),
     ("连", "lián", "even (连…都)", [2]),
     ("既然", "jì rán", "since (that's so)", [4, 2]), ("即使", "jí shǐ", "even if", [2, 3]),
     ("不仅", "bù jǐn", "not only (formal)", [4, 3]), ("由于", "yóu yú", "owing to (formal)", [2, 2]),
@@ -1446,6 +1452,151 @@ GRAMMAR = [
                 "weather! Written and slightly theatrical; in daily speech 真 "
                 "does the same job smaller: 天气真好.",
      "examples": [("多么好的天气啊！", "Duō me hǎo de tiān qì a!", "What wonderful weather!")]},
+    # ── Phase 4 additions: S5/S6 nuance ──────────────────────────────────────
+    {"id": "rang-shi", "stage": "S5", "name": "让 / 使 — making things happen",
+     "pattern": "A 让/使 B + verb/adjective",
+     "explain": "Causatives: A makes B do or feel something. 让 is everyday — "
+                "妈妈让我洗手, mom has me wash my hands; 使 is its formal twin, "
+                "at home with feelings and outcomes: 这个消息使大家很高兴.",
+     "examples": [("妈妈让我洗手。", "Māma ràng wǒ xǐ shǒu.", "Mom has me wash my hands."),
+                  ("这个消息使大家很高兴。", "Zhè ge xiāo xi shǐ dà jiā hěn gāo xìng.",
+                   "The news made everyone happy.")]},
+    {"id": "you-you", "stage": "S5", "name": "又…又 — both at once",
+     "pattern": "又 + A + 又 + B",
+     "explain": "Two qualities living together: 又便宜又好吃 — cheap AND tasty. "
+                "Both slots want the same polarity (both good or both bad); "
+                "mixing praise and complaint needs 但是 instead.",
+     "examples": [("这个菜又便宜又好吃。", "Zhè ge cài yòu pián yi yòu hǎo chī.",
+                   "This dish is cheap and delicious."),
+                  ("他又累又饿。", "Tā yòu lèi yòu è.", "He's tired and hungry.")]},
+    {"id": "xian-zai", "stage": "S5", "name": "先…再 — first this, then that (plan)",
+     "pattern": "先 + verb…，再 + verb…",
+     "explain": "先…再 sequences a PLAN — things not yet done: 先吃饭，再工作 — "
+                "eat first, work after. Compare 先…然后, which narrates equally "
+                "well; 再 leans future, 然后 leans story.",
+     "examples": [("我们先吃饭，再工作。", "Wǒ men xiān chī fàn, zài gōng zuò.",
+                   "Let's eat first and work after.")]},
+    {"id": "zai-vs-you", "stage": "S5", "name": "再 / 又 — again, future vs past",
+     "pattern": "再 + verb (future) · 又 + verb + 了 (past)",
+     "explain": "Both mean again, split by time: 再 for repeats that haven't "
+                "happened yet — 请再来; 又 for ones that already did — 他昨天又 "
+                "来了. Pick by whether the repeat is behind or ahead of you.",
+     "examples": [("请再来！", "Qǐng zài lái!", "Please come again!"),
+                  ("他昨天又来了。", "Tā zuó tiān yòu lái le.", "He came again yesterday.")]},
+    {"id": "buru", "stage": "S5", "name": "不如 — the losing comparison",
+     "pattern": "A 不如 B (+ adjective)",
+     "explain": "A 不如 B says A doesn't measure up to B: 坐车不如走路 — "
+                "driving isn't as good as walking. It's 比 flipped into modest "
+                "advice; add the adjective to name the dimension: 不如他高.",
+     "examples": [("坐车不如走路。", "Zuò chē bù rú zǒu lù.", "Driving isn't as good as walking."),
+                  ("我说得不如他好。", "Wǒ shuō de bù rú tā hǎo.", "I don't speak as well as he does.")]},
+    {"id": "daodi", "stage": "S5", "name": "到底 — what's REALLY going on",
+     "pattern": "…到底 + question",
+     "explain": "到底 presses a question that's been dodged: 你到底去不去？ — "
+                "are you going or NOT? Literally 'to the bottom'. It demands "
+                "the final answer; keep it for real impatience.",
+     "examples": [("你到底去不去？", "Nǐ dào dǐ qù bu qù?", "Are you going or not, in the end?")]},
+    {"id": "kongpa", "stage": "S5", "name": "恐怕 — I'm afraid that…",
+     "pattern": "恐怕 + clause",
+     "explain": "恐怕 delivers unwelcome likelihoods gently: 恐怕要下雨了 — "
+                "I'm afraid it's going to rain. It hedges the speaker's own "
+                "guess; for other people's fears use 害怕.",
+     "examples": [("恐怕要下雨了。", "Kǒng pà yào xià yǔ le.", "I'm afraid it's about to rain."),
+                  ("他恐怕不来了。", "Tā kǒng pà bù lái le.", "I'm afraid he isn't coming.")]},
+    {"id": "qianwan", "stage": "S5", "name": "千万 — whatever you do…",
+     "pattern": "千万 + 别/要 + verb",
+     "explain": "千万 (ten million!) turbo-charges a warning: 千万别迟到 — "
+                "whatever you do, don't be late. Almost always pairs with 别 "
+                "or 要; it begs, where 一定 merely insists.",
+     "examples": [("千万别迟到！", "Qiān wàn bié chí dào!", "Whatever you do, don't be late!")]},
+    {"id": "qilai-inchoative", "stage": "S5", "name": "起来 — starting up, calling up",
+     "pattern": "verb + 起来",
+     "explain": "Beyond literal rising, 起来 marks a start — 哭起来, burst out "
+                "crying — and memory surfacing: 想起来了！ — it came back to "
+                "me! The action switches on and keeps going.",
+     "examples": [("妹妹哭起来了。", "Mèi mei kū qǐ lai le.", "Little sister burst out crying."),
+                  ("我想起来了！", "Wǒ xiǎng qǐ lai le!", "Now I remember!")]},
+    {"id": "xiaqu-continue", "stage": "S5", "name": "下去 — keep going",
+     "pattern": "verb + 下去",
+     "explain": "下去 pushes an ongoing action into the future: 说下去 — keep "
+                "talking; 学下去 — keep studying. It's the encouragement "
+                "complement: whatever's happening, don't stop.",
+     "examples": [("请说下去。", "Qǐng shuō xià qu.", "Please go on."),
+                  ("汉语很难，但是我要学下去。", "Hàn yǔ hěn nán, dàn shì wǒ yào xué xià qu.",
+                   "Chinese is hard, but I'll keep studying.")]},
+    {"id": "chulai-figure", "stage": "S5", "name": "出来 — figuring it out",
+     "pattern": "verb + 出来",
+     "explain": "出来 marks something emerging into the open — including into "
+                "your mind: 听出来 — recognize by ear; 看出来 — tell by "
+                "looking. 我听出来了你的声音: I picked your voice out.",
+     "examples": [("我听出来了你的声音。", "Wǒ tīng chū lai le nǐ de shēng yīn.",
+                   "I recognized your voice."),
+                  ("你看得出来吗？", "Nǐ kàn de chū lai ma?", "Can you tell by looking?")]},
+    {"id": "le-final", "stage": "S5", "name": "了 at the end — new situation",
+     "pattern": "clause + 了",
+     "explain": "Sentence-final 了 announces that the SITUATION changed: 下雨了 "
+                "— it's raining (now); 我会了 — now I've got it. Verb-了 ticks "
+                "off an action; end-了 updates the world. They can even stack: "
+                "我吃了饭了.",
+     "examples": [("下雨了。", "Xià yǔ le.", "It's (started) raining."),
+                  ("我会了！", "Wǒ huì le!", "Now I've got it!")]},
+    {"id": "di-ordinal", "stage": "S5", "name": "第 — first, second, third",
+     "pattern": "第 + number (+ measure)",
+     "explain": "第 turns any number ordinal: 第一 first, 第二次 the second "
+                "time, 第三个 the third one. No word changes shape — the "
+                "prefix does all the work.",
+     "examples": [("这是我第一次坐飞机。", "Zhè shì wǒ dì yī cì zuò fēi jī.",
+                   "This is my first time on a plane.")]},
+    {"id": "wulun-dou", "stage": "S6", "name": "无论…都 — regardless",
+     "pattern": "无论 + question form，都 …",
+     "explain": "无论 takes a question form (多难, 谁, 什么) and 都 flattens "
+                "every answer to the same outcome: 无论多难，都要学下去 — "
+                "however hard it is, keep studying. The question inside is the "
+                "signature.",
+     "examples": [("无论多难，我都要学下去。", "Wú lùn duō nán, wǒ dōu yào xué xià qu.",
+                   "No matter how hard, I'll keep studying.")]},
+    {"id": "buguan-dou", "stage": "S6", "name": "不管…都 — the spoken regardless",
+     "pattern": "不管 + question form，都 …",
+     "explain": "The everyday twin of 无论 — same structure, more casual: "
+                "不管天气怎么样，我们都去. Reading leans 无论; conversation "
+                "leans 不管.",
+     "examples": [("不管天气怎么样，我们都去。", "Bù guǎn tiān qì zěn me yàng, wǒ men dōu qù.",
+                   "Whatever the weather, we're going.")]},
+    {"id": "jinguan", "stage": "S6", "name": "尽管…还是 — even though, still",
+     "pattern": "尽管 A，还是 B",
+     "explain": "尽管 concedes a REAL fact (unlike 即使's hypothetical): 尽管很 "
+                "累，他还是加班 — tired as he was, he still worked late. 还是 "
+                "carries the stubborn outcome.",
+     "examples": [("尽管很累，他还是加班。", "Jǐn guǎn hěn lèi, tā hái shi jiā bān.",
+                   "Even though he was tired, he still worked overtime.")]},
+    {"id": "chufei", "stage": "S6", "name": "除非 — unless",
+     "pattern": "除非 A，(否则/我才) B",
+     "explain": "除非 names the one condition that changes everything: 除非你 "
+                "去，我才去 — I'll only go if you do. It's 只有 sharpened to a "
+                "single escape hatch.",
+     "examples": [("除非你去，我才去。", "Chú fēi nǐ qù, wǒ cái qù.",
+                   "I'm only going if you go.")]},
+    {"id": "nanmian", "stage": "S6", "name": "难免 — bound to happen",
+     "pattern": "…难免 + verb/noun",
+     "explain": "难免 forgives the inevitable: 学新东西，难免有错 — learning "
+                "something new, mistakes are unavoidable. It normalizes rather "
+                "than excuses — perfect for encouraging a learner.",
+     "examples": [("学新东西，难免有错。", "Xué xīn dōng xi, nán miǎn yǒu cuò.",
+                   "Learning something new, mistakes are bound to happen.")]},
+    {"id": "zhiyi", "stage": "S6", "name": "…之一 — one of the",
+     "pattern": "…最 + adjective + 的 + noun + 之一",
+     "explain": "The formal frame for rankings: 北京是中国最大的城市之一 — "
+                "Beijing is one of China's biggest cities. 之 is classical "
+                "的; you'll read 之一 constantly in introductions and facts.",
+     "examples": [("北京是中国最大的城市之一。", "Běi jīng shì Zhōng guó zuì dà de chéng shì zhī yī.",
+                   "Beijing is one of the biggest cities in China.")]},
+    {"id": "shifou", "stage": "S6", "name": "是否 — whether (formal)",
+     "pattern": "…是否 + verb",
+     "explain": "是否 folds 是不是 into one written-register word: 我不知道他 "
+                "是否会来 — I don't know whether he'll come. Headlines and "
+                "reports run on it; in speech, 是不是 stays friendlier.",
+     "examples": [("我不知道他是否会来。", "Wǒ bù zhī dào tā shì fǒu huì lái.",
+                   "I don't know whether he will come.")]},
 ]
 
 # ── Reading passages ───────────────────────────────────────────────────────────

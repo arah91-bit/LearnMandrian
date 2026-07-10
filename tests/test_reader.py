@@ -29,7 +29,7 @@ def test_reader_level_counts_cover_phase2_depth():
     assert counts["R2"] >= 10
     assert counts["R3"] >= 10
     assert counts["R4"] >= 8
-    assert counts["R5"] >= 6
+    assert counts["R5"] >= 8
     assert counts["R6"] >= 4
     assert counts["R7"] >= 2
 
