@@ -94,6 +94,21 @@ def test_beginner_arc_never_runs_out_of_material():
             break
 
 
+def test_s5_vocabulary_milestone_only_rises():
+    """Phase 4 milestone: cumulative deterministic content at S5 >= 1300 on the
+    way to the S5 exit threshold of 1800 (PLAN.md WS1 phase D). Raise this
+    floor as batches land; never lower it."""
+    import reader
+    vocab = set()
+    for k, s in enumerate(curriculum.STAGES):
+        vocab |= {w[0] for w in curriculum.SEEDS.get(s["id"], [])}
+        vocab |= {w[0] for t in reader.TEXTS
+                  if reader._LEVEL_IDX[t["level"]] <= k for w in t["new_words"]}
+        if s["id"] == "S5":
+            assert len(vocab) >= 1300, f"S5 milestone: {len(vocab)}/1300"
+            break
+
+
 def test_writing_ladder_is_sound_through_w2():
     fixed = [r for r in curriculum.WRITING_RUNGS if r["id"] in ("W0", "W1", "W2")]
     counts = {r["id"]: len(r["chars"]) for r in fixed}
