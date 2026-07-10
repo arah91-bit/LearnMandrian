@@ -103,26 +103,21 @@ those two, plus S6 vocabulary groundwork (toward 1800/3500), R6/R7 growth
 wired to the 40-idiom set, a listening-passage bank expansion (2 → 4 per
 stage), and surfacing composition history on the Progress tab.
 
-**Active scope (Phase 6): the capstone story and the long tail.**
-In order:
+**Phase 6 — COMPLETE (2026-07-10, executed with honest remainders).** Landed:
+(1) the R7 capstone: 回茶店, three chapters closing the reader's circle —
+promise kept (说到做到), panic found in a book (七上八下, 'what I lost was my
+calm'), festival arrival at the r3-1 tea shop (人山人海, 心想事成); R7 floor
+at 7, reader at 66 texts; (2) the Progress self-study log — the trail behind
+the ladders (compositions, idioms, drills, reads); (3) listening passages to
+4 per stage, with the coverage invariant forcing four honest rewrites/
+re-stagings during review (失败 belongs at S5; 它 finally seeded); (4) S5
+vocabulary to 1381, floor raised to 1350.
 
-1. **WS2 — the R7 chaptered story.** Three linked texts (r7-5/6/7), one
-   narrative: the trip back to the tea shop from r3-1 — a plan kept
-   (说到做到), a scare on the train (七上八下), and a festival arrival
-   (人山人海, 心想事成). Learned 成语 live in dialogue; every chapter
-   passes the taught-before-used invariant; R7 floor rises to 7.
-2. **Progress — the self-study log.** A card listing recent deterministic
-   activity (compositions ok/retry, idioms added, shadowing, drills) so the
-   learner sees the trail, not just the ladders. api_view exposes the tail
-   of the activity log.
-3. **WS5 — listening passages 2 → 4 per stage** (S3–S6, +8 passages), same
-   coverage invariant.
-4. **WS1 — S5 vocabulary 1300 → 1500** (hand-checked batches; milestone
-   floor moves with reality, never past it).
-5. **(stretch) WS1 — S6 groundwork batch.**
-
-Done-when: invariants green, browser walkthrough of one chapter and the log
-card, deploy + smoke, honest remainders roll forward.
+**Phase 6 remainders (→ Phase 7):** S5 1381 → 1500 (then onward to 1800);
+S6 groundwork batch untouched. Phase 7 candidates: those, plus wiring more
+of the 40 idioms into upper texts, R6 growth (6 → 8), a second R7 chaptered
+story, and can-do S7 (the maintenance tier's own exit bar — what 'fluent
+enough' means is a design question worth a paragraph before code).
 
 **Branch/deploy mode:** phase work happens on the feature branch, verified
 against a scratch instance; deploy to the shared test container
