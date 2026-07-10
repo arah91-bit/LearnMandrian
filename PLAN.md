@@ -60,6 +60,34 @@ S5 vocabulary stretch (→1300) not attempted. Next phase also inherits: WS1
 phase D (S5 → 1800 eventually), themed tutor conversation menus (WS9),
 成语-of-the-day feed, and R7 chaptered long-form growth.
 
+**Active scope (Phase 4): the upper path and the maintenance loop.**
+In order:
+
+1. **WS2 — R5 to 8 texts.** Two more short stories at R5 (themes from the
+   HSK4 band: a plan that changes, a misunderstanding resolved), passing all
+   reader invariants; bump the sizing floor to R5 ≥ 8.
+2. **WS4 — grammar to ≈120.** ~20 more S5/S6 points (causative 让/使, 又…又,
+   先…再, 越是…, 无论…都, 不管, 尽管, 除非, directional extensions 起来/下去/
+   出来 figurative senses, 不如, sentence-final 了 vs verbal 了, 到底, 恐怕,
+   千万, 难免 …). Coverage test stays the gate: function words get seeded.
+3. **WS1 phase D-part — S5 vocabulary milestone 1300.** Hand-checked HSK4-band
+   batches until cumulative content at S5 ≥ 1300; encode it as an interim
+   floor test (S5 exit needs 1800 eventually — the milestone only rises).
+4. **WS9 — 成语 of the day.** An original set (~20 idioms: pinyin, tones,
+   meaning, the fable retold in our own words, one example sentence at ≤S6
+   vocabulary), a deterministic daily rotation endpoint, a Learn-tab card
+   with audio, and one tap to add today's idiom to the SRS deck. Invariant:
+   example sentences use only seeded characters plus the idiom's own.
+5. **WS9 — themed conversation menus.** A per-stage theme catalog appended to
+   curriculum.md (S4+: opinions, stories, news, culture…); the snapshot deals
+   the tutor a deterministic theme-of-the-day for S4+ learners so sessions
+   stop re-deciding what to talk about. Token budget: one line.
+6. **(stretch) WS2 — one more chaptered R7 story.**
+
+Done-when per item: invariants/tests named above green, browser walkthrough
+of the 成语 card and one new text, deploy + smoke after the slice, honest
+remainder notes for whatever doesn't land.
+
 **Branch/deploy mode:** phase work happens on the feature branch, verified
 against a scratch instance; deploy to the shared test container
 (`languagetutor-test`) after the whole phase slice is reviewed and local
