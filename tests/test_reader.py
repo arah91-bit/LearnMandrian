@@ -140,3 +140,22 @@ def test_recommend_points_at_the_reader():
     assert rec["id"] == "read" and rec["tid"] == "r0-1"
     learner.record_activity(s, "read", "r0-1", "2/2")
     assert learner.recommend(s)["id"] == "lesson"   # reader done today -> new material
+
+
+# ── Shadowing ──────────────────────────────────────────────────────────────────
+def test_sentence_tones_derive_from_token_pinyin():
+    t = reader.get_text("r0-1")
+    tones = reader.sentence_tones(t["sentences"][0]["t"])
+    assert tones == [1]                              # 一 yī
+    t2 = reader.get_text("r2-2")                     # 我要喝茶。
+    assert reader.sentence_tones(t2["sentences"][0]["t"]) == [3, 4, 1, 2]
+
+
+def test_shadow_sentences_prefer_completed_texts():
+    s = _state()
+    assert reader.shadow_sentences(s, 0) == []       # S0: nothing sentence-length yet
+    out = reader.shadow_sentences(s, 2)              # open-level fallback has sentences
+    assert out and all(len(i["tones"]) >= 3 for i in out)
+    s["reader"]["r5-1"] = {"date": "x", "score": "3/3"}
+    out2 = reader.shadow_sentences(s, 5)
+    assert out2 and all(i["id"].startswith("r5-1") for i in out2)

@@ -394,6 +394,7 @@
         <button class="pbtn" data-practice="listening"><span class="zh">听</span>Listening</button>
         <button class="pbtn" data-practice="dictation"><span class="zh">写</span>Dictation</button>
         <button class="pbtn" id="cando-btn"><span class="zh">会</span>Can-do check</button>
+        <button class="pbtn" id="shadow-btn"><span class="zh">跟</span>Shadowing</button>
         <button class="pbtn" id="place-btn"><span class="zh">测</span>Placement test</button>
       </div>
     </div>
@@ -1551,6 +1552,18 @@ function qzBuild(){
     setTimeout(()=>{ const inp = $('#qzText'); if (inp) inp.focus(); }, 50);
     return;
   }
+  if (qz.kind === 'shadow'){
+    body = `<div class="qz-passage" data-say="${esc(it.zh)}">${esc(it.zh)}</div>
+      <div class="qz-py" style="text-align:center">from ${esc(it.text)}</div>
+      <div class="qz-prompt">Listen at natural speed, then mirror it — rhythm and
+      tones, not just words.</div>
+      <button class="qz-play" data-say="${esc(it.zh)}" aria-label="play">▶</button>
+      <button class="rv-reveal" id="shadowRecGo">record my try</button>
+      <div class="qz-note"></div>`;
+    $('#qzBody').innerHTML = body;
+    wrSay(it.zh);
+    return;
+  }
   if (qz.kind === 'tone_drill'){
     const tones = (it.expected || []).map(t=>`T${t}`).join(' ');
     body = `<div class="qz-word" data-say="${esc(it.hanzi)}">${esc(it.hanzi || tones)}</div>
@@ -1720,6 +1733,57 @@ async function recordToneDrill(){
   }
 }
 
+async function recordShadow(){
+  if (!qz || qz.kind !== 'shadow' || qz.lock) return;
+  const it = qz.items[qz.idx];
+  qz.lock = true;
+  const note = $('#qzBody .qz-note');
+  try{
+    toneDrillStream = await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:true, noiseSuppression:true}});
+    toneDrillChunks = [];
+    toneDrillRec = new MediaRecorder(toneDrillStream);
+    toneDrillRec.ondataavailable = e=>{ if (e.data.size) toneDrillChunks.push(e.data); };
+    toneDrillRec.onstop = async ()=>{
+      toneDrillStream.getTracks().forEach(t=>t.stop());
+      const blob = new Blob(toneDrillChunks, {type:toneDrillRec.mimeType || 'audio/webm'});
+      const fd = new FormData();
+      fd.append('audio', blob, 'shadow.webm');
+      fd.append('zh', it.zh);
+      fd.append('expected', JSON.stringify(it.tones || []));
+      note.textContent = 'listening back…';
+      try{
+        const r = await fetch('/api/shadow/submit',{method:'POST', body:fd});
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || r.status);
+        const pace = j.native_s ? `your pace ${j.learner_s}s · native ${j.native_s}s` :
+          `your pace ${j.learner_s}s`;
+        const toneBit = (j.heard && j.heard.length)
+          ? ` · tones heard: ${j.heard.map(t=>'T'+t).join(' ')}` : '';
+        note.textContent = pace + toneBit;
+        setTimeout(()=>{ qz.lock = false; qzAdvance(600); }, 2200);
+      }catch(e){
+        note.textContent = 'could not score: '+e.message;
+        qz.lock = false;
+      }
+    };
+    toneDrillRec.start();
+    note.textContent = 'recording — tap again to stop';
+    const btn = $('#shadowRecGo');
+    if (btn){ btn.textContent = 'stop'; btn.onclick = ()=>toneDrillRec.stop(); }
+  }catch(e){
+    note.textContent = 'mic error: '+(e.name || e.message);
+    qz.lock = false;
+  }
+}
+async function startShadow(){
+  try{
+    const r = await fetch('/api/shadow/start');
+    const j = await r.json();
+    if (!r.ok || !j.items.length){ alert(j.detail || 'read a text first'); return; }
+    openQuiz('shadow', '跟读 — shadowing', j.items, null);
+  }catch(e){ alert('shadowing failed to load: '+e.message); }
+}
 async function startToneDrill(){
   try{
     const r = await fetch('/api/tone_drill/start');
@@ -2053,6 +2117,7 @@ function runRec(id){
 $('#rec-go').onclick = e=>runRec(e.target.dataset.act);
 $('#place-btn').onclick = startPlacement;
 $('#cando-btn').onclick = ()=>startCanDo();
+$('#shadow-btn').onclick = startShadow;
 $('#view-progress').addEventListener('click', e=>{
   const b = e.target.closest('[data-cando]');
   if (b) startCanDo(b.dataset.cando);
@@ -2070,6 +2135,12 @@ $('#view-words').addEventListener('click', e=>{
 $('#qzBody').addEventListener('click', e=>{
   if (e.target.closest('#qzTextGo')){ qzTextSubmit(); return; }
   if (e.target.closest('#toneRecGo')){ recordToneDrill(); return; }
+  if (e.target.closest('#shadowRecGo')){
+    if (qz && qz.lock && toneDrillRec && toneDrillRec.state === 'recording'){
+      toneDrillRec.stop(); return;
+    }
+    recordShadow(); return;
+  }
   const p = e.target.closest('[data-pick]');
   if (p){ qzPick(+p.dataset.pick); return; }
   if (e.target.closest('#qzDone')){ qz = null; $('#qzModal').classList.remove('on'); }

@@ -883,3 +883,49 @@ def complete(state, tid, score):
     state.setdefault("reader", {})[tid] = {
         "date": datetime.date.today().isoformat(), "score": score}
     return t["new_words"]
+
+
+# ── Shadowing (Phase 3) ────────────────────────────────────────────────────────
+_MARKS = {c: n for cs, n in (("āēīōūǖ", 1), ("áéíóúǘ", 2),
+                             ("ǎěǐǒǔǚ", 3), ("àèìòùǜ", 4)) for c in cs}
+
+
+def _tone_of(syllable):
+    for ch in syllable.lower():
+        if ch in _MARKS:
+            return _MARKS[ch]
+    return 5
+
+
+def sentence_tones(tokens):
+    """Expected tone sequence for a tokenized sentence, from token pinyin."""
+    tones = []
+    for tok in tokens:
+        if tok["p"]:
+            tones += [_tone_of(s) for s in tok["p"].split()]
+    return tones
+
+
+def shadow_sentences(state, stage_idx, n=5):
+    """Sentences worth mirroring: drawn from texts the learner has COMPLETED
+    (they know the words; now the prosody), newest first, longest-first within
+    a text so the drill has substance. Falls back to open-level texts."""
+    done = state.get("reader", {})
+    limit = open_through(state, stage_idx)
+    pool = [t for t in TEXTS if t["id"] in done]
+    if not pool:
+        pool = [t for t in TEXTS if _LEVEL_IDX[t["level"]] <= limit]
+    pool = pool[::-1][:6]                            # newest completed texts
+    out = []
+    for t in pool:
+        sents = sorted(t["sentences"], key=lambda s: -len(s["t"]))
+        for s in sents[:2]:
+            zh = "".join(tok["z"] for tok in s["t"])
+            tones = sentence_tones(s["t"])
+            if len(tones) < 3:                       # too short to shadow
+                continue
+            out.append({"id": f"{t['id']}:{zh[:12]}", "zh": zh,
+                        "text": t["title"], "tones": tones})
+            if len(out) >= n:
+                return out
+    return out

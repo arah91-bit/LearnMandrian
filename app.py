@@ -814,6 +814,53 @@ def tone_drill_submit(audio: UploadFile = File(...), target_hanzi: str = Form(""
     return out
 
 
+@app.get("/api/shadow/start")
+def shadow_start():
+    """Shadowing: mirror native-speed sentences from texts already read."""
+    state = learner.load()
+    items = reader.shadow_sentences(state, learner.speaking_stage(state))
+    if not items:
+        raise HTTPException(404, "read a text first — shadowing mirrors what you've read")
+    return {"items": items}
+
+
+@app.post("/api/shadow/submit")
+def shadow_submit(audio: UploadFile = File(...), zh: str = Form(""),
+                  expected: str = Form("[]")):
+    blob = audio.file.read(_MAX_AUDIO + 1)
+    if len(blob) > _MAX_AUDIO:
+        raise HTTPException(413, "audio too large")
+    try:
+        expected_tones = [int(x) for x in json.loads(expected)][:24]
+    except (TypeError, ValueError, json.JSONDecodeError):
+        raise HTTPException(400, "expected must be a JSON tone list")
+    zh = str(zh)[:80]
+    raw_path = _save_debug_audio("shadow", blob, ".webm")
+    wav = _webm_to_wav(blob)
+    try:
+        _keep_debug_wav(raw_path, wav)
+        learner_s = max(0.0, (pathlib.Path(wav).stat().st_size - 44) / 32000.0)
+        ear = EAR.analyze(wav)
+    finally:
+        os.unlink(wav)
+    try:                                   # native pace from the (cached) TTS
+        pcm = _segment_pcm("zh", zh)
+        native_s = len(pcm) / _PCM_BPS if pcm else None
+    except Exception:
+        native_s = None
+    heard = [int(s["tone"]) for s in ear.get("syllables", [])]
+    hits = sum(1 for e, h in zip(expected_tones, heard) if e == h)
+    with learner.txn() as state:
+        learner.record_activity(state, "shadow", zh[:12],
+                                f"{round(learner_s, 1)}s")
+        learner.touch_day(state)
+        out = {"ok": True, "learner_s": round(learner_s, 2),
+               "native_s": round(native_s, 2) if native_s else None,
+               "ear": ear, "heard": heard, "expected": expected_tones,
+               "tone_hits": hits, "recommend": learner.recommend(state)}
+    return out
+
+
 @app.get("/api/settings")
 def settings_get():
     return learner.load()["settings"]
