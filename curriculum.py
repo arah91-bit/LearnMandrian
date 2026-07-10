@@ -2901,6 +2901,17 @@ COMPOSITION_PROMPTS = {
         {"id": "S6-chengyu", "prompt": "Write a short paragraph that uses any 成语 you've learned, naturally.",
          "require": [], "require_chengyu": True, "min_chars": 24},
     ],
+    "S7": [   # maintenance-tier prompts — every one asks for a 成语 placed naturally
+        {"id": "S7-view", "prompt": "State a view on how you learn best and back it with "
+                                    "your own experience — work in a 成语 where it belongs, not where it shows.",
+         "require": [], "require_chengyu": True, "min_chars": 40},
+        {"id": "S7-story", "prompt": "Tell a small true story from this month — a beginning, "
+                                     "a turn, an end — and let one 成语 carry the turn.",
+         "require": [], "require_chengyu": True, "min_chars": 40},
+        {"id": "S7-advice", "prompt": "Write a short note of advice to someone just starting "
+                                      "Chinese — one 成语, used naturally.",
+         "require": [], "require_chengyu": True, "min_chars": 36},
+    ],
 }
 
 
@@ -2941,3 +2952,153 @@ def check_composition(sid, prompt_id, text, learner_hanzi=()):
             "sentences": sentences, "required": req, "found": found,
             "required_ok": req_ok, "unknown_chars": unknown,
             "passed": req_ok and len(hanzi) >= pr["min_chars"] and not unknown}
+
+
+# ── The S7 fluency pulse (Phase 7 / WS6) ──────────────────────────────────────
+# Fluency has no exit exam, so S7 gets a recurring diagnostic instead: every
+# PULSE_INTERVAL_DAYS the recommendation engine deals one UNSEEN passage to
+# read, one to hear, a composition that must land a 成语, and one sentence to
+# shadow at native speed. Nothing lifts; it measures drift and points
+# remediation at exactly what decayed. The reserve passages below never appear
+# in the reader or the practice banks — unseen is the point.
+PULSE_INTERVAL_DAYS = 14
+
+PULSE_RESERVE = [
+    {"id": "pulse-method", "zh":
+        "有人觉得学外语一定要去国外，其实不一定。方法比地方重要：每天听一点，"
+        "说一点，读一点，慢慢就会进步。最难的不是开始，而是坚持。半途而废的人，"
+        "学十年也学不好。",
+     "shadow": ("最难的不是开始，而是坚持。",
+                "zuì nán de bú shì kāi shǐ ér shì jiān chí"),
+     "qs": [{"q": "What does the speaker say about going abroad?",
+             "choices": ["not actually necessary", "the only way",
+                         "too expensive", "good for listening only"], "a": 0},
+            {"q": "What is harder than starting?",
+             "choices": ["keeping going", "reading",
+                         "finding a teacher", "speaking"], "a": 0},
+            {"q": "Who won't learn well, per the passage?",
+             "choices": ["those who give up halfway", "those who stay home",
+                         "busy people", "older learners"], "a": 0}]},
+    {"id": "pulse-phones", "zh":
+        "现在很多人一起吃饭的时候都在看手机，谁也不说话。有人说手机让我们离得更近，"
+        "也有人说它让我们离得更远。我觉得手机只是东西，怎么用才是问题。",
+     "shadow": ("手机只是东西，怎么用才是问题。",
+                "shǒu jī zhǐ shì dōng xi zěn me yòng cái shì wèn tí"),
+     "qs": [{"q": "What happens at meals now?",
+             "choices": ["everyone is on their phone", "people argue loudly",
+                         "nobody eats", "people tell stories"], "a": 0},
+            {"q": "What are the two views on phones?",
+             "choices": ["they bring us closer / push us apart", "cheap / expensive",
+                         "fast / slow", "old / new"], "a": 0},
+            {"q": "What is the speaker's own view?",
+             "choices": ["how you use it is the real question",
+                         "phones should be banned at meals",
+                         "phones bring people closer", "phones cost too much"], "a": 0}]},
+    {"id": "pulse-slow-town", "zh":
+        "去年我去了很远的一个小城。那里没有大商场，也没有地铁，可是人们过得很慢，"
+        "很舒服。我本来只想住三天，结果住了一个星期。回来以后我常常想：忙，"
+        "真的比慢好吗？",
+     "shadow": ("我本来只想住三天，结果住了一个星期。",
+                "wǒ běn lái zhǐ xiǎng zhù sān tiān jié guǒ zhù le yí gè xīng qī"),
+     "qs": [{"q": "What did the small town lack?",
+             "choices": ["big malls and a subway", "restaurants",
+                         "hotels", "tea shops"], "a": 0},
+            {"q": "How long did the speaker stay?",
+             "choices": ["a week", "three days", "a month", "one night"], "a": 0},
+            {"q": "What question follows them home?",
+             "choices": ["is busy really better than slow?", "is the south too hot?",
+                         "should they move there?", "was it too expensive?"], "a": 0}]},
+    {"id": "pulse-job-change", "zh":
+        "我朋友最近换了工作。以前他天天加班，钱不少，可是身体越来越差。现在他的"
+        "工资低了一点，但是每天六点就能回家，周末还能去爬山。他说：工作是做不完的，"
+        "身体才是自己的。",
+     "shadow": ("工作是做不完的，身体才是自己的。",
+                "gōng zuò shì zuò bu wán de shēn tǐ cái shì zì jǐ de"),
+     "qs": [{"q": "What was the old job like?",
+             "choices": ["overtime every day, decent pay", "easy and well paid",
+                         "far from home", "part-time"], "a": 0},
+            {"q": "What can the friend do now?",
+             "choices": ["be home by six and hike on weekends", "earn much more",
+                         "work from home", "sleep at noon"], "a": 0},
+            {"q": "What is his conclusion?",
+             "choices": ["work is endless; your body is your own", "money first, always",
+                         "never change jobs", "hiking beats working"], "a": 0}]},
+    {"id": "pulse-fast-news", "zh":
+        "以前大家看报纸，一条新闻要读十分钟；现在都用手机，很快就看完一条。快是快，"
+        "可是很多人只看题目，不看内容。还没想好就告诉别人。我们知道的事情越来越多，"
+        "懂的事情却越来越少。",
+     "shadow": ("很多人只看题目，不看内容。",
+                "hěn duō rén zhǐ kàn tí mù bú kàn nèi róng"),
+     "qs": [{"q": "How has news reading changed?",
+             "choices": ["from ten minutes to moments", "from phones to paper",
+                         "people read more slowly", "nobody reads at all"], "a": 0},
+            {"q": "What do many people do before sharing news?",
+             "choices": ["pass it on before thinking it through", "check three sources",
+                         "read the whole piece", "ask a teacher"], "a": 0},
+            {"q": "What is the closing worry?",
+             "choices": ["we know more but understand less", "papers are dying",
+                         "phones are too slow", "news is too long"], "a": 0}]},
+    {"id": "pulse-old-friend", "zh":
+        "上个星期我见了一个十年没见的老朋友。我们都变了：他头发白了一些，我也胖了"
+        "一点。可是坐下来一说话，好像又回到了以前。好朋友就是这样：几年不见，"
+        "一见面还是老样子。",
+     "shadow": ("几年不见，一见面还是老样子。",
+                "jǐ nián bú jiàn yí jiàn miàn hái shì lǎo yàng zi"),
+     "qs": [{"q": "How long had it been?",
+             "choices": ["ten years", "ten months", "a year", "a week"], "a": 0},
+            {"q": "How have the two of them changed?",
+             "choices": ["white hair, a little weight", "new jobs",
+                         "a new city", "not at all"], "a": 0},
+            {"q": "What is the point about good friends?",
+             "choices": ["apart for years, instantly the same", "they never change",
+                         "they must meet often", "they grow apart"], "a": 0}]},
+]
+
+_PULSE_BY_ID = {p["id"]: p for p in PULSE_RESERVE}
+
+_TONE_MARKS = {c: n for cs, n in (("āēīōūǖ", 1), ("áéíóúǘ", 2),
+                                  ("ǎěǐǒǔǚ", 3), ("àèìòùǜ", 4)) for c in cs}
+
+
+def _py_tone(syllable):
+    for ch in syllable.lower():
+        if ch in _TONE_MARKS:
+            return _TONE_MARKS[ch]
+    return 5
+
+
+def _pulse_public_qs(p):
+    return [{"id": f"{p['id']}-q{i}", "q": q["q"], "choices": q["choices"]}
+            for i, q in enumerate(p["qs"])]
+
+
+def pulse_deal(n):
+    """The nth pulse, deterministically: two different reserve passages (one
+    read, one heard), a 成语 composition, and the read passage's shadow line."""
+    k = len(PULSE_RESERVE)
+    rd = PULSE_RESERVE[(2 * n) % k]
+    li = PULSE_RESERVE[(2 * n + 1) % k]
+    prompts = COMPOSITION_PROMPTS["S7"]
+    pr = prompts[n % len(prompts)]
+    zh, py = rd["shadow"]
+    return {"n": n,
+            "reading": {"id": rd["id"], "zh": rd["zh"], "qs": _pulse_public_qs(rd)},
+            "listening": {"id": li["id"], "zh": li["zh"], "qs": _pulse_public_qs(li)},
+            "compose": {"id": pr["id"], "prompt": pr["prompt"],
+                        "min_chars": pr["min_chars"]},
+            "shadow": {"zh": zh, "py": py,
+                       "tones": [_py_tone(s) for s in py.split()]}}
+
+
+def score_pulse_passage(pid, answers):
+    p = _PULSE_BY_ID.get(pid)
+    if p is None:
+        raise KeyError(pid)
+    right = sum(1 for i, q in enumerate(p["qs"])
+                if answers.get(f"{pid}-q{i}") == q["a"])
+    return {"id": pid, "right": right, "total": len(p["qs"])}
+
+
+def pulse_verdict(ratio):
+    """holds / slipping / decayed — the pulse's whole vocabulary."""
+    return "holds" if ratio >= 0.8 else "slipping" if ratio >= 0.5 else "decayed"

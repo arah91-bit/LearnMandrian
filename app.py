@@ -909,6 +909,109 @@ def shadow_submit(audio: UploadFile = File(...), zh: str = Form(""),
     return out
 
 
+# ── The S7 fluency pulse — maintenance measured, never passed ─────────────────
+@app.get("/api/pulse")
+def pulse_status():
+    return learner.pulse_view(learner.load())
+
+
+@app.post("/api/pulse/start")
+def pulse_start():
+    with learner.txn() as state:
+        if learner.speaking_stage(state) < 7:
+            raise HTTPException(403, "the pulse is S7's rhythm — keep climbing first")
+        deal = learner.pulse_start(state)
+    return deal
+
+
+@app.post("/api/pulse/answer")
+def pulse_answer(payload: dict):
+    section = str(payload.get("section", ""))
+    if section not in ("reading", "listening", "compose", "shadow"):
+        raise HTTPException(400, "unknown pulse section")
+    with learner.txn() as state:
+        open_ = state.get("pulse_open")
+        if not open_:
+            raise HTTPException(409, "no pulse in progress — start one first")
+        if section in ("reading", "listening"):
+            pid = str(payload.get("id", ""))
+            if pid != open_[f"{section}_id"]:
+                raise HTTPException(400, "that passage isn't part of this pulse")
+            try:
+                answers = {str(k): int(v) for k, v in (payload.get("answers") or {}).items()}
+            except (TypeError, ValueError, AttributeError):
+                raise HTTPException(400, "answers must map item ids to choice indices")
+            result = curriculum.score_pulse_passage(pid, answers)
+        elif section == "compose":
+            text = str(payload.get("text", ""))[:1000]
+            rep = curriculum.check_composition(
+                "S7", open_["compose_id"], text,
+                learner_hanzi=[w["hanzi"] for w in state["vocab"]])
+            result = {"id": open_["compose_id"], "passed": rep["passed"],
+                      "chars": rep["chars"], "found": rep["found"],
+                      "required_ok": rep["required_ok"],
+                      "unknown_chars": rep["unknown_chars"]}
+        else:                       # mic-less path; audio lands at /api/pulse/shadow
+            if not payload.get("skip"):
+                raise HTTPException(400, "shadow answers arrive as audio at /api/pulse/shadow")
+            result = {"skipped": True}
+        report = learner.pulse_record(state, section, result)
+        learner.touch_day(state)
+        out = {"ok": True, "section": section,
+               "result": open_["sections"].get(section, result),
+               "report": report, "recommend": learner.recommend(state)}
+    return out
+
+
+@app.post("/api/pulse/shadow")
+def pulse_shadow(audio: UploadFile = File(...)):
+    """The pulse's shadow leg: the expected line and tones come from the open
+    pulse itself — the client only sends the audio."""
+    state = learner.load()
+    open_ = state.get("pulse_open")
+    if not open_:
+        raise HTTPException(409, "no pulse in progress — start one first")
+    zh = open_["shadow_zh"]
+    expected_tones = [int(x) for x in open_["shadow_tones"]]
+    blob = audio.file.read(_MAX_AUDIO + 1)
+    if len(blob) > _MAX_AUDIO:
+        raise HTTPException(413, "audio too large")
+    raw_path = _save_debug_audio("pulse_shadow", blob, ".webm")
+    wav = _webm_to_wav(blob)
+    try:
+        _keep_debug_wav(raw_path, wav)
+        learner_s = max(0.0, (pathlib.Path(wav).stat().st_size - 44) / 32000.0)
+        ear = EAR.analyze(wav)
+    finally:
+        os.unlink(wav)
+    try:
+        pcm = _segment_pcm("zh", zh)
+        native_s = len(pcm) / _PCM_BPS if pcm else None
+    except Exception:
+        native_s = None
+    scored = [t for t in expected_tones if t in (1, 2, 3, 4)]   # neutrals aren't scored
+    heard = [int(s["tone"]) for s in ear.get("syllables", [])]
+    by_pos = {i: h for i, h in enumerate(heard)}
+    hits = sum(1 for i, e in enumerate(expected_tones)
+               if e in (1, 2, 3, 4) and by_pos.get(i) == e)
+    pace = round(learner_s / native_s, 2) if native_s else None
+    with learner.txn() as state:
+        if not state.get("pulse_open"):
+            raise HTTPException(409, "no pulse in progress — start one first")
+        learner.log_tone_attempt(state, expected_tones, heard[:len(expected_tones)],
+                                 hanzi=zh, audio_path=_rel_user_path(raw_path),
+                                 source="pulse")
+        report = learner.pulse_record(state, "shadow",
+                                      {"hits": hits, "total": len(scored),
+                                       "pace": pace})
+        learner.touch_day(state)
+        out = {"ok": True, "section": "shadow", "heard": heard,
+               "learner_s": round(learner_s, 2),
+               "native_s": round(native_s, 2) if native_s else None,
+               "report": report, "recommend": learner.recommend(state)}
+    return out
+
+
 @app.get("/api/settings")
 def settings_get():
     return learner.load()["settings"]

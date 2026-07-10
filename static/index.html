@@ -510,6 +510,11 @@
     <div class="card" id="cando-card">
       <h2>Can-do checks — your ladder</h2><div class="list"></div>
     </div>
+    <div class="card" id="pulse-card" hidden>
+      <h2>Fluency pulse <span class="t5" style="font-size:12px;font-weight:400">
+        S7 · every two weeks · nothing to pass, everything to notice</span></h2>
+      <div class="pulse-status"></div><div class="list"></div>
+    </div>
     <div class="card" id="tonehist-card" hidden>
       <h2>Recent tone attempts</h2><div class="list"></div>
     </div>
@@ -1358,7 +1363,7 @@ function render(s){
     go.textContent = ({placement:'测 — take the test', review:'复习 — review now',
       read:'读 — open the text', reading:'读 — start reading',
       listening:'听 — start listening', dictation:'写 — start dictation',
-      lesson:'继续 — continue the lesson',
+      lesson:'继续 — continue the lesson', pulse:'脉 — take the pulse',
       writing:'写 — to the pad', can_do:'会 — start check'})[r.id] || 'start';
     go.dataset.act = r.id;
   }
@@ -1464,6 +1469,26 @@ function render(s){
       padding:4px 12px;font-size:12px">${r && r.passed ? 'retake' : 'take it'}</button></div>`;
   }).join('');
 
+  /* the S7 fluency pulse — maintenance has no exit, only a rhythm */
+  const pv = s.pulse || {};
+  const pc = $('#pulse-card');
+  pc.hidden = !(pv.at_stage || (pv.history && pv.history.length));
+  if (!pc.hidden){
+    pc.querySelector('.pulse-status').innerHTML = pv.due
+      ? `<button class="pbtn" id="pulse-btn"><span class="zh">脉</span>take the pulse now</button>`
+      : `<div class="empty">next pulse in ${Math.max(0, (pv.interval_days||14) - (pv.days_since||0))} day(s)</div>`;
+    const PV = {holds:'t1', slipping:'t3', decayed:'t4', skipped:'t5'};
+    const cell = (r, txt)=>`<span class="${PV[r.verdict]||'t5'}" title="${esc(r.verdict||'')}">${esc(txt)}</span>`;
+    pc.querySelector('.list').innerHTML = (pv.history||[]).map(h=>
+      `<div class="confusion"><span class="t5">${esc(h.date)}</span>
+        ${cell(h.reading, '读 '+h.reading.right+'/'+h.reading.total)}
+        ${cell(h.listening, '听 '+h.listening.right+'/'+h.listening.total)}
+        ${cell(h.compose, '作 '+(h.compose.passed?'✓':'✗'))}
+        ${cell(h.shadow, h.shadow.skipped ? '跟 —' : '跟 '+h.shadow.hits+'/'+h.shadow.total)}
+        <span style="margin-left:auto"><b>${h.holds}/4</b> hold</span></div>`).join('')
+      || '<div class="empty">No pulses yet — the first deals the moment you arrive.</div>';
+  }
+
   /* recent tone attempts — the detailed history behind the drills */
   const th = $('#tonehist-card');
   const recent = s.tone_recent || [];
@@ -1486,7 +1511,7 @@ function render(s){
   al.hidden = !act.length;
   const ACT_ZH = {read:'读', reading:'读', listening:'听', review:'复习', placement:'测',
     can_do:'会', dictation:'写', tone_drill:'声', shadow:'跟', compose:'作', chengyu:'语',
-    lesson:'课', writing:'写'};
+    lesson:'课', writing:'写', pulse:'脉'};
   if (act.length) al.querySelector('.list').innerHTML = act.map(a=>
     `<div class="confusion"><span class="tag" style="background:var(--brand)">${esc(ACT_ZH[a.kind]||'·')}</span>
      ${esc(a.kind)}${a.detail ? ' · ' + esc(String(a.detail)) : ''}
@@ -1851,6 +1876,141 @@ async function startCanDo(stage){
   }catch(e){ alert('can-do check failed to load: '+e.message); }
 }
 
+/* ── the S7 fluency pulse — four legs in one sitting, drift reported at the
+   end. Reuses the quiz modal shell but runs its own state machine (pu). ── */
+let pu = null;
+const PU_STEPS = ['reading','listening','compose','shadow'];
+async function startPulse(){
+  try{
+    const r = await fetch('/api/pulse/start',{method:'POST'});
+    const j = await r.json();
+    if (!r.ok){ alert(j.detail || 'the pulse is locked'); return; }
+    pu = {deal:j, step:'reading', qIdx:0, answers:{}, report:null};
+    qz = null;
+    $('#qzTitle').textContent = '脉 — fluency pulse';
+    $('#qzModal').classList.add('on');
+    puBuild();
+  }catch(e){ alert('pulse failed to load: '+e.message); }
+}
+function puBuild(){
+  const d = pu.deal;
+  $('#qzProg').textContent = `${PU_STEPS.indexOf(pu.step)+1} / 4 · ${pu.step}`;
+  let body = '';
+  if (pu.step === 'reading' || pu.step === 'listening'){
+    const sec = d[pu.step];
+    const q = sec.qs[pu.qIdx];
+    body = pu.step === 'reading'
+      ? `<div class="qz-passage">${esc(sec.zh)}</div>`
+      : `<button class="qz-play" data-say="${esc(sec.zh)}" aria-label="play">▶</button>
+         <div class="qz-py" style="text-align:center">unseen passage — ears only this time</div>`;
+    pu.order = q.choices.map((_,i)=>i).sort(()=>Math.random()-.5);  // honest: no fixed slot
+    body += `<div class="qz-prompt">${esc(q.q)}</div>
+      <div class="qz-choices">` + pu.order.map(i=>
+        `<button data-pick="${i}">${esc(q.choices[i])}</button>`).join('') + `</div>
+      <div class="qz-note"></div>`;
+    $('#qzBody').innerHTML = body;
+    if (pu.step === 'listening' && pu.qIdx === 0) wrSay(sec.zh);
+    return;
+  }
+  if (pu.step === 'compose'){
+    $('#qzBody').innerHTML = `<div class="qz-prompt">${esc(d.compose.prompt)}
+        (at least ${d.compose.min_chars} characters)</div>
+      <textarea class="qz-input" id="puText" rows="5" lang="zh-Hans"
+        style="width:100%;height:auto;resize:vertical" placeholder="用一个成语，写得自然"></textarea>
+      <button class="rv-reveal" id="puComposeGo">check & continue</button>
+      <div class="qz-note">one draft — the pulse measures where you are today</div>`;
+    return;
+  }
+  /* shadow */
+  $('#qzBody').innerHTML =
+    `<div class="qz-passage" data-say="${esc(d.shadow.zh)}">${esc(d.shadow.zh)}</div>
+    ${S.show_pinyin ? `<div class="qz-py" style="text-align:center">${esc(pyDisp(d.shadow.py))}</div>` : ''}
+    <div class="qz-prompt">One line at native speed — mirror the rhythm and the tones.</div>
+    <button class="qz-play" data-say="${esc(d.shadow.zh)}" aria-label="play">▶</button>
+    <button class="rv-reveal" id="puShadowGo">record my try</button>
+    <button class="rv-reveal" id="puShadowSkip" style="opacity:.65">no mic — skip this leg</button>
+    <div class="qz-note"></div>`;
+  wrSay(d.shadow.zh);
+}
+function puPick(i){
+  const sec = pu.deal[pu.step];
+  const q = sec.qs[pu.qIdx];
+  pu.answers[q.id] = i;
+  if (pu.qIdx < sec.qs.length - 1){ pu.qIdx++; puBuild(); return; }
+  puSend({section:pu.step, id:sec.id, answers:pu.answers});
+}
+async function puSend(payload){
+  const note = $('#qzBody .qz-note');
+  try{
+    const r = await fetch('/api/pulse/answer',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || r.status);
+    if (j.report){ pu.report = j.report; puReport(); return; }
+    if (payload.section === 'compose'){
+      note.textContent = j.result.passed ? '成语 landed ✓'
+        : (j.result.required_ok ? 'counted — length or characters fell short'
+           : 'no 成语 found — counted as a slip');
+      setTimeout(()=>{ if (!pu) return; pu.step = 'shadow'; pu.qIdx = 0; puBuild(); }, 1400);
+      return;
+    }
+    pu.answers = {}; pu.qIdx = 0;
+    pu.step = PU_STEPS[PU_STEPS.indexOf(payload.section) + 1];
+    puBuild();
+  }catch(e){ if (note) note.textContent = 'could not save: '+e.message; }
+}
+async function puRecordShadow(){
+  const note = $('#qzBody .qz-note');
+  try{
+    toneDrillStream = await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:true, noiseSuppression:true}});
+    toneDrillChunks = [];
+    toneDrillRec = new MediaRecorder(toneDrillStream);
+    toneDrillRec.ondataavailable = e=>{ if (e.data.size) toneDrillChunks.push(e.data); };
+    toneDrillRec.onstop = async ()=>{
+      toneDrillStream.getTracks().forEach(t=>t.stop());
+      const blob = new Blob(toneDrillChunks, {type:toneDrillRec.mimeType || 'audio/webm'});
+      const fd = new FormData();
+      fd.append('audio', blob, 'pulse.webm');
+      note.textContent = 'listening back…';
+      try{
+        const r = await fetch('/api/pulse/shadow',{method:'POST', body:fd});
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.detail || r.status);
+        if (j.report){ pu.report = j.report; puReport(); }
+      }catch(e){ note.textContent = 'could not score: '+e.message; }
+    };
+    toneDrillRec.start();
+    note.textContent = 'recording — tap stop when you finish the line';
+    const btn = $('#puShadowGo');
+    if (btn){ btn.textContent = 'stop'; btn.onclick = ()=>toneDrillRec.stop(); }
+  }catch(e){ note.textContent = 'mic error: '+(e.name || e.message); }
+}
+function puReport(){
+  const rep = pu.report;
+  const PV = {holds:'t1', slipping:'t3', decayed:'t4', skipped:'t5'};
+  const row = (label, r, detail)=>`<div class="confusion"><b style="min-width:86px">${label}</b>
+    ${esc(detail)} <span style="margin-left:auto" class="${PV[r.verdict]||'t5'}">${esc(r.verdict)}</span></div>`;
+  let html = `<div class="qz-score">${rep.holds} / 4 hold</div><div class="list">`
+    + row('读 reading', rep.reading, `${rep.reading.right}/${rep.reading.total}`)
+    + row('听 listening', rep.listening, `${rep.listening.right}/${rep.listening.total}`)
+    + row('作 成语', rep.compose, rep.compose.passed ? 'landed' : 'missed')
+    + row('跟 shadow', rep.shadow, rep.shadow.skipped ? 'skipped'
+        : `${rep.shadow.hits}/${rep.shadow.total} tones`
+          + (rep.shadow.pace ? ` · ${rep.shadow.pace}× native time` : ''))
+    + `</div>`;
+  html += (rep.remedy && rep.remedy.length)
+    ? `<div class="qz-prompt">What slipped, and the way back:</div>`
+      + rep.remedy.map(m=>`<button class="pbtn" data-remedy="${esc(m.id)}"
+          style="margin:4px 0">${esc(m.label)}</button>
+          <div class="qz-note" style="margin-bottom:6px">${esc(m.why)}</div>`).join('')
+    : `<div class="qz-note">Everything holds. Same time in two weeks.</div>`;
+  html += `<button class="rv-reveal" id="qzDone" style="margin-top:14px">done</button>`;
+  $('#qzBody').innerHTML = html;
+  $('#qzProg').textContent = '';
+  loadState();
+}
+
 /* ── SRS review session — self-serve flashcards over the same schedule the
    tutor grades into; Again/Hard/Good/Easy map to SM-2 grades 1/3/4/5 ── */
 let rv = null;
@@ -2148,6 +2308,7 @@ function runRec(id){
     if (tid) openReaderText(tid);
   }
   else if (id === 'reading' || id === 'listening' || id === 'dictation') startPractice(id);
+  else if (id === 'pulse') startPulse();
   else if (id === 'can_do') startCanDo();
   else if (id === 'writing'){ goTab('write'); startWritingLesson(); }
   else if (id === 'lesson'){ goTab('talk'); $('#golesson').click(); }
@@ -2159,6 +2320,7 @@ $('#shadow-btn').onclick = startShadow;
 $('#view-progress').addEventListener('click', e=>{
   const b = e.target.closest('[data-cando]');
   if (b) startCanDo(b.dataset.cando);
+  if (e.target.closest('#pulse-btn')) startPulse();
 });
 $('#tone-drill-btn').onclick = startToneDrill;
 document.querySelectorAll('[data-practice]').forEach(b=>
@@ -2179,9 +2341,25 @@ $('#qzBody').addEventListener('click', e=>{
     }
     recordShadow(); return;
   }
+  if (e.target.closest('#puComposeGo')){
+    const t = ($('#puText') && $('#puText').value || '').trim();
+    if (t) puSend({section:'compose', text:t});
+    return;
+  }
+  if (e.target.closest('#puShadowGo')){ puRecordShadow(); return; }
+  if (e.target.closest('#puShadowSkip')){ puSend({section:'shadow', skip:true}); return; }
+  const m = e.target.closest('[data-remedy]');
+  if (m){
+    const id = m.dataset.remedy;
+    pu = null; qz = null; $('#qzModal').classList.remove('on');
+    if (id === 'reading' || id === 'listening') startPractice(id);
+    else if (id === 'tone_drill') startToneDrill();
+    else if (id === 'compose'){ goTab('write'); const c = $('#composeText'); if (c) c.focus(); }
+    return;
+  }
   const p = e.target.closest('[data-pick]');
-  if (p){ qzPick(+p.dataset.pick); return; }
-  if (e.target.closest('#qzDone')){ qz = null; $('#qzModal').classList.remove('on'); }
+  if (p){ (pu ? puPick : qzPick)(+p.dataset.pick); return; }
+  if (e.target.closest('#qzDone')){ pu = null; qz = null; $('#qzModal').classList.remove('on'); }
 });
 $('#qzBody').addEventListener('keydown', e=>{
   if (e.key === 'Enter' && e.target.closest('#qzText')){
@@ -2201,7 +2379,7 @@ $('#setBody').addEventListener('click', e=>{
   const k = b.dataset.set;
   setSetting(k, 'val' in b.dataset ? b.dataset.val : !S[k]);
 });
-$('#qzClose').onclick = ()=>{ qz = null; $('#qzModal').classList.remove('on'); };
+$('#qzClose').onclick = ()=>{ pu = null; qz = null; $('#qzModal').classList.remove('on'); };
 $('#rvClose').onclick = ()=>{ rv = null; $('#rvModal').classList.remove('on'); loadState(); };
 $('#gramClose').onclick = ()=>$('#gramModal').classList.remove('on');
 $('#setClose').onclick = ()=>$('#setModal').classList.remove('on');

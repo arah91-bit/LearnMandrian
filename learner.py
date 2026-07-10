@@ -61,6 +61,8 @@ _DEFAULT = {
     "activity": [],       # self-study log: {date, kind, detail, score}
     "reader": {},         # graded reader: text_id -> {date, score}
     "tone_attempts": [],  # detailed tone history with target/heard/audio metadata
+    "pulse": [],          # S7 fluency-pulse history: {date, n, sections..., holds}
+    "pulse_open": None,   # a dealt-but-unfinished pulse accumulating its sections
 }
 
 _SETTING_KEYS = set(_DEFAULT["settings"])
@@ -290,6 +292,100 @@ def _did_today(state, *kinds):
     return any(a["date"] == t and a["kind"] in kinds for a in state["activity"])
 
 
+# ── The S7 fluency pulse ───────────────────────────────────────────────────────
+# Fluency has no exit, so nothing above S7 to pass into — instead a recurring
+# diagnostic measures drift: unseen reading, unseen listening, a 成语
+# composition, one shadowed line. curriculum.py holds the reserve content;
+# this side holds the rhythm (every PULSE_INTERVAL_DAYS) and the history.
+def pulse_due(state):
+    if speaking_stage(state) < 7:
+        return False
+    hist = state.get("pulse", [])
+    if not hist:
+        return True
+    last = datetime.date.fromisoformat(hist[-1]["date"])
+    return (datetime.date.today() - last).days >= curriculum.PULSE_INTERVAL_DAYS
+
+
+def pulse_view(state):
+    """The Progress card's payload: due-ness, cadence, recent history."""
+    hist = state.get("pulse", [])
+    days_since = None
+    if hist:
+        days_since = (datetime.date.today()
+                      - datetime.date.fromisoformat(hist[-1]["date"])).days
+    return {"at_stage": speaking_stage(state) >= 7,
+            "due": pulse_due(state),
+            "days_since": days_since,
+            "interval_days": curriculum.PULSE_INTERVAL_DAYS,
+            "history": hist[-12:][::-1]}
+
+
+def pulse_start(state):
+    """Deal the nth pulse and hold it open; sections land via pulse_record."""
+    n = len(state.get("pulse", []))
+    deal = curriculum.pulse_deal(n)
+    state["pulse_open"] = {"date": _today(), "n": n,
+                           "reading_id": deal["reading"]["id"],
+                           "listening_id": deal["listening"]["id"],
+                           "compose_id": deal["compose"]["id"],
+                           "shadow_zh": deal["shadow"]["zh"],
+                           "shadow_tones": deal["shadow"]["tones"],
+                           "sections": {}}
+    return deal
+
+
+_PULSE_SECTIONS = ("reading", "listening", "compose", "shadow")
+
+_PULSE_REMEDY = {
+    "reading": {"id": "reading", "label": "读 — reading practice",
+                "why": "Reading comprehension slipped — a passage run brings it back."},
+    "listening": {"id": "listening", "label": "听 — listening practice",
+                  "why": "Listening slipped — native-speed passages, little and often."},
+    "compose": {"id": "compose", "label": "作 — write a composition",
+                "why": "The 成语 composition didn't land — write one with the checker on."},
+    "shadow": {"id": "tone_drill", "label": "声 — tone drill",
+               "why": "Tones drifted while shadowing — drill the confusions directly."},
+}
+
+
+def _pulse_section_verdict(section, r):
+    if section == "compose":
+        return "holds" if r.get("passed") else "slipping"
+    if section == "shadow":
+        if r.get("skipped") or not r.get("total"):
+            return "skipped"
+        return curriculum.pulse_verdict(r["hits"] / r["total"])
+    total = r.get("total") or 0
+    return curriculum.pulse_verdict(r["right"] / total if total else 0)
+
+
+def pulse_record(state, section, result):
+    """Store one section's result (verdict attached); once all four are in,
+    close the pulse: remediation for whatever decayed, an entry in history.
+    Returns the finished report, or None while sections are still missing."""
+    open_ = state.get("pulse_open")
+    if not open_ or section not in _PULSE_SECTIONS:
+        return None
+    result = dict(result)
+    result["verdict"] = _pulse_section_verdict(section, result)
+    open_["sections"][section] = result
+    if set(open_["sections"]) < set(_PULSE_SECTIONS):
+        return None
+    s = open_["sections"]
+    report = {"date": open_["date"], "n": open_["n"],
+              **{k: s[k] for k in _PULSE_SECTIONS}}
+    report["remedy"] = [dict(_PULSE_REMEDY[k]) for k in _PULSE_SECTIONS
+                        if s[k]["verdict"] in ("slipping", "decayed")]
+    report["holds"] = sum(1 for k in _PULSE_SECTIONS if s[k]["verdict"] == "holds")
+    state.setdefault("pulse", []).append(report)
+    state["pulse"] = state["pulse"][-24:]          # a year of fortnights
+    state["pulse_open"] = None
+    record_activity(state, "pulse", f"pulse {open_['n'] + 1}",
+                    f"{report['holds']}/4 hold")
+    return report
+
+
 def recommend(state):
     """The next best activity, deterministically, so 'what should I do?' always
     has one answer. Order: know where you stand → clear the debt (reviews) →
@@ -301,6 +397,10 @@ def recommend(state):
     if due > 0:
         return {"id": "review", "title": f"Review {min(due, 8)} due word{'s' if due > 1 else ''}",
                 "why": "Reviews come first, always — the schedule only works if you clear it."}
+    if pulse_due(state):
+        return {"id": "pulse", "title": "Take the fluency pulse",
+                "why": "Every two weeks at S7: an unseen read, an unseen listen, a "
+                       "成语 composition, one shadowed line — see what held and what slipped."}
     if not _did_today(state, "reading", "listening", "read"):
         nxt = reader.next_text(state, speaking_stage(state))
         if nxt:   # the graded reader outranks generic practice: it BUILDS vocabulary
@@ -422,6 +522,7 @@ def api_view(state):
                      "writing_rung": writing_rung(state),
                      "placement": state.get("placement"),
                      "can_do": state.get("can_do", {})},
+        "pulse": pulse_view(state),
         "recommend": recommend(state),
         "today": t,
     }
