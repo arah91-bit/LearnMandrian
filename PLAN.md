@@ -119,6 +119,45 @@ of the 40 idioms into upper texts, R6 growth (6 → 8), a second R7 chaptered
 story, and can-do S7 (the maintenance tier's own exit bar — what 'fluent
 enough' means is a design question worth a paragraph before code).
 
+**Active scope (Phase 7): fluency has no exit — measure the pulse.**
+
+**The S7 design decision (settled here, before code):** S7 is maintenance;
+there is no stage above it, so a pass-once exit exam is the wrong shape.
+Instead of a can-do check, S7 gets a recurring **fluency pulse** — a
+diagnostic the recommendation engine deals every ~2 weeks at S7: one UNSEEN
+R7-band reading passage (drawn from a reserve bank, never shown in the
+reader), one native-speed listening item, one composition prompt requiring a
+成语 used naturally, and one shadowing sentence. It does not lift anything;
+it reports drift ("reading holds; tones on T2→T1 slipping — here's the
+drill") and its remediations point at exactly what decayed. Passing isn't
+the point; noticing is. Results live in `state["pulse"]` history so the
+Progress tab can chart maintenance over months.
+
+In order:
+
+1. **WS6/S7 — the fluency pulse.** Engine (bank of 4+ reserve passages held
+   to S7 coverage, scorer, recommendation integration at S7, Progress
+   history card). Done when: pulse deals end-to-end in a browser at a
+   forced-S7 scratch profile, remediation targets render, tests cover
+   scoring and the every-N-days scheduling rule.
+2. **WS2 — R6 to 8 texts, idioms doing the work.** Two texts built AROUND
+   feed idioms (井底之蛙 as a travel-perspective story; 亡羊补牢 as fixing a
+   habit late), teaching them as new_words. Add the consistency invariant:
+   any 成语 appearing in reader text must exist in the CHENGYU set. Done
+   when: invariants green, R6 floor 8.
+3. **WS1 — S5 to 1500** (~120 hand-checked words, floor moves to 1500), then
+   **S6 groundwork** (~150 words toward the HSK5 band: society, opinion,
+   work-life abstractions). Done when: floors moved to reality, no dup hanzi,
+   spot-check noted in commits.
+4. **Maintenance polish (small).** Chengyu card shows learned-count (X of
+   40); recommendation engine offers today's idiom when it is not yet in the
+   deck and everything else is done — the maintenance tier's daily drip
+   becomes part of the loop. Done when: browser-verified.
+5. **(stretch) WS2 — second R7 chaptered story.**
+
+Same guardrails: invariant-first, authenticity rule (no generated content),
+scratch verification, backup push, honest remainders to Phase 8.
+
 **Branch/deploy mode:** phase work happens on the feature branch, verified
 against a scratch instance; deploy to the shared test container
 (`languagetutor-test`) after the whole phase slice is reviewed and local
