@@ -30,7 +30,7 @@ def test_reader_level_counts_cover_phase2_depth():
     assert counts["R3"] >= 10
     assert counts["R4"] >= 8
     assert counts["R5"] >= 8
-    assert counts["R6"] >= 4
+    assert counts["R6"] >= 8
     assert counts["R7"] >= 7
 
 
@@ -96,6 +96,21 @@ def test_questions_have_valid_answers_and_a_translation_exists():
         assert t["qs"] and t["en"] and t["intro"]
         for q in t["qs"]:
             assert 0 <= q["a"] < len(q["choices"]) and len(q["choices"]) >= 2
+
+
+def test_every_reader_chengyu_lives_in_the_feed():
+    """Consistency: a 成语 met in a story must also exist in the daily-idiom
+    feed (curriculum.CHENGYU), or the two systems drift apart. Four-hanzi
+    word tokens in the reader are idioms by construction — real compound
+    words stop at three characters here."""
+    import curriculum
+    feed = {c["zh"] for c in curriculum.CHENGYU}
+    for t in reader.TEXTS:
+        for s in t["sentences"]:
+            for tok in s["t"]:
+                z = tok["z"]
+                if tok["p"] and len(z) == 4 and all("㐀" <= c <= "鿿" for c in z):
+                    assert z in feed, f"{t['id']} uses 成语 {z} missing from CHENGYU"
 
 
 # ── Unlocks & progression ──────────────────────────────────────────────────────

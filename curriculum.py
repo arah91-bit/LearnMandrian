@@ -2727,6 +2727,30 @@ CHENGYU = [
               "birthday cake and at New Year. Heart wishes; things complete.",
      "example": ("生日快乐，心想事成！", "Shēng rì kuài lè, xīn xiǎng shì chéng!",
                  "Happy birthday — may all your wishes come true!")},
+    # Phase 7: the reader↔feed consistency invariant found these three living
+    # in reader texts but missing here — the feed and the reader must not drift.
+    {"id": "ma-ma-hu-hu", "zh": "马马虎虎", "py": "mǎ ma hū hū",
+     "tones": [3, 5, 1, 1], "meaning": "careless; so-so",
+     "story": "A painter, the old joke runs, gave a tiger's head a horse's "
+              "body and swore it was fine either way. Horse-horse tiger-tiger "
+              "has meant careless ever since — though today it mostly just "
+              "shrugs: so-so.",
+     "example": ("我的中文还马马虎虎。", "Wǒ de Zhōng wén hái mǎ ma hū hū.",
+                 "My Chinese is still just so-so.")},
+    {"id": "ru-xiang-sui-su", "zh": "入乡随俗", "py": "rù xiāng suí sú",
+     "tones": [4, 1, 2, 2], "meaning": "when in Rome…",
+     "story": "The traveler's oldest kindness: enter a village, follow its "
+              "customs. Chopsticks in one land, shoes off at the door in "
+              "another — the guest who watches and joins is welcome anywhere.",
+     "example": ("到了新地方，要入乡随俗。", "Dào le xīn dì fang, yào rù xiāng suí sú.",
+                 "In a new place, follow the local customs.")},
+    {"id": "yi-shi-er-niao", "zh": "一石二鸟", "py": "yì shí èr niǎo",
+     "tones": [4, 2, 4, 3], "meaning": "one stone, two birds",
+     "story": "The imported twin of 一举两得: one throw, two catches. Use "
+              "either — this one paints the picture, that one keeps the books.",
+     "example": ("走路上班，省钱又健康，真是一石二鸟。",
+                 "Zǒu lù shàng bān, shěng qián yòu jiàn kāng, zhēn shì yì shí èr niǎo.",
+                 "Walking to work saves money and keeps you healthy — one stone, two birds.")},
 ]
 
 

@@ -840,9 +840,83 @@ TEXTS = [
      "en": "In China, Anna is a guest. Chinese people eat with chopsticks, so Anna learns to use chopsticks too. Now it's her new habit. She says: \"Enter the village, follow its customs! I like Chinese customs.\" Her friends all say her habits are great.",
      "qs": [{"q": "入乡随俗 tells a traveler to…", "choices": ["follow local customs", "stay home", "eat quickly", "speak loudly"], "a": 0},
             {"q": "What does Anna learn to use?", "choices": ["chopsticks", "a map", "a computer", "a bicycle"], "a": 0}]},
+
+    {"id": "r6-7", "level": "R6", "title": "井底之蛙", "title_en": "The frog at the bottom of the well",
+     "intro": "A frog in a well, the fable goes, thought the sky was as small as "
+              "the well's mouth — until a sea turtle described the ocean. "
+              "井底之蛙 is anyone whose world stayed the size of their well. "
+              "A travel story to climb out with.",
+     "new_words": [("井底之蛙", "jǐng dǐ zhī wā", "a frog at the bottom of a well", [3, 3, 1, 1]),
+                   ("世界", "shì jiè", "world", [4, 4]),
+                   ("一直", "yì zhí", "all along; always", [4, 2]),
+                   ("住", "zhù", "to live (somewhere)", [4]),
+                   ("觉得", "jué de", "to feel, to think", [2, 5]),
+                   ("更", "gèng", "even more", [4]),
+                   ("远", "yuǎn", "far", [3]),
+                   ("应该", "yīng gāi", "should", [1, 1]),
+                   ("笑", "xiào", "to laugh, to smile", [4]),
+                   ("回家", "huí jiā", "to go home", [2, 1]),
+                   ("做", "zuò", "to do; to be (a role)", [4])],
+     "sentences": [_s("王明|Wáng_Míng|Wang_Ming 一直|yì_zhí|all_along 住|zhù|lives 在|zài|in 他|tā|his 的|de|'s 小|xiǎo|small 城市|chéng_shì|city 里|lǐ|inside 。"),
+                   _s("他|tā|he 总是|zǒng_shì|always 说|shuō|says ： “ 我们|wǒ_men|our 的|de|'s 茶|chá|tea 最|zuì|most 好喝|hǎo_hē|tasty ， 我们|wǒ_men|our 的|de|'s 山|shān|mountain 最|zuì|most 高|gāo|tall 。 ”"),
+                   _s("安娜|Ān_nà|Anna 说|shuō|says ： “ 你|nǐ|you 是|shì|are 井底之蛙|jǐng_dǐ_zhī_wā|frog_in_a_well ！ 井|jǐng|well 里|lǐ|inside 的|de|'s 蛙|wā|frog 觉得|jué_de|thinks 天|tiān|sky 很|hěn|very 小|xiǎo|small 。 ”"),
+                   _s("“ 世界|shì_jiè|world 很|hěn|very 大|dà|big ， 你|nǐ|you 应该|yīng_gāi|should 去|qù|go 看看|kàn_kan|take_a_look 。 ”"),
+                   _s("他们|tā_men|they 坐|zuò|take 火车|huǒ_chē|train 去|qù|go 了|le|(done) 很|hěn|very 远|yuǎn|far 的|de|'s 地方|dì_fang|place 。"),
+                   _s("王明|Wáng_Míng|Wang_Ming 看到|kàn_dào|sees 了|le|(done) 更|gèng|even 高|gāo|taller 的|de|'s 山|shān|mountains 、 更|gèng|even 大|dà|bigger 的|de|'s 城市|chéng_shì|cities 和|hé|and 很多|hěn_duō|many 新|xīn|new 朋友|péng_you|friends 。"),
+                   _s("回家|huí_jiā|going_home 以后|yǐ_hòu|after ， 他|tā|he 笑|xiào|laughs 了|le|(done) ： “ 我|wǒ|I 不|bù|not 想|xiǎng|want 再|zài|again 做|zuò|be 井底之蛙|jǐng_dǐ_zhī_wā|frog_in_a_well 了|le|(anymore) 。 ”"),
+                   _s("现在|xiàn_zài|now 他|tā|he 想|xiǎng|wants 去|qù|go 更|gèng|even 多|duō|more 的|de|'s 地方|dì_fang|places ， 看|kàn|see 更|gèng|even 大|dà|bigger 的|de|'s 世界|shì_jiè|world 。")],
+     "en": "Wang Ming has always lived in his small city. He always says: \"Our tea "
+           "is the tastiest, our mountain the tallest.\" Anna says: \"You're a frog "
+           "at the bottom of a well! The frog in the well thinks the sky is tiny. "
+           "The world is big — you should go look.\" They take a train somewhere "
+           "far. Wang Ming sees taller mountains, bigger cities, and many new "
+           "friends. Back home, he laughs: \"I don't want to be the frog in the "
+           "well anymore.\" Now he wants to visit more places and see a bigger world.",
+     "qs": [{"q": "井底之蛙 describes someone who…", "choices": ["thinks their small world is the whole world", "loves swimming", "climbs mountains", "drinks too much tea"], "a": 0},
+            {"q": "What does the frog in the well think about the sky?", "choices": ["it is tiny", "it is beautiful", "it is far", "it is wet"], "a": 0},
+            {"q": "What does Wang Ming want after the trip?", "choices": ["to see a bigger world", "to stay home forever", "to sell tea", "to buy the well"], "a": 0}]},
+
+    {"id": "r6-8", "level": "R6", "title": "亡羊补牢", "title_en": "Mend the pen after losing a sheep",
+     "intro": "A farmer lost a sheep through a hole in the pen and shrugged — "
+              "the sheep was gone, why fix the hole? Then he lost another. "
+              "亡羊补牢：mend the pen after losing a sheep — late, but not too "
+              "late. A story about bad habits and second chances.",
+     "new_words": [("亡羊补牢", "wáng yáng bǔ láo", "mend the pen after losing a sheep — not too late", [2, 2, 3, 2]),
+                   ("羊圈", "yáng juàn", "sheep pen", [2, 4]),
+                   ("洞", "dòng", "hole", [4]),
+                   ("邻居", "lín jū", "neighbor", [2, 1]),
+                   ("跑", "pǎo", "to run (away)", [3]),
+                   ("已经", "yǐ jīng", "already", [3, 1]),
+                   ("又", "yòu", "again; once more", [4]),
+                   ("忘", "wàng", "to forget", [4]),
+                   ("玩", "wán", "to play", [2]),
+                   ("手机", "shǒu jī", "cellphone", [1, 1]),
+                   ("第二天", "dì èr tiān", "the next day", [4, 4, 1]),
+                   ("开始", "kāi shǐ", "to begin", [1, 3])],
+     "sentences": [_s("王明|Wáng_Míng|Wang_Ming 最近|zuì_jìn|lately 天天|tiān_tiān|every_day 玩|wán|plays_on 手机|shǒu_jī|phone ， 很|hěn|very 晚|wǎn|late 睡觉|shuì_jiào|sleeps 。"),
+                   _s("学过|xué_guò|studied 的|de|(that) 词|cí|words ， 他|tā|he 忘|wàng|forgot 了|le|(done) 很多|hěn_duō|many 。"),
+                   _s("老师|lǎo_shī|teacher 给|gěi|for 他|tā|him 讲|jiǎng|tells 了|le|(done) 一个|yí_gè|one 故事|gù_shi|story 。"),
+                   _s("一个|yí_gè|one 人|rén|man 的|de|'s 羊圈|yáng_juàn|sheep_pen 上|shàng|on 有|yǒu|has 一个|yí_gè|one 洞|dòng|hole ， 跑|pǎo|ran_away 了|le|(done) 一|yì|one 只|zhī|(animal) 羊|yáng|sheep 。"),
+                   _s("邻居|lín_jū|neighbor 说|shuō|says ： “ 你|nǐ|you 应该|yīng_gāi|should 补|bǔ|mend 好|hǎo|well 这个|zhè_ge|this 洞|dòng|hole ！ ”", who="邻居"),
+                   _s("那个|nà_ge|that 人|rén|man 说|shuō|says ： “ 羊|yáng|sheep 已经|yǐ_jīng|already 跑|pǎo|ran 了|le|(done) ， 补|bǔ|mending 洞|dòng|hole 有|yǒu|has 什么|shén_me|what 用|yòng|use ？ ”"),
+                   _s("第二天|dì_èr_tiān|next_day ， 又|yòu|again 跑|pǎo|ran_away 了|le|(done) 一|yì|one 只|zhī|(animal) 羊|yáng|sheep 。"),
+                   _s("他|tā|he 补|bǔ|mended 好|hǎo|well 了|le|(done) 洞|dòng|hole ， 以后|yǐ_hòu|afterwards 再|zài|again 也|yě|also 没有|méi_yǒu|never 跑|pǎo|ran_away 过|guò|(ever) 羊|yáng|sheep 。"),
+                   _s("老师|lǎo_shī|teacher 说|shuō|says ： “ 亡羊补牢|wáng_yáng_bǔ_láo|mend_the_pen ， 现在|xiàn_zài|now 开始|kāi_shǐ|starting 也|yě|also 不|bù|not 晚|wǎn|late 。 ”", who="老师"),
+                   _s("王明|Wáng_Míng|Wang_Ming 笑|xiào|smiles 了|le|(done) ： “ 好|hǎo|okay ！ 从|cóng|from 今天|jīn_tiān|today 开始|kāi_shǐ|starting ， 我|wǒ|I 天天|tiān_tiān|every_day 复习|fù_xí|review 。 ”")],
+     "en": "Lately Wang Ming plays on his phone every day and sleeps late. He has "
+           "forgotten many of the words he studied. The teacher tells him a story. "
+           "A man's sheep pen had a hole, and a sheep ran away. The neighbor said: "
+           "\"You should mend that hole!\" The man said: \"The sheep is already "
+           "gone — what's the use of mending the hole?\" The next day another "
+           "sheep ran away. He mended the hole, and never lost a sheep again. The "
+           "teacher says: \"Mend the pen after losing a sheep — starting now isn't "
+           "too late.\" Wang Ming smiles: \"Okay! From today, I review every day.\"",
+     "qs": [{"q": "亡羊补牢 says that fixing things late is…", "choices": ["still worth doing", "useless", "expensive", "funny"], "a": 0},
+            {"q": "Why did the first sheep escape?", "choices": ["a hole in the pen", "the door was open", "a wolf took it", "it was sold"], "a": 0},
+            {"q": "What does Wang Ming decide?", "choices": ["to review every day", "to buy a sheep", "to sleep more", "to change teachers"], "a": 0}]},
     {"id": "r7-1", "level": "R7", "title": "慢慢变好", "title_en": "Getting better slowly",
      "intro": "A longer reflective chapter about reading, history, and attitude.",
-     "new_words": [("文章", "wén zhāng", "article", [2, 1]), ("世界", "shì jiè", "world", [4, 4]),
+     "new_words": [("文章", "wén zhāng", "article", [2, 1]),
                    ("历史", "lì shǐ", "history", [4, 3]), ("文化", "wén huà", "culture", [2, 4]),
                    ("社会", "shè huì", "society", [4, 4]), ("影响", "yǐng xiǎng", "influence", [3, 3]),
                    ("态度", "tài dù", "attitude", [4, 4]), ("讨论", "tǎo lùn", "to discuss", [3, 4]),
