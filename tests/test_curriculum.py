@@ -156,11 +156,14 @@ def test_reading_passages_use_only_characters_taught_by_their_stage():
         known |= {c for g in curriculum.GRAMMAR if g["stage"] == sid
                   for zh, _, _ in g["examples"] for c in zh if "㐀" <= c <= "鿿"}
         known_at[sid] = set(known)
-    for sid, passages in curriculum.READING.items():
-        for i, p in enumerate(passages):
-            unk = {c for c in p["zh"]
-                   if "㐀" <= c <= "鿿" and c not in known_at[sid] and c not in names}
-            assert not unk, f"{sid} passage {i} uses untaught characters: {''.join(unk)}"
+    for bank in (curriculum.READING, curriculum.LISTENING_PASSAGES):
+        for sid, passages in bank.items():
+            for i, p in enumerate(passages):
+                unk = {c for c in p["zh"]
+                       if "㐀" <= c <= "鿿" and c not in known_at[sid] and c not in names}
+                assert not unk, f"{sid} passage {i} uses untaught characters: {''.join(unk)}"
+                for q in p["qs"]:
+                    assert 0 <= q["a"] < len(q["choices"])
 
 
 # ── Placement ──────────────────────────────────────────────────────────────────
@@ -189,6 +192,10 @@ def test_can_do_checks_are_server_scored_and_targeted():
         assert all("answer" not in it and "remediate" not in it for it in public)
         assert all(it["kind"] in ("reading", "listening") for it in private)
         assert any(it.get("critical") for it in private)
+        known = _known_chars_through(sid) | set("安娜王明")
+        for it in private:                    # no-gaps applies to assessments too
+            unk = {c for c in it["zh"] if "㐀" <= c <= "鿿" and c not in known}
+            assert not unk, f"{it['id']} uses untaught chars: {''.join(sorted(unk))}"
     items = curriculum.can_do_items("S2")
     full = {it["id"]: it["answer"] for it in items}
     result = curriculum.score_can_do("S2", full)

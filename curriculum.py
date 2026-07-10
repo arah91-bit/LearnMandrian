@@ -2004,7 +2004,7 @@ def score_placement(answers):
 # ── Can-do stage-exit checks ──────────────────────────────────────────────────
 # Server-scored like placement, but stored separately: these are practical
 # exit checks for a stage, not a diagnostic placement history.
-CAN_DO_STAGES = ["S1", "S2", "S3", "S4"]
+CAN_DO_STAGES = ["S1", "S2", "S3", "S4", "S5", "S6"]
 CAN_DO_PASS_RATIO = 0.80
 
 CAN_DO_CHECKS = {
@@ -2139,6 +2139,68 @@ CAN_DO_CHECKS = {
          "remediate": {"kind": "grammar", "detail": "de-manner",
                        "label": "得 manner complement"}},
     ],
+    "S5": [
+        {"id": "S5-plan-fell-through", "kind": "listening", "skill": "storytelling",
+         "critical": True, "zh": "我本来要去，结果没有去。", "py": "Wǒ běnlái yào qù, jiéguǒ méiyǒu qù.",
+         "prompt": "Listen. What happened?",
+         "choices": ["planned to go but didn't", "went as planned", "will go tomorrow", "went twice"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "discourse-flow", "label": "本来/结果 story glue"}},
+        {"id": "S5-despite-price", "kind": "reading", "skill": "opinions",
+         "critical": False, "zh": "虽然很贵，但是质量很好。", "py": "Suīrán hěn guì, dànshì zhìliàng hěn hǎo.",
+         "prompt": "What is the speaker's attitude?",
+         "choices": ["worth it despite the price", "too expensive to buy", "poor quality", "undecided"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "connectors-1", "label": "虽然…但是 pair"}},
+        {"id": "S5-passive-bei", "kind": "reading", "skill": "grammar",
+         "critical": False, "zh": "我的咖啡被他喝完了。", "py": "Wǒ de kāfēi bèi tā hē wán le.",
+         "prompt": "What happened to the coffee?",
+         "choices": ["he drank it all", "it was bought", "it went cold", "nothing"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "bei-passive", "label": "被 passive"}},
+        {"id": "S5-favor", "kind": "listening", "skill": "social",
+         "critical": False, "zh": "你能帮我一个忙吗？", "py": "Nǐ néng bāng wǒ yí ge máng ma?",
+         "prompt": "Listen. What is being asked?",
+         "choices": ["a favor", "the time", "the price", "directions"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "separable-verbs", "label": "帮忙 splits open"}},
+        {"id": "S5-duration", "kind": "reading", "skill": "grammar",
+         "critical": False, "zh": "我学了两年汉语。", "py": "Wǒ xué le liǎng nián Hànyǔ.",
+         "prompt": "How long has the study lasted?",
+         "choices": ["two years", "two months", "since yesterday", "twenty years"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "duration-after-verb", "label": "duration follows the verb"}},
+        {"id": "S5-only-if", "kind": "reading", "skill": "opinions",
+         "critical": True, "zh": "只有每天练习，才能进步。", "py": "Zhǐyǒu měitiān liànxí, cáinéng jìnbù.",
+         "prompt": "What does this claim?",
+         "choices": ["only daily practice brings progress", "practice is optional", "progress is fast", "talent is enough"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "zhiyou-cai", "label": "只有…才 strict condition"}}],
+    "S6": [
+        {"id": "S6-chengyu-mamahuhu", "kind": "reading", "skill": "chengyu",
+         "critical": True, "zh": "他做事总是马马虎虎。", "py": "Tā zuò shì zǒngshì mǎmahūhū.",
+         "prompt": "His work is…",
+         "choices": ["careless", "excellent", "fast", "finished"], "answer": 0,
+         "remediate": {"kind": "reader", "detail": "r6-5", "label": "马马虎虎 story"}},
+        {"id": "S6-wulun", "kind": "reading", "skill": "grammar",
+         "critical": False, "zh": "无论多难，我都要学下去。", "py": "Wúlùn duō nán, wǒ dōu yào xué xiàqu.",
+         "prompt": "The speaker will…",
+         "choices": ["keep studying no matter what", "quit if it's hard", "study only easy things", "take a break"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "wulun-dou", "label": "无论…都"}},
+        {"id": "S6-jiran", "kind": "listening", "skill": "discourse",
+         "critical": False, "zh": "既然你来了，就一起吃饭吧。", "py": "Jìrán nǐ lái le, jiù yìqǐ chīfàn ba.",
+         "prompt": "Listen. What is being suggested?",
+         "choices": ["since you're here, eat together", "leave right away", "come back later", "cook alone"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "jiran-jiu", "label": "既然…就"}},
+        {"id": "S6-jinguan", "kind": "reading", "skill": "grammar",
+         "critical": False, "zh": "尽管下雨，比赛还是举行了。", "py": "Jǐnguǎn xià yǔ, bǐsài háishi jǔxíng le.",
+         "prompt": "What happened to the match?",
+         "choices": ["held despite the rain", "cancelled", "moved indoors", "postponed"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "jinguan", "label": "尽管…还是"}},
+        {"id": "S6-zhiyi", "kind": "reading", "skill": "register",
+         "critical": False, "zh": "北京是中国最大的城市之一。", "py": "Běijīng shì Zhōngguó zuì dà de chéngshì zhī yī.",
+         "prompt": "This sentence says Beijing is…",
+         "choices": ["one of the biggest cities", "the only big city", "a small city", "the capital"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "zhiyi", "label": "…之一"}},
+        {"id": "S6-nandao", "kind": "listening", "skill": "rhetoric",
+         "critical": True, "zh": "难道你不知道吗？", "py": "Nándào nǐ bù zhīdào ma?",
+         "prompt": "Listen. What is the tone?",
+         "choices": ["disbelief — surely you knew", "a polite request", "an apology", "a greeting"], "answer": 0,
+         "remediate": {"kind": "grammar", "detail": "nandao", "label": "难道 rhetorical"}}],
 }
 
 
@@ -2353,6 +2415,12 @@ def listening_practice(vocab, sid, n=6, rng=None):
         it["prompt"] = "Listen — what does it mean?"
         items.append(it)
     rng.shuffle(items)
+    passages = LISTENING_PASSAGES.get(sid, [])
+    if passages:                       # one passage per session, all its questions
+        pz = rng.choice(passages)
+        for q in pz["qs"]:
+            items.append({"kind": "passage_listen", "zh": pz["zh"], "py": None,
+                          "prompt": q["q"], "choices": q["choices"], "a": q["a"]})
     return {"stage": sid, "items": items}
 
 
@@ -2489,6 +2557,129 @@ CHENGYU = [
               "one visit.",
      "example": ("中国很大，百闻不如一见。", "Zhōng guó hěn dà, bǎi wén bù rú yí jiàn.",
                  "China is vast — seeing it once beats hearing about it a hundred times.")},
+    {"id": "shuo-dao-zuo-dao", "zh": "说到做到", "py": "shuō dào zuò dào",
+     "tones": [1, 4, 4, 4], "meaning": "to mean what you say",
+     "story": "Say it, then do it — four characters that make a promise "
+              "airtight. High praise when said about someone else.",
+     "example": ("他说到做到，大家都相信他。", "Tā shuō dào zuò dào, dà jiā dōu xiāng xìn tā.",
+                 "He does what he says — everyone trusts him.")},
+    {"id": "ma-dao-cheng-gong", "zh": "马到成功", "py": "mǎ dào chéng gōng",
+     "tones": [3, 4, 2, 1], "meaning": "instant success (a wish)",
+     "story": "May success arrive the moment your horse does — the cavalry "
+              "blessing that became the exam-season send-off.",
+     "example": ("明天考试，祝你马到成功！", "Míng tiān kǎo shì, zhù nǐ mǎ dào chéng gōng!",
+                 "Exam tomorrow — may success ride in with you!")},
+    {"id": "ren-shan-ren-hai", "zh": "人山人海", "py": "rén shān rén hǎi",
+     "tones": [2, 1, 2, 3], "meaning": "a sea of people",
+     "story": "Mountains of people, oceans of people. The only honest "
+              "description of a festival square or a holiday train station.",
+     "example": ("春节的火车站人山人海。", "Chūn jié de huǒ chē zhàn rén shān rén hǎi.",
+                 "At Spring Festival the station is a sea of people.")},
+    {"id": "wu-yan-liu-se", "zh": "五颜六色", "py": "wǔ yán liù sè",
+     "tones": [3, 2, 4, 4], "meaning": "colorful, of every hue",
+     "story": "Five colors, six shades — the count is poetry, not arithmetic. "
+              "Markets, gardens, and festival lights are all 五颜六色.",
+     "example": ("花园里的花五颜六色。", "Huā yuán li de huā wǔ yán liù sè.",
+                 "The garden's flowers are every color at once.")},
+    {"id": "qian-fang-bai-ji", "zh": "千方百计", "py": "qiān fāng bǎi jì",
+     "tones": [1, 1, 3, 4], "meaning": "by every possible means",
+     "story": "A thousand methods, a hundred plans — trying every door in the "
+              "corridor. Effort at full stubbornness.",
+     "example": ("他千方百计找到了那本书。", "Tā qiān fāng bǎi jì zhǎo dào le nà běn shū.",
+                 "He tried everything until he found that book.")},
+    {"id": "ri-xin-yue-yi", "zh": "日新月异", "py": "rì xīn yuè yì",
+     "tones": [4, 1, 4, 4], "meaning": "changing by the day",
+     "story": "New each day, different each month. The stock phrase for "
+              "technology and cities that won't sit still for a photograph.",
+     "example": ("科技发展日新月异。", "Kē jì fā zhǎn rì xīn yuè yì.",
+                 "Technology changes by the day.")},
+    {"id": "zi-yan-zi-yu", "zh": "自言自语", "py": "zì yán zì yǔ",
+     "tones": [4, 2, 4, 3], "meaning": "to talk to oneself",
+     "story": "Self speaks, self replies. Every language learner's private "
+              "classroom — narrating the kitchen counts as practice.",
+     "example": ("她学汉语的时候常常自言自语。", "Tā xué Hàn yǔ de shí hou cháng cháng zì yán zì yǔ.",
+                 "She often talks to herself while studying Chinese.")},
+    {"id": "jing-jing-you-tiao", "zh": "井井有条", "py": "jǐng jǐng yǒu tiáo",
+     "tones": [3, 3, 3, 2], "meaning": "neat and orderly",
+     "story": "As regular as the grid of a well-field. Desks, plans, and "
+              "kitchens can all earn it.",
+     "example": ("她的房间井井有条。", "Tā de fáng jiān jǐng jǐng yǒu tiáo.",
+                 "Her room is in perfect order.")},
+    {"id": "da-tong-xiao-yi", "zh": "大同小异", "py": "dà tóng xiǎo yì",
+     "tones": [4, 2, 3, 4], "meaning": "much the same, minor differences",
+     "story": "Big sameness, small difference — for menus, phone models, and "
+              "excuses that all rhyme.",
+     "example": ("这两个计划大同小异。", "Zhè liǎng ge jì huà dà tóng xiǎo yì.",
+                 "These two plans are much the same.")},
+    {"id": "ban-xin-ban-yi", "zh": "半信半疑", "py": "bàn xìn bàn yí",
+     "tones": [4, 4, 4, 2], "meaning": "half believing, half doubting",
+     "story": "One ear believes, the other doesn't. The natural posture "
+              "toward good news that arrives too easily.",
+     "example": ("他说的话，我半信半疑。", "Tā shuō de huà, wǒ bàn xìn bàn yí.",
+                 "I half believe what he says.")},
+    {"id": "huo-shang-jia-you", "zh": "火上加油", "py": "huǒ shàng jiā yóu",
+     "tones": [3, 4, 1, 2], "meaning": "to add fuel to the fire",
+     "story": "The fire was doing fine before you brought oil. Said of words "
+              "that make an argument worse while claiming to help.",
+     "example": ("他已经很生气了，你别火上加油。", "Tā yǐ jīng hěn shēng qì le, nǐ bié huǒ shàng jiā yóu.",
+                 "He's already angry — don't add fuel to the fire.")},
+    {"id": "shi-you-ba-jiu", "zh": "十有八九", "py": "shí yǒu bā jiǔ",
+     "tones": [2, 3, 1, 3], "meaning": "nine times out of ten",
+     "story": "Of ten, expect eight or nine. Chinese hedges its bets with "
+              "arithmetic instead of adverbs.",
+     "example": ("这个时候，他十有八九在图书馆。", "Zhè ge shí hou, tā shí yǒu bā jiǔ zài tú shū guǎn.",
+                 "At this hour he's nine times out of ten at the library.")},
+    {"id": "yi-lu-ping-an", "zh": "一路平安", "py": "yí lù píng ān",
+     "tones": [2, 4, 2, 1], "meaning": "safe travels",
+     "story": "May the whole road be level and calm. What you say at the "
+              "airport gate instead of goodbye.",
+     "example": ("明天你出发，一路平安！", "Míng tiān nǐ chū fā, yí lù píng ān!",
+                 "You leave tomorrow — safe travels!")},
+    {"id": "ge-zhong-ge-yang", "zh": "各种各样", "py": "gè zhǒng gè yàng",
+     "tones": [4, 3, 4, 4], "meaning": "all kinds of",
+     "story": "Each type, each shape. The polite way to say a market sells "
+              "everything and a family holds opinions of every kind.",
+     "example": ("商场里有各种各样的东西。", "Shāng chǎng li yǒu gè zhǒng gè yàng de dōng xi.",
+                 "The mall has all kinds of things.")},
+    {"id": "tan-he-rong-yi", "zh": "谈何容易", "py": "tán hé róng yì",
+     "tones": [2, 2, 2, 4], "meaning": "easier said than done",
+     "story": "Talking about it — what could be easier? Doing it is another "
+              "country. Usually said with a sigh.",
+     "example": ("每天早起，谈何容易！", "Měi tiān zǎo qǐ, tán hé róng yì!",
+                 "Getting up early every day — easier said than done!")},
+    {"id": "yan-er-dao-ling", "zh": "掩耳盗铃", "py": "yǎn ěr dào líng",
+     "tones": [3, 3, 4, 2], "meaning": "fooling only yourself",
+     "story": "A thief stealing a bell covered his own ears so the ringing "
+              "would not give him away. The bell disagreed. Denial has never "
+              "had a better logo.",
+     "example": ("不复习就说没有考试，这是掩耳盗铃。", "Bù fù xí jiù shuō méi yǒu kǎo shì, zhè shì yǎn ěr dào líng.",
+                 "Skipping review and claiming there's no exam — you're only fooling yourself.")},
+    {"id": "hu-jia-hu-wei", "zh": "狐假虎威", "py": "hú jiǎ hǔ wēi",
+     "tones": [2, 3, 3, 1], "meaning": "borrowing someone else's power",
+     "story": "A fox, caught by a tiger, claimed to be king of the forest — "
+              "walk behind me and watch everyone flee. They fled from the "
+              "tiger, of course. The fox took the credit.",
+     "example": ("他不过是狐假虎威。", "Tā bú guò shì hú jiǎ hǔ wēi.",
+                 "He's just borrowing someone else's authority.")},
+    {"id": "yu-gong-yi-shan", "zh": "愚公移山", "py": "yú gōng yí shān",
+     "tones": [2, 1, 2, 1], "meaning": "persistence moves mountains",
+     "story": "An old man began digging away the two mountains blocking his "
+              "door. Laughed at, he answered: my sons will dig, and theirs "
+              "after them — the mountains, meanwhile, aren't growing.",
+     "example": ("学汉语要有愚公移山的精神。", "Xué Hàn yǔ yào yǒu yú gōng yí shān de jīng shén.",
+                 "Learning Chinese takes mountain-moving persistence.")},
+    {"id": "shu-men-shu-lu", "zh": "熟门熟路", "py": "shú mén shú lù",
+     "tones": [2, 2, 2, 4], "meaning": "familiar ground",
+     "story": "Known door, known road — you could walk it with your eyes "
+              "closed. Said of tasks as well as streets.",
+     "example": ("这个工作他熟门熟路。", "Zhè ge gōng zuò tā shú mén shú lù.",
+                 "This job is familiar ground for him.")},
+    {"id": "xin-ping-qi-he", "zh": "心平气和", "py": "xīn píng qì hé",
+     "tones": [1, 2, 4, 2], "meaning": "calm and even-tempered",
+     "story": "Heart level, breath even. The recommended setting for hard "
+              "conversations — and for third-tone drills.",
+     "example": ("我们心平气和地谈一谈吧。", "Wǒ men xīn píng qì hé de tán yi tán ba.",
+                 "Let's talk this over calmly.")},
     {"id": "xin-xiang-shi-cheng", "zh": "心想事成", "py": "xīn xiǎng shì chéng",
      "tones": [1, 3, 4, 2], "meaning": "may your wishes come true",
      "story": "Not a fable but a gift: the four characters you say over "
@@ -2496,6 +2687,61 @@ CHENGYU = [
      "example": ("生日快乐，心想事成！", "Shēng rì kuài lè, xīn xiǎng shì chéng!",
                  "Happy birthday — may all your wishes come true!")},
 ]
+
+
+# ── Listening comprehension passages (Phase 5 / WS5) ─────────────────────────
+# Multi-sentence audio: the client speaks the whole passage, text stays
+# hidden until answered. Characters held to stage coverage like READING.
+LISTENING_PASSAGES = {
+    "S3": [
+        {"zh": "昨天我很忙。早上我六点起床，喝了一杯咖啡就去工作。晚上我十点才睡觉。",
+         "qs": [{"q": "When did the speaker get up?",
+                 "choices": ["six o'clock", "ten o'clock", "noon", "eight o'clock"], "a": 0},
+                {"q": "When did they finally sleep?",
+                 "choices": ["ten at night", "six at night", "right after work", "at noon"], "a": 0}]},
+        {"zh": "我妹妹生病了，头疼，还有点发烧。医生说：多喝水，多休息，别去工作。",
+         "qs": [{"q": "What is wrong with the sister?",
+                 "choices": ["headache and fever", "broken leg", "toothache", "nothing"], "a": 0},
+                {"q": "What did the doctor advise?",
+                 "choices": ["rest and drink water", "work harder", "take a trip", "eat more"], "a": 0}]},
+    ],
+    "S4": [
+        {"zh": "明天我们去公园。如果下雨，我们就去电影院看电影。你先买票，我准备吃的。",
+         "qs": [{"q": "What is the rain plan?",
+                 "choices": ["the cinema", "stay home", "the library", "go anyway"], "a": 0},
+                {"q": "Who buys the tickets?",
+                 "choices": ["the listener", "the speaker", "nobody", "the cinema"], "a": 0}]},
+        {"zh": "我家附近有一个新商场，里面有饭馆、电影院，还有一个小公园。周末人很多，要排队。",
+         "qs": [{"q": "What is near the speaker's home?",
+                 "choices": ["a new mall", "a train station", "a hospital", "a school"], "a": 0},
+                {"q": "What are weekends like there?",
+                 "choices": ["crowded, with queues", "quiet", "closed", "cheap"], "a": 0}]},
+    ],
+    "S5": [
+        {"zh": "我本来打算坐火车去，结果票卖完了，只好坐飞机。虽然贵一点，但是快多了。",
+         "qs": [{"q": "Why did the speaker fly?",
+                 "choices": ["train tickets sold out", "planes are cheaper", "fear of trains", "no reason"], "a": 0},
+                {"q": "How do they feel about flying?",
+                 "choices": ["pricier but much faster", "worse in every way", "cheaper and slower", "identical"], "a": 0}]},
+        {"zh": "小王最近压力很大，天天加班。朋友建议他每天散步半个小时，放松放松。",
+         "qs": [{"q": "What is Xiao Wang's problem?",
+                 "choices": ["stress and overtime", "no money", "an illness", "a move"], "a": 0},
+                {"q": "What did the friend suggest?",
+                 "choices": ["a daily half-hour walk", "quitting the job", "more coffee", "less sleep"], "a": 0}]},
+    ],
+    "S6": [
+        {"zh": "现在很多年轻人不看报纸，新闻都在手机上看。有人觉得方便，也有人担心大家看得太快，想得太少。",
+         "qs": [{"q": "How do young people read news now?",
+                 "choices": ["on their phones", "in newspapers", "on television", "not at all"], "a": 0},
+                {"q": "What is the worry?",
+                 "choices": ["reading fast, thinking little", "phones are expensive", "news is boring", "paper waste"], "a": 0}]},
+        {"zh": "学一门语言，最难的不是开始，而是坚持。无论多忙，每天学一点，慢慢就会看到进步。",
+         "qs": [{"q": "What is hardest about learning a language?",
+                 "choices": ["persisting", "starting", "paying", "listening"], "a": 0},
+                {"q": "What is the advice?",
+                 "choices": ["a little every day", "long weekend sessions", "move abroad", "hire a tutor"], "a": 0}]},
+    ],
+}
 
 
 def chengyu_of_the_day(day=None):
