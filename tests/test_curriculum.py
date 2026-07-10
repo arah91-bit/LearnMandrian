@@ -105,7 +105,7 @@ def test_s5_vocabulary_milestone_only_rises():
         vocab |= {w[0] for t in reader.TEXTS
                   if reader._LEVEL_IDX[t["level"]] <= k for w in t["new_words"]}
         if s["id"] == "S5":
-            assert len(vocab) >= 1300, f"S5 milestone: {len(vocab)}/1300"
+            assert len(vocab) >= 1350, f"S5 milestone: {len(vocab)}/1350"
             break
 
 
