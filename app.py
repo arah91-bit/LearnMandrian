@@ -814,6 +814,27 @@ def tone_drill_submit(audio: UploadFile = File(...), target_hanzi: str = Form(""
     return out
 
 
+@app.get("/api/chengyu")
+def chengyu_today():
+    """成语 of the day — the maintenance-tier drip of idioms."""
+    c = curriculum.chengyu_of_the_day()
+    state = learner.load()
+    known = {w["hanzi"] for w in state["vocab"]}
+    return {"today": c, "in_deck": c["zh"] in known, "count": len(curriculum.CHENGYU)}
+
+
+@app.post("/api/chengyu/learn")
+def chengyu_learn(payload: dict):
+    cid = str(payload.get("id", ""))
+    c = next((x for x in curriculum.CHENGYU if x["id"] == cid), None)
+    if not c:
+        raise HTTPException(404, "no such idiom")
+    with learner.txn() as state:
+        msg = learner.add_word(state, c["zh"], c["py"], c["meaning"], c["tones"])
+        learner.record_activity(state, "chengyu", c["zh"])
+    return {"ok": True, "result": msg}
+
+
 @app.get("/api/shadow/start")
 def shadow_start():
     """Shadowing: mirror native-speed sentences from texts already read."""

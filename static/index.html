@@ -398,6 +398,19 @@
         <button class="pbtn" id="place-btn"><span class="zh">测</span>Placement test</button>
       </div>
     </div>
+    <div class="card" id="chengyu-card" hidden>
+      <h2>成语 of the day</h2>
+      <div class="cy-zh" data-say="" style="font-family:var(--hanzi);font-size:30px"></div>
+      <div class="cy-py" style="color:var(--brand-hot);font-size:14px"></div>
+      <div class="cy-en" style="color:var(--dim);font-size:14px;margin-bottom:6px"></div>
+      <p class="cy-story rintro" style="margin:8px 0"></p>
+      <div class="gx" style="border:0;padding:4px 0">
+        <div class="zh cy-ex-zh" data-say="" style="font-size:18px"></div>
+        <div class="py cy-ex-py"></div>
+        <div class="en cy-ex-en"></div>
+      </div>
+      <button class="pbtn" id="cy-learn" style="margin-top:8px"><span class="zh">记</span>add to my deck</button>
+    </div>
     <div class="card" id="grammar-card">
       <h2>Grammar — unlocks as you climb</h2>
       <div class="glist"><div class="empty">Loading…</div></div>
@@ -2173,8 +2186,36 @@ document.addEventListener('click', e=>{
   if (s && !e.target.closest('.wr')) wrSay(s.dataset.say);
 });
 
+async function loadChengyu(){
+  try{
+    const r = await fetch('/api/chengyu');
+    if (!r.ok) return;
+    const j = await r.json();
+    const c = j.today, card = $('#chengyu-card');
+    card.hidden = false;
+    const zh = card.querySelector('.cy-zh');
+    zh.textContent = c.zh; zh.dataset.say = c.zh;
+    card.querySelector('.cy-py').textContent = pyDisp(c.py);
+    card.querySelector('.cy-en').textContent = c.meaning;
+    card.querySelector('.cy-story').textContent = c.story;
+    const ex = card.querySelector('.cy-ex-zh');
+    ex.textContent = c.example[0]; ex.dataset.say = c.example[0];
+    card.querySelector('.cy-ex-py').textContent = pyDisp(c.example[1]);
+    card.querySelector('.cy-ex-en').textContent = c.example[2];
+    const btn = $('#cy-learn');
+    btn.disabled = j.in_deck;
+    btn.textContent = j.in_deck ? '已在卡片里 — in your deck' : '记 — add to my deck';
+    btn.onclick = async ()=>{
+      await fetch('/api/chengyu/learn',{method:'POST',
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:c.id})});
+      btn.disabled = true; btn.textContent = '已在卡片里 — in your deck';
+      loadState();
+    };
+  }catch(e){}
+}
 loadState();
 loadCurriculum();
+loadChengyu();
 loadLibrary();
 loadReader();
 

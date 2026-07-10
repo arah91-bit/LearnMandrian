@@ -355,3 +355,28 @@ def test_ingest_search_matches_books_and_sections():
     hits = ingest.search(index, "course 3")
     assert hits and hits[0]["page"] == 42
     assert ingest.search(index, "") == []
+
+
+# ── 成语 of the day ────────────────────────────────────────────────────────────
+def test_chengyu_set_is_sound_and_daily_rotation_is_deterministic():
+    import datetime
+    ids = set()
+    known = set("安娜王明")
+    for sid in [s["id"] for s in curriculum.STAGES]:
+        known |= {c for w in curriculum.SEEDS.get(sid, []) for c in w[0]}
+        known |= {c for g in curriculum.GRAMMAR if g["stage"] == sid
+                  for zh, _, _ in g["examples"] for c in zh if "㐀" <= c <= "鿿"}
+    for c in curriculum.CHENGYU:
+        assert c["id"] not in ids
+        ids.add(c["id"])
+        assert len(c["zh"]) == len(c["tones"]) == len(c["py"].split())
+        assert c["story"] and c["meaning"]
+        zh, py, en = c["example"]
+        assert c["zh"] in zh, f"{c['id']} example never uses the idiom"
+        own = set(c["zh"])
+        unk = {ch for ch in zh if "㐀" <= ch <= "鿿" and ch not in known | own}
+        assert not unk, f"{c['id']} example uses untaught chars: {''.join(sorted(unk))}"
+    d = datetime.date(2026, 7, 9)
+    assert curriculum.chengyu_of_the_day(d) == curriculum.chengyu_of_the_day(d)
+    assert curriculum.chengyu_of_the_day(d) != curriculum.chengyu_of_the_day(
+        d + datetime.timedelta(days=1))

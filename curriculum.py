@@ -590,6 +590,7 @@ SEEDS["S5"] += [
     ("戒指", "jiè zhi", "ring (jewelry)", [4, 5]), ("礼堂", "lǐ táng", "auditorium", [3, 2]),
     ("烦恼", "fán nǎo", "worries, vexation", [2, 3]), ("孤单", "gū dān", "lonely", [1, 1]),
     ("勇气", "yǒng qì", "courage", [3, 4]), ("信心", "xìn xīn", "confidence", [4, 1]),
+    ("够", "gòu", "enough", [4]),
     ("耐烦", "nài fán", "patient (不耐烦: impatient)", [4, 2]),
     ("志愿者", "zhì yuàn zhě", "volunteer", [4, 4, 3]),
     ("导演", "dǎo yǎn", "(film) director", [3, 3]), ("观众", "guān zhòng", "audience", [1, 4]),
@@ -2353,3 +2354,152 @@ def listening_practice(vocab, sid, n=6, rng=None):
         items.append(it)
     rng.shuffle(items)
     return {"stage": sid, "items": items}
+
+
+# ── 成语 of the day (Phase 4 / WS9) ────────────────────────────────────────────
+# Original retellings — the fables are folklore; every word here is ours.
+# Example sentences stay within seeded vocabulary plus the idiom itself.
+CHENGYU = [
+    {"id": "shu-neng-sheng-qiao", "zh": "熟能生巧", "py": "shú néng shēng qiǎo",
+     "tones": [2, 2, 1, 3], "meaning": "practice makes perfect",
+     "story": "An old oil-seller could pour oil through the hole of a coin without "
+              "wetting it. Asked for his secret, he shrugged: no secret — ten "
+              "thousand pours. Skill grows wherever repetition lives.",
+     "example": ("别着急，熟能生巧，每天练习就好。", "Bié zháo jí, shú néng shēng qiǎo, měi tiān liàn xí jiù hǎo.",
+                 "Don't worry — practice makes perfect; just practice every day.")},
+    {"id": "ban-tu-er-fei", "zh": "半途而废", "py": "bàn tú ér fèi",
+     "tones": [4, 2, 2, 4], "meaning": "to give up halfway",
+     "story": "A student quit his studies and came home early; his wife cut the "
+              "cloth she was weaving in two — months of work, abandoned mid-"
+              "pattern, worth nothing. He went back and finished.",
+     "example": ("学汉语不能半途而废。", "Xué Hàn yǔ bù néng bàn tú ér fèi.",
+                 "With Chinese, you can't give up halfway.")},
+    {"id": "yi-ju-liang-de", "zh": "一举两得", "py": "yì jǔ liǎng dé",
+     "tones": [4, 3, 3, 2], "meaning": "one move, two gains",
+     "story": "The bookish sibling of 一石二鸟: one action, two rewards. Walking "
+              "to work saves money AND is exercise — that's 一举两得.",
+     "example": ("走路上班，健康也省钱，一举两得。", "Zǒu lù shàng bān, jiàn kāng yě shěng qián, yì jǔ liǎng dé.",
+                 "Walking to work — healthy and cheap: one move, two gains.")},
+    {"id": "shi-quan-shi-mei", "zh": "十全十美", "py": "shí quán shí měi",
+     "tones": [2, 2, 2, 3], "meaning": "perfect in every way",
+     "story": "Ten out of ten, complete and beautiful. Usually heard in the "
+              "negative — 没有十全十美的人 — nobody is perfect, and that's the "
+              "kind way to say it.",
+     "example": ("没有十全十美的人。", "Méi yǒu shí quán shí měi de rén.",
+                 "Nobody is perfect in every way.")},
+    {"id": "san-xin-er-yi", "zh": "三心二意", "py": "sān xīn èr yì",
+     "tones": [1, 1, 4, 4], "meaning": "half-hearted, in two minds",
+     "story": "Three hearts, two minds — too many to steer one boat. It's the "
+              "student checking the phone mid-sentence, the cook leaving the "
+              "pan. The cure is its mirror twin: 一心一意.",
+     "example": ("学习的时候别三心二意。", "Xué xí de shí hou bié sān xīn èr yì.",
+                 "Don't be half-hearted while studying.")},
+    {"id": "yi-xin-yi-yi", "zh": "一心一意", "py": "yì xīn yí yì",
+     "tones": [4, 1, 2, 4], "meaning": "wholeheartedly",
+     "story": "One heart, one mind: everything pointed at a single thing. The "
+              "打磨 of any skill — including the one you're doing right now.",
+     "example": ("她一心一意学中文。", "Tā yì xīn yí yì xué Zhōng wén.",
+                 "She studies Chinese wholeheartedly.")},
+    {"id": "si-mian-ba-fang", "zh": "四面八方", "py": "sì miàn bā fāng",
+     "tones": [4, 4, 1, 1], "meaning": "from all directions",
+     "story": "Four faces, eight directions — the whole compass at once. Crowds, "
+              "news, and festival guests all arrive 从四面八方.",
+     "example": ("春节的时候，人们从四面八方回家。", "Chūn jié de shí hou, rén men cóng sì miàn bā fāng huí jiā.",
+                 "At Spring Festival, people head home from all directions.")},
+    {"id": "qi-shang-ba-xia", "zh": "七上八下", "py": "qī shàng bā xià",
+     "tones": [1, 4, 1, 4], "meaning": "nervous, unsettled",
+     "story": "Seven up, eight down — a heart bouncing like a bucket in a well. "
+              "The feeling outside the exam room door, in four characters.",
+     "example": ("考试以前，我心里七上八下。", "Kǎo shì yǐ qián, wǒ xīn li qī shàng bā xià.",
+                 "Before the exam, my heart was all over the place.")},
+    {"id": "jiu-niu-yi-mao", "zh": "九牛一毛", "py": "jiǔ niú yì máo",
+     "tones": [3, 2, 4, 2], "meaning": "a drop in the bucket",
+     "story": "One hair off nine oxen. A historian used it to weigh his own "
+              "death against his unfinished book — and chose to keep writing.",
+     "example": ("这点钱对他来说是九牛一毛。", "Zhè diǎn qián duì tā lái shuō shì jiǔ niú yì máo.",
+                 "To him, this bit of money is a drop in the bucket.")},
+    {"id": "dui-niu-tan-qin", "zh": "对牛弹琴", "py": "duì niú tán qín",
+     "tones": [4, 2, 2, 2], "meaning": "playing a lute to a cow",
+     "story": "A musician played his finest piece to a grazing cow, which went "
+              "on chewing. Match the message to the listener — or don't blame "
+              "the cow.",
+     "example": ("跟他讲语法，有点对牛弹琴。", "Gēn tā jiǎng yǔ fǎ, yǒu diǎn duì niú tán qín.",
+                 "Explaining grammar to him is a bit like playing a lute to a cow.")},
+    {"id": "hua-she-tian-zu", "zh": "画蛇添足", "py": "huà shé tiān zú",
+     "tones": [4, 2, 1, 2], "meaning": "to ruin by overdoing (legs on a snake)",
+     "story": "A drawing contest: first snake done wins the wine. The fastest "
+              "painter, showing off, added legs — and lost. Done means done.",
+     "example": ("句子已经很好了，别画蛇添足。", "Jù zi yǐ jīng hěn hǎo le, bié huà shé tiān zú.",
+                 "The sentence is already good — don't add legs to the snake.")},
+    {"id": "jing-di-zhi-wa", "zh": "井底之蛙", "py": "jǐng dǐ zhī wā",
+     "tones": [3, 3, 1, 1], "meaning": "a frog at the bottom of a well",
+     "story": "The frog thought the sky was exactly as big as the circle above "
+              "its well — until a sea turtle described the ocean. Small worlds "
+              "feel complete from inside.",
+     "example": ("多旅行，别做井底之蛙。", "Duō lǚ xíng, bié zuò jǐng dǐ zhī wā.",
+                 "Travel more — don't be a frog in a well.")},
+    {"id": "wang-yang-bu-lao", "zh": "亡羊补牢", "py": "wáng yáng bǔ láo",
+     "tones": [2, 2, 3, 2], "meaning": "mend the pen after losing a sheep — not too late",
+     "story": "A shepherd lost one sheep through a hole and shrugged; he lost a "
+              "second before he fixed the fence. He never lost a third. Late "
+              "beats never.",
+     "example": ("现在开始也不晚，亡羊补牢。", "Xiàn zài kāi shǐ yě bù wǎn, wáng yáng bǔ láo.",
+                 "Starting now isn't too late — mend the pen.")},
+    {"id": "ba-miao-zhu-zhang", "zh": "拔苗助长", "py": "bá miáo zhù zhǎng",
+     "tones": [2, 2, 4, 3], "meaning": "to spoil things by rushing them",
+     "story": "A farmer, impatient with his seedlings, pulled each one up a "
+              "little to help it grow. By morning the field was dead. Growth "
+              "keeps its own calendar.",
+     "example": ("每天十个新词就够了，别拔苗助长。", "Měi tiān shí gè xīn cí jiù gòu le, bié bá miáo zhù zhǎng.",
+                 "Ten new words a day is enough — don't pull up the seedlings.")},
+    {"id": "shou-zhu-dai-tu", "zh": "守株待兔", "py": "shǒu zhū dài tù",
+     "tones": [3, 1, 4, 4], "meaning": "waiting for windfalls",
+     "story": "A rabbit once ran into a tree stump and died at a farmer's feet. "
+              "He spent the rest of the season watching the stump instead of "
+              "plowing. Luck doesn't repeat on schedule.",
+     "example": ("机会要自己找，不能守株待兔。", "Jī huì yào zì jǐ zhǎo, bù néng shǒu zhū dài tù.",
+                 "You have to hunt for opportunities — not wait by the stump.")},
+    {"id": "sai-weng-shi-ma", "zh": "塞翁失马", "py": "sài wēng shī mǎ",
+     "tones": [4, 1, 1, 3], "meaning": "a blessing in disguise",
+     "story": "The old man lost his horse — bad luck? It returned leading a "
+              "second horse. His son rode it, fell, broke a leg — bad luck? The "
+              "army came recruiting, and the boy stayed home. Wait before you "
+              "score the game.",
+     "example": ("别难过，塞翁失马，谁知道呢？", "Bié nán guò, sài wēng shī mǎ, shéi zhī dào ne?",
+                 "Don't be sad — it may be a blessing in disguise. Who knows?")},
+    {"id": "zi-xiang-mao-dun", "zh": "自相矛盾", "py": "zì xiāng máo dùn",
+     "tones": [4, 1, 2, 4], "meaning": "self-contradictory",
+     "story": "A weapons seller praised his spear — pierces any shield — and his "
+              "shield — stops any spear. Someone asked: and your spear against "
+              "your shield? The words for spear and shield became the word for "
+              "contradiction.",
+     "example": ("你说的话自相矛盾。", "Nǐ shuō de huà zì xiāng máo dùn.",
+                 "What you're saying contradicts itself.")},
+    {"id": "ru-mu-san-fen", "zh": "入木三分", "py": "rù mù sān fēn",
+     "tones": [4, 4, 1, 1], "meaning": "penetrating, incisive",
+     "story": "A calligrapher's brush pressed so much intent into the wood that "
+              "the ink soaked three-tenths of an inch deep. Now it praises any "
+              "analysis that cuts below the surface.",
+     "example": ("老师的话入木三分。", "Lǎo shī de huà rù mù sān fēn.",
+                 "The teacher's words cut right to the bone.")},
+    {"id": "bai-wen-bu-ru-yi-jian", "zh": "百闻不如一见", "py": "bǎi wén bù rú yí jiàn",
+     "tones": [3, 2, 4, 2, 2, 4], "meaning": "seeing once beats hearing a hundred times",
+     "story": "A general, asked how many troops he'd need, refused to answer "
+              "from the capital: let me look first. A hundred reports are worth "
+              "one visit.",
+     "example": ("中国很大，百闻不如一见。", "Zhōng guó hěn dà, bǎi wén bù rú yí jiàn.",
+                 "China is vast — seeing it once beats hearing about it a hundred times.")},
+    {"id": "xin-xiang-shi-cheng", "zh": "心想事成", "py": "xīn xiǎng shì chéng",
+     "tones": [1, 3, 4, 2], "meaning": "may your wishes come true",
+     "story": "Not a fable but a gift: the four characters you say over "
+              "birthday cake and at New Year. Heart wishes; things complete.",
+     "example": ("生日快乐，心想事成！", "Shēng rì kuài lè, xīn xiǎng shì chéng!",
+                 "Happy birthday — may all your wishes come true!")},
+]
+
+
+def chengyu_of_the_day(day=None):
+    """Deterministic daily rotation — same idiom all day, new one tomorrow."""
+    import datetime
+    day = day or datetime.date.today()
+    return CHENGYU[day.toordinal() % len(CHENGYU)]
