@@ -413,6 +413,8 @@ def api_view(state):
         },
         "sessions": state["sessions"][::-1][:10],
         "tone_recent": state.get("tone_attempts", [])[-6:][::-1],
+        "activity_recent": [a for a in state["activity"]
+                            if a["kind"] != "turn"][-8:][::-1],
         "writing": state["writing"],
         "settings": state["settings"],
         "position": {"stage_idx": stage_idx,

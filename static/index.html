@@ -513,6 +513,9 @@
     <div class="card" id="tonehist-card" hidden>
       <h2>Recent tone attempts</h2><div class="list"></div>
     </div>
+    <div class="card" id="actlog-card" hidden>
+      <h2>Self-study log</h2><div class="list"></div>
+    </div>
     <div class="card" id="wprog-card">
       <h2>Writing ladder</h2><div class="rows"></div>
     </div>
@@ -1476,6 +1479,19 @@ function render(s){
       ${esc(a.target_hanzi || a.target_pinyin || '—')}</span> ${chips}
       <span style="margin-left:auto" class="t5">${esc(a.date)}</span></div>`;
   }).join('');
+
+  /* self-study log — the trail, not just the ladders */
+  const act = s.activity_recent || [];
+  const al = $('#actlog-card');
+  al.hidden = !act.length;
+  const ACT_ZH = {read:'读', reading:'读', listening:'听', review:'复习', placement:'测',
+    can_do:'会', dictation:'写', tone_drill:'声', shadow:'跟', compose:'作', chengyu:'语',
+    lesson:'课', writing:'写'};
+  if (act.length) al.querySelector('.list').innerHTML = act.map(a=>
+    `<div class="confusion"><span class="tag" style="background:var(--brand)">${esc(ACT_ZH[a.kind]||'·')}</span>
+     ${esc(a.kind)}${a.detail ? ' · ' + esc(String(a.detail)) : ''}
+     ${a.score ? ` <b>${esc(String(a.score))}</b>` : ''}
+     <span style="margin-left:auto" class="t5">${esc(a.date)}</span></div>`).join('');
 
   /* writing ladder progress bars */
   const wrp = s.writing || {};

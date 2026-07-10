@@ -31,7 +31,7 @@ def test_reader_level_counts_cover_phase2_depth():
     assert counts["R4"] >= 8
     assert counts["R5"] >= 8
     assert counts["R6"] >= 4
-    assert counts["R7"] >= 2
+    assert counts["R7"] >= 7
 
 
 def test_every_word_token_carries_pinyin_and_gloss():
