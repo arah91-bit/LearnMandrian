@@ -84,6 +84,36 @@ questions), and the writing track's W3 composition engine follow-through
 (dictation exists; add typed free-composition prompts with deterministic
 feedback on known-word usage).
 
+**Active scope (Phase 5): the upper arc becomes climbable.**
+In order:
+
+1. **WS6 — can-do exit checks for S5 and S6.** Extend the bank and
+   `CAN_DO_STAGES` so the derived stage can be EARNED past the word-count
+   thresholds at every level (S5 exit would otherwise demand 1800 words —
+   assessment, not census, is the right gate up here). 5–6 items per stage,
+   reading/listening mix with critical items; remediation points at R5/R6
+   texts and S5/S6 grammar. Done when: scoring tests green, pass lifts to
+   S6/S7 in a browser walkthrough, fail remediates.
+2. **WS5 — listening comprehension passages.** Multi-sentence audio (client
+   TTS, text hidden) with 2–3 questions, S3–S6, two passages per stage,
+   character-coverage tested like reading passages. Served inside listening
+   practice as a new item kind. Done when: coverage test green, browser
+   walkthrough hears a passage and answers.
+3. **WS9 — 成语 set 20 → 40.** Same format and invariants (rotation math is
+   untouched — the modulus just grows). Done when: integrity test green over
+   40, no duplicate ids/idioms.
+4. **WS3/W3 — typed composition with deterministic feedback.** Per-stage
+   prompts ("three sentences about yesterday — use 了"); the checker reports
+   which required patterns/words appeared, which characters are outside the
+   learner's known set, and length — honest mechanical feedback, no LLM
+   needed (the tutor remains the stylist). Records activity; Write tab card.
+   Done when: checker unit-tested, browser walkthrough submits and reads
+   feedback.
+5. **(stretch) WS2 — the R7 chaptered story** (three linked texts, one
+   narrative). 6. **(stretch) WS1 — S5 vocabulary 1300 → 1500.**
+
+Same rules; honest remainders roll to Phase 6.
+
 **Branch/deploy mode:** phase work happens on the feature branch, verified
 against a scratch instance; deploy to the shared test container
 (`languagetutor-test`) after the whole phase slice is reviewed and local
