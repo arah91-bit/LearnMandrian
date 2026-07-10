@@ -387,3 +387,30 @@ def test_chengyu_set_is_sound_and_daily_rotation_is_deterministic():
     assert curriculum.chengyu_of_the_day(d) == curriculum.chengyu_of_the_day(d)
     assert curriculum.chengyu_of_the_day(d) != curriculum.chengyu_of_the_day(
         d + datetime.timedelta(days=1))
+
+
+# ── Typed composition ──────────────────────────────────────────────────────────
+def test_composition_prompts_and_checker():
+    import datetime
+    ids = set()
+    for sid, prompts in curriculum.COMPOSITION_PROMPTS.items():
+        for pr in prompts:
+            assert pr["id"] not in ids
+            ids.add(pr["id"])
+            assert pr["prompt"] and pr["min_chars"] > 0
+    d = datetime.date(2026, 7, 10)
+    assert (curriculum.composition_prompt_of_the_day("S3", d)
+            == curriculum.composition_prompt_of_the_day("S3", d))
+    ok = curriculum.check_composition(
+        "S3", "S3-yesterday", "昨天我喝了两杯咖啡。我去了商店。晚上我看书了。")
+    assert ok["passed"] and ok["found"] == ["了"] and not ok["unknown_chars"]
+    short = curriculum.check_composition("S3", "S3-yesterday", "我喝了。")
+    assert not short["passed"] and not short["length_ok"]
+    missing = curriculum.check_composition("S3", "S3-yesterday",
+                                           "今天我喝两杯咖啡，明天我去商店，晚上我看书。")
+    assert not missing["required_ok"]
+    stranger = curriculum.check_composition("S2", "S2-likes", "我喜欢猫和茶，还有龘。")
+    assert "龘" in stranger["unknown_chars"] and not stranger["passed"]
+    learner_knows = curriculum.check_composition(
+        "S2", "S2-likes", "我喜欢猫。", learner_hanzi=["猫"])
+    assert not learner_knows["unknown_chars"]

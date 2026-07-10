@@ -481,6 +481,15 @@
       <div class="focus empty">Your tutor starts you on strokes — rung W0.</div>
     </div>
     <div id="ladder"></div>
+    <div class="card" id="compose-card" hidden>
+      <h2>写作 — today's composition</h2>
+      <p class="rintro" id="composePrompt"></p>
+      <textarea id="composeText" lang="zh-Hans" rows="4" style="width:100%;font:inherit;
+        font-family:var(--hanzi);font-size:18px;background:var(--raised);color:var(--ink);
+        border:1px solid var(--line);border-radius:10px;padding:10px 12px"></textarea>
+      <button class="pbtn" id="composeGo" style="margin-top:8px"><span class="zh">交</span>check my writing</button>
+      <div id="composeReport" class="qz-note" style="text-align:left;min-height:0"></div>
+    </div>
     <div class="card" id="wwords-card" hidden>
       <h2>Words you've written</h2><div class="list"></div>
     </div>
@@ -2213,9 +2222,39 @@ async function loadChengyu(){
     };
   }catch(e){}
 }
+async function loadCompose(){
+  try{
+    const r = await fetch('/api/compose');
+    if (!r.ok) return;
+    const j = await r.json();
+    const card = $('#compose-card');
+    card.hidden = false;
+    $('#composePrompt').textContent = `${j.prompt} (at least ${j.min_chars} characters)`;
+    $('#composeGo').onclick = async ()=>{
+      const t = $('#composeText').value.trim();
+      if (!t) return;
+      const r2 = await fetch('/api/compose/submit',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({id: j.id, text: t})});
+      const rep = await r2.json();
+      if (!r2.ok){ $('#composeReport').textContent = rep.detail || 'error'; return; }
+      const bits = [];
+      bits.push(`${rep.chars} characters (${rep.length_ok ? 'enough' : 'need ' + rep.min_chars}) · ${rep.sentences} sentence${rep.sentences === 1 ? '' : 's'}`);
+      bits.push(rep.required_ok ? `required pattern used: ${rep.found.join('、') || '—'} ✓`
+                                : `missing required: ${rep.required.join(' or ')}`);
+      bits.push(rep.unknown_chars.length
+        ? `characters outside your world yet: ${rep.unknown_chars.join(' ')} — ask the tutor about them`
+        : 'every character is one you know ✓');
+      bits.push(rep.passed ? '写得好 — logged. Bring it to the tutor for style.' : 'revise and check again — this only counts the mechanics.');
+      $('#composeReport').innerHTML = bits.map(esc).join('<br>');
+      loadState();
+    };
+  }catch(e){}
+}
 loadState();
 loadCurriculum();
 loadChengyu();
+loadCompose();
 loadLibrary();
 loadReader();
 

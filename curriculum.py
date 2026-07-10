@@ -2768,3 +2768,90 @@ CONVERSATION_THEMES = {
            "retell today's news and add your view", "tell a story that lands a laugh",
            "plan an imaginary trip together, budget and all"],
 }
+
+
+# ── Typed composition (Phase 5 / WS3-W3) ──────────────────────────────────────
+# Deterministic writing practice: a prompt, a required pattern, and honest
+# mechanical feedback — what appeared, what's missing, which characters sit
+# outside the learner's world. The tutor remains the stylist; this is reps.
+COMPOSITION_PROMPTS = {
+    "S2": [
+        {"id": "S2-intro", "prompt": "Introduce yourself in two sentences — your name, and one thing about you.",
+         "require": ["我"], "min_chars": 8},
+        {"id": "S2-likes", "prompt": "Write three things you like.",
+         "require": ["喜欢"], "min_chars": 9},
+        {"id": "S2-order", "prompt": "You're at a tea shop: write what you want to eat and drink.",
+         "require": ["要"], "min_chars": 6},
+    ],
+    "S3": [
+        {"id": "S3-yesterday", "prompt": "Three sentences about yesterday — use 了 for what you completed.",
+         "require": ["了"], "min_chars": 15},
+        {"id": "S3-times", "prompt": "Your day by the clock: when you get up, eat, and sleep.",
+         "require": ["点"], "min_chars": 15},
+        {"id": "S3-weather", "prompt": "Describe today's weather and what you'll do because of it.",
+         "require": ["天气"], "min_chars": 12},
+    ],
+    "S4": [
+        {"id": "S4-plan", "prompt": "A weekend plan with a backup — use 如果…就.",
+         "require": ["如果"], "min_chars": 16},
+        {"id": "S4-why", "prompt": "Why are you learning Chinese? Use 因为…所以.",
+         "require": ["因为"], "min_chars": 16},
+        {"id": "S4-home", "prompt": "Describe your home: rooms, and one thing you like about it.",
+         "require": ["有"], "min_chars": 16},
+    ],
+    "S5": [
+        {"id": "S5-story", "prompt": "A tiny story where the plan changed — use 本来 and 结果.",
+         "require": ["结果"], "min_chars": 24},
+        {"id": "S5-compare", "prompt": "Compare two cities, foods, or seasons — use 比.",
+         "require": ["比"], "min_chars": 20},
+        {"id": "S5-advice", "prompt": "A friend is stressed. Give advice — use 应该.",
+         "require": ["应该"], "min_chars": 20},
+    ],
+    "S6": [
+        {"id": "S6-opinion", "prompt": "An opinion with a concession — use 尽管 or 虽然, then land your view.",
+         "require": ["尽管", "虽然"], "require_any": True, "min_chars": 30},
+        {"id": "S6-news", "prompt": "Retell something you read this week and add your view — use 最近.",
+         "require": ["最近"], "min_chars": 30},
+        {"id": "S6-chengyu", "prompt": "Write a short paragraph that uses any 成语 you've learned, naturally.",
+         "require": [], "require_chengyu": True, "min_chars": 24},
+    ],
+}
+
+
+def composition_prompt_of_the_day(sid, day=None):
+    import datetime
+    day = day or datetime.date.today()
+    prompts = COMPOSITION_PROMPTS.get(sid) or COMPOSITION_PROMPTS["S2"]
+    return prompts[day.toordinal() % len(prompts)]
+
+
+def check_composition(sid, prompt_id, text, learner_hanzi=()):
+    """Mechanical, honest feedback. known = seeds through the stage plus the
+    learner's own deck; no judgment of style — that's the tutor's job."""
+    prompts = {pr["id"]: pr for ps in COMPOSITION_PROMPTS.values() for pr in ps}
+    pr = prompts.get(prompt_id)
+    if pr is None:
+        raise KeyError(prompt_id)
+    text = str(text or "").strip()
+    hanzi = [c for c in text if "㐀" <= c <= "鿿"]
+    known = set("".join(w for w in learner_hanzi))
+    for s in STAGES[: _STAGE_IDX.get(sid, 0) + 1]:
+        known |= {c for w in SEEDS.get(s["id"], []) for c in w[0]}
+    known |= {c for cy in CHENGYU for c in cy["zh"]}
+    unknown = sorted({c for c in hanzi if c not in known})
+    req = pr.get("require", [])
+    found = [w for w in req if w in text]
+    if pr.get("require_chengyu"):
+        used = [cy["zh"] for cy in CHENGYU if cy["zh"] in text]
+        req_ok = bool(used)
+        found += used
+    elif pr.get("require_any"):
+        req_ok = bool(found)
+    else:
+        req_ok = len(found) == len(req)
+    sentences = len([s for s in re.split(r"[。！？!?]", text) if s.strip()])
+    return {"prompt": pr["prompt"], "chars": len(hanzi),
+            "min_chars": pr["min_chars"], "length_ok": len(hanzi) >= pr["min_chars"],
+            "sentences": sentences, "required": req, "found": found,
+            "required_ok": req_ok, "unknown_chars": unknown,
+            "passed": req_ok and len(hanzi) >= pr["min_chars"] and not unknown}

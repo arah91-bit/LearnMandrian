@@ -814,6 +814,33 @@ def tone_drill_submit(audio: UploadFile = File(...), target_hanzi: str = Form(""
     return out
 
 
+@app.get("/api/compose")
+def compose_today(stage: str = ""):
+    state = learner.load()
+    sid = stage if stage in {s["id"] for s in curriculum.STAGES} \
+        else curriculum.STAGES[learner.speaking_stage(state)]["id"]
+    pr = curriculum.composition_prompt_of_the_day(sid)
+    return {"stage": sid, "id": pr["id"], "prompt": pr["prompt"],
+            "min_chars": pr["min_chars"]}
+
+
+@app.post("/api/compose/submit")
+def compose_submit(payload: dict):
+    pid = str(payload.get("id", ""))
+    text = str(payload.get("text", ""))[:1000]
+    with learner.txn() as state:
+        try:
+            report = curriculum.check_composition(
+                curriculum.STAGES[learner.speaking_stage(state)]["id"], pid, text,
+                learner_hanzi=[w["hanzi"] for w in state["vocab"]])
+        except KeyError:
+            raise HTTPException(404, "no such prompt")
+        learner.record_activity(state, "compose", pid,
+                                "ok" if report["passed"] else "retry")
+        learner.touch_day(state)
+    return report
+
+
 @app.get("/api/chengyu")
 def chengyu_today():
     """成语 of the day — the maintenance-tier drip of idioms."""
