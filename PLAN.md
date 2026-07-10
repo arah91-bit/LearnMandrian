@@ -60,33 +60,29 @@ S5 vocabulary stretch (→1300) not attempted. Next phase also inherits: WS1
 phase D (S5 → 1800 eventually), themed tutor conversation menus (WS9),
 成语-of-the-day feed, and R7 chaptered long-form growth.
 
-**Active scope (Phase 4): the upper path and the maintenance loop.**
-In order:
+**Phase 4 — COMPLETE (2026-07-10, executed with honest remainders).** Landed:
+(1) R5 to 8 texts (a plan that survives sold-out tickets; a coffee mix-up
+teaching 对不起/没关系) — reader at 63 texts; (2) grammar to 119 points with
+S5/S6 nuance (让/使, 又…又, 再/又, 不如, 到底, 恐怕, 千万, figurative
+起来/下去/出来, sentence-final 了, 第, 无论/不管/尽管/除非/难免, …之一,
+是否); (3) S5 vocabulary milestone 1300 hit with ~320 hand-checked HSK4-band
+entries in two batches — a dedupe-induced stage-migration regression was
+caught twice by the invariants and fixed; milestone encoded as a rising-floor
+test; (4) 成语 of the day: 20 original retellings with coverage-tested
+example sentences, deterministic rotation, Learn-tab card with audio and
+one-tap add-to-deck (browser-verified end to end); (5) conversation themes:
+a per-stage catalog dealt deterministically into the S4+ snapshot so free
+conversation arrives with a topic.
 
-1. **WS2 — R5 to 8 texts.** Two more short stories at R5 (themes from the
-   HSK4 band: a plan that changes, a misunderstanding resolved), passing all
-   reader invariants; bump the sizing floor to R5 ≥ 8.
-2. **WS4 — grammar to ≈120.** ~20 more S5/S6 points (causative 让/使, 又…又,
-   先…再, 越是…, 无论…都, 不管, 尽管, 除非, directional extensions 起来/下去/
-   出来 figurative senses, 不如, sentence-final 了 vs verbal 了, 到底, 恐怕,
-   千万, 难免 …). Coverage test stays the gate: function words get seeded.
-3. **WS1 phase D-part — S5 vocabulary milestone 1300.** Hand-checked HSK4-band
-   batches until cumulative content at S5 ≥ 1300; encode it as an interim
-   floor test (S5 exit needs 1800 eventually — the milestone only rises).
-4. **WS9 — 成语 of the day.** An original set (~20 idioms: pinyin, tones,
-   meaning, the fable retold in our own words, one example sentence at ≤S6
-   vocabulary), a deterministic daily rotation endpoint, a Learn-tab card
-   with audio, and one tap to add today's idiom to the SRS deck. Invariant:
-   example sentences use only seeded characters plus the idiom's own.
-5. **WS9 — themed conversation menus.** A per-stage theme catalog appended to
-   curriculum.md (S4+: opinions, stories, news, culture…); the snapshot deals
-   the tutor a deterministic theme-of-the-day for S4+ learners so sessions
-   stop re-deciding what to talk about. Token budget: one line.
-6. **(stretch) WS2 — one more chaptered R7 story.**
-
-Done-when per item: invariants/tests named above green, browser walkthrough
-of the 成语 card and one new text, deploy + smoke after the slice, honest
-remainder notes for whatever doesn't land.
+**Phase 4 remainders (→ Phase 5):** the stretch R7 chaptered story was not
+written; S5 continues toward 1800 (currently ≥1300); grammar sits at 119
+(≈120 aspiration met in spirit — add S6/S7 register points as texts need
+them). Phase 5 candidates, in order: S5→S6 content arc (vocabulary to 1800,
+R6/R7 depth, can-do checks for S5/S6), 成语 set growth (20 → 60) wired into
+R6+ texts, listening comprehension passages (multi-sentence audio with
+questions), and the writing track's W3 composition engine follow-through
+(dictation exists; add typed free-composition prompts with deterministic
+feedback on known-word usage).
 
 **Branch/deploy mode:** phase work happens on the feature branch, verified
 against a scratch instance; deploy to the shared test container
