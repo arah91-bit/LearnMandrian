@@ -103,6 +103,27 @@ those two, plus S6 vocabulary groundwork (toward 1800/3500), R6/R7 growth
 wired to the 40-idiom set, a listening-passage bank expansion (2 → 4 per
 stage), and surfacing composition history on the Progress tab.
 
+**Active scope (Phase 6): the capstone story and the long tail.**
+In order:
+
+1. **WS2 — the R7 chaptered story.** Three linked texts (r7-5/6/7), one
+   narrative: the trip back to the tea shop from r3-1 — a plan kept
+   (说到做到), a scare on the train (七上八下), and a festival arrival
+   (人山人海, 心想事成). Learned 成语 live in dialogue; every chapter
+   passes the taught-before-used invariant; R7 floor rises to 7.
+2. **Progress — the self-study log.** A card listing recent deterministic
+   activity (compositions ok/retry, idioms added, shadowing, drills) so the
+   learner sees the trail, not just the ladders. api_view exposes the tail
+   of the activity log.
+3. **WS5 — listening passages 2 → 4 per stage** (S3–S6, +8 passages), same
+   coverage invariant.
+4. **WS1 — S5 vocabulary 1300 → 1500** (hand-checked batches; milestone
+   floor moves with reality, never past it).
+5. **(stretch) WS1 — S6 groundwork batch.**
+
+Done-when: invariants green, browser walkthrough of one chapter and the log
+card, deploy + smoke, honest remainders roll forward.
+
 **Branch/deploy mode:** phase work happens on the feature branch, verified
 against a scratch instance; deploy to the shared test container
 (`languagetutor-test`) after the whole phase slice is reviewed and local
