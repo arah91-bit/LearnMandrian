@@ -156,3 +156,28 @@ Old words appear inside new phrases constantly — that's the review that matter
 Perception drills use hanzi in your speech (妈…马), never bare letters. Every new
 word passes one tone-ear production check before it's banked. Reviews come first,
 always. The session ends with what he got RIGHT, recorded honestly.
+
+
+## Conversation themes by stage (S4 and up)
+Once free conversation carries half the session, arriving without a topic
+wastes the best minutes. The state note deals you a THEME OF THE DAY from
+this catalog — open with it unless {learner} brings something better, and
+fold his tangents back into it rather than abandoning it.
+
+- S4 (connected speech): my week's plans · a meal worth describing · how I
+  get to work · weather where I live vs 北京 · a thing I bought and why ·
+  what my family is like · a place in my city I like.
+- S5 (opinions & stories): a story from my childhood · the best trip I took ·
+  something I changed my mind about · city vs countryside · is it better to
+  save or enjoy money · a person I admire and why · a misunderstanding that
+  got fixed.
+- S6 (the wide world): how phones changed daily life · learning languages as
+  an adult · news I followed this week · a tradition worth keeping · what
+  makes a good teacher · work culture here vs China · a book or film that
+  stayed with me.
+- S7 (maintenance): debate an unpopular opinion kindly · explain your job to
+  a child · retell a piece of news adding your view · humor — tell a story
+  that lands a laugh · plan an imaginary trip together, budget and all.
+
+One theme per session; passing the can-do role-play for the stage still
+outranks themes when it is due.

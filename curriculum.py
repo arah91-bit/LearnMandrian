@@ -2503,3 +2503,22 @@ def chengyu_of_the_day(day=None):
     import datetime
     day = day or datetime.date.today()
     return CHENGYU[day.toordinal() % len(CHENGYU)]
+
+
+# ── Conversation themes (Phase 4 / WS9) — dealt to the tutor at S4+ ──────────
+CONVERSATION_THEMES = {
+    "S4": ["this week's plans", "a meal worth describing", "how you get to work",
+           "the weather here versus Beijing", "something you bought and why",
+           "what your family is like", "a favorite place in your city"],
+    "S5": ["a story from your childhood", "the best trip you ever took",
+           "something you changed your mind about", "city versus countryside",
+           "saving money versus enjoying it", "a person you admire and why",
+           "a misunderstanding that got fixed"],
+    "S6": ["how phones changed daily life", "learning languages as an adult",
+           "news you followed this week", "a tradition worth keeping",
+           "what makes a good teacher", "work culture here versus China",
+           "a book or film that stayed with you"],
+    "S7": ["debate an unpopular opinion kindly", "explain your job to a child",
+           "retell today's news and add your view", "tell a story that lands a laugh",
+           "plan an imaginary trip together, budget and all"],
+}

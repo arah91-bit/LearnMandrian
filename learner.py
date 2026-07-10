@@ -367,6 +367,12 @@ def snapshot(state):
             lines.append(f"Last reader text: {text['title']} — {text['title_en']}")
     if state["settings"].get("immersion"):
         lines.append("Immersion mode is ON — he asked for as much Mandarin as his level allows.")
+    if speaking_stage(state) >= 4:      # S4+: deal a conversation theme (see
+        import datetime                  # curriculum.md's theme catalog)
+        themes = curriculum.CONVERSATION_THEMES.get(st["id"], [])
+        if themes:
+            theme = themes[datetime.date.today().toordinal() % len(themes)]
+            lines.append(f"Conversation theme of the day (S4+ catalog): {theme}")
     recent = [a for a in state["activity"] if a["kind"] != "turn"][-3:]
     if recent:
         lines.append("Recent self-study in the app: " + "; ".join(

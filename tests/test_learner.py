@@ -87,3 +87,12 @@ def test_plan_sessions_and_snapshot():
     assert "Last reader text: 你好" in snap
     view = learner.api_view(s)
     assert view["stats"]["due_count"] == 1 and view["sessions"][0]["summary"]
+
+
+def test_snapshot_deals_a_theme_at_s4_plus():
+    s = _state()
+    learner.set_placement(s, {"stage_idx": 5, "stage": "S5",
+                              "stage_name": "x", "per_stage": {}})
+    assert "Conversation theme of the day" in learner.snapshot(s)
+    s2 = _state()
+    assert "Conversation theme" not in learner.snapshot(s2)   # beginners drill, not chat
