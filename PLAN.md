@@ -119,44 +119,48 @@ of the 40 idioms into upper texts, R6 growth (6 → 8), a second R7 chaptered
 story, and can-do S7 (the maintenance tier's own exit bar — what 'fluent
 enough' means is a design question worth a paragraph before code).
 
-**Active scope (Phase 7): fluency has no exit — measure the pulse.**
-
-**The S7 design decision (settled here, before code):** S7 is maintenance;
-there is no stage above it, so a pass-once exit exam is the wrong shape.
-Instead of a can-do check, S7 gets a recurring **fluency pulse** — a
-diagnostic the recommendation engine deals every ~2 weeks at S7: one UNSEEN
-R7-band reading passage (drawn from a reserve bank, never shown in the
-reader), one native-speed listening item, one composition prompt requiring a
-成语 used naturally, and one shadowing sentence. It does not lift anything;
-it reports drift ("reading holds; tones on T2→T1 slipping — here's the
+**The S7 design decision (settled in Phase 7, before code):** S7 is
+maintenance; there is no stage above it, so a pass-once exit exam is the
+wrong shape. Instead of a can-do check, S7 gets a recurring **fluency
+pulse** — a diagnostic the recommendation engine deals every ~2 weeks at S7:
+one UNSEEN R7-band reading passage (drawn from a reserve bank, never shown
+in the reader), one native-speed listening item, one composition prompt
+requiring a 成语 used naturally, and one shadowing sentence. It does not
+lift anything; it reports drift ("reading holds; tones slipping — here's the
 drill") and its remediations point at exactly what decayed. Passing isn't
 the point; noticing is. Results live in `state["pulse"]` history so the
 Progress tab can chart maintenance over months.
 
-In order:
+**Phase 7 — COMPLETE (2026-07-10, executed with honest remainders).** Landed:
+(1) the fluency pulse exactly as designed above: 6 reserve passages (3
+questions each, every character taught by S6, machine-checked unseen — the
+bank may never leak into the reader or practice banks), deterministic deal
+rotation, holds/slipping/decayed verdicts per leg, mic-less shadow skip
+path, `/api/pulse*` endpoints, four-leg flow in the quiz modal with shuffled
+choices, Progress history card, 14-day rhythm in `recommend()` right after
+reviews; S7 finally has its own composition prompts (previously daily
+compose at S7 fell back to S2 — a real gap, closed). (2) R6 to 8 texts:
+井底之蛙 and 亡羊补牢 as stories that teach the idiom plus 21 core words
+(住/世界/开始/手机… — taught-before-used caught three gaps mid-write). The
+new reader↔feed invariant (any 4-hanzi reader token must exist in CHENGYU)
+immediately found three idioms living only in the reader — 马马虎虎,
+入乡随俗, 一石二鸟 — feed now 43. (3) S5 cumulative 1381 → 1510, floor
+1350 → 1500 (+129 HSK4-band words); S6 groundwork +139 HSK5-band words
+(seeds 48 → 187) — every candidate deduped against all stages AND reader
+words, tone-mark machine-checked, dozen spot-checked by hand. (4) the
+idiom drip: chengyu card shows X-of-43 learned; when everything else is
+done, `recommend()` deals today's idiom, whose first review then comes due
+immediately — the drip feeds the SRS. Tests 55 → 68; every leg
+browser-verified on a forced-S7 scratch profile (deal → report → targeted
+remediation → history; drip → card → deck; new texts render).
 
-1. **WS6/S7 — the fluency pulse.** Engine (bank of 4+ reserve passages held
-   to S7 coverage, scorer, recommendation integration at S7, Progress
-   history card). Done when: pulse deals end-to-end in a browser at a
-   forced-S7 scratch profile, remediation targets render, tests cover
-   scoring and the every-N-days scheduling rule.
-2. **WS2 — R6 to 8 texts, idioms doing the work.** Two texts built AROUND
-   feed idioms (井底之蛙 as a travel-perspective story; 亡羊补牢 as fixing a
-   habit late), teaching them as new_words. Add the consistency invariant:
-   any 成语 appearing in reader text must exist in the CHENGYU set. Done
-   when: invariants green, R6 floor 8.
-3. **WS1 — S5 to 1500** (~120 hand-checked words, floor moves to 1500), then
-   **S6 groundwork** (~150 words toward the HSK5 band: society, opinion,
-   work-life abstractions). Done when: floors moved to reality, no dup hanzi,
-   spot-check noted in commits.
-4. **Maintenance polish (small).** Chengyu card shows learned-count (X of
-   40); recommendation engine offers today's idiom when it is not yet in the
-   deck and everything else is done — the maintenance tier's daily drip
-   becomes part of the loop. Done when: browser-verified.
-5. **(stretch) WS2 — second R7 chaptered story.**
-
-Same guardrails: invariant-first, authenticity rule (no generated content),
-scratch verification, backup push, honest remainders to Phase 8.
+**Phase 7 remainders (→ Phase 8):** the stretch second R7 chaptered story
+was not attempted; the pulse's audio shadow leg reuses shadow_submit's
+proven EAR path but wasn't mic-tested in a browser (preview has no mic —
+worth one manual try on the deployed instance). Phase 8 candidates: S6
+vocabulary onward toward 1800, R7 growth wired to the enlarged feed, pulse
+history charting over months once real pulses accumulate, and S6/S7 grammar
+depth (the inventory thins above S5).
 
 **Branch/deploy mode:** phase work happens on the feature branch, verified
 against a scratch instance; deploy to the shared test container
