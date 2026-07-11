@@ -415,6 +415,11 @@ def recommend(state):
     if not _did_today(state, "lesson", "turn"):
         return {"id": "lesson", "title": "Continue the lesson",
                 "why": "Reviews are clear and you've practiced — time for new material with the tutor."}
+    cy = curriculum.chengyu_of_the_day()
+    if cy["zh"] not in {w["hanzi"] for w in state["vocab"]}:
+        return {"id": "chengyu", "title": f"成语 of the day: {cy['zh']}",
+                "why": "Everything else is done — one four-character story into "
+                       "the deck keeps the long tail growing."}
     return {"id": "writing", "title": "Writing practice",
             "why": "Everything else is done today — a few minutes at the pad locks characters in."}
 

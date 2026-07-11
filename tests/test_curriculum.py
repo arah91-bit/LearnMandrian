@@ -307,7 +307,11 @@ def test_recommend_cascade():
     learner.record_activity(s, "reading", "S0", "4/6")
     assert learner.recommend(s)["id"] == "lesson"        # practiced -> new material
     learner.record_activity(s, "lesson")
-    assert learner.recommend(s)["id"] == "writing"       # everything done -> pad
+    cy = curriculum.chengyu_of_the_day()                 # everything done -> the
+    assert learner.recommend(s)["id"] == "chengyu"       # daily idiom drip...
+    learner.add_word(s, cy["zh"], cy["py"], cy["meaning"], cy["tones"])
+    learner.grade_word(s, cy["zh"], 5)                   # (due tomorrow, not today)
+    assert learner.recommend(s)["id"] == "writing"       # ...then the pad
     learner.record_activity(s, "listening", "S0", "5/6")
     assert learner.recommend(s)["id"] == "writing"
 

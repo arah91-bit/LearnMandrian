@@ -399,7 +399,7 @@
       </div>
     </div>
     <div class="card" id="chengyu-card" hidden>
-      <h2>成语 of the day</h2>
+      <h2>成语 of the day <span class="cy-count t5" style="font-size:12px;font-weight:400"></span></h2>
       <div class="cy-zh" data-say="" style="font-family:var(--hanzi);font-size:30px"></div>
       <div class="cy-py" style="color:var(--brand-hot);font-size:14px"></div>
       <div class="cy-en" style="color:var(--dim);font-size:14px;margin-bottom:6px"></div>
@@ -1364,6 +1364,7 @@ function render(s){
       read:'读 — open the text', reading:'读 — start reading',
       listening:'听 — start listening', dictation:'写 — start dictation',
       lesson:'继续 — continue the lesson', pulse:'脉 — take the pulse',
+      chengyu:'语 — meet today\'s idiom',
       writing:'写 — to the pad', can_do:'会 — start check'})[r.id] || 'start';
     go.dataset.act = r.id;
   }
@@ -2309,6 +2310,11 @@ function runRec(id){
   }
   else if (id === 'reading' || id === 'listening' || id === 'dictation') startPractice(id);
   else if (id === 'pulse') startPulse();
+  else if (id === 'chengyu'){
+    goTab('learn');
+    const c = $('#chengyu-card');
+    if (c && !c.hidden) c.scrollIntoView({behavior:'smooth', block:'center'});
+  }
   else if (id === 'can_do') startCanDo();
   else if (id === 'writing'){ goTab('write'); startWritingLesson(); }
   else if (id === 'lesson'){ goTab('talk'); $('#golesson').click(); }
@@ -2396,6 +2402,7 @@ async function loadChengyu(){
     const j = await r.json();
     const c = j.today, card = $('#chengyu-card');
     card.hidden = false;
+    card.querySelector('.cy-count').textContent = `${j.learned} of ${j.count} learned`;
     const zh = card.querySelector('.cy-zh');
     zh.textContent = c.zh; zh.dataset.say = c.zh;
     card.querySelector('.cy-py').textContent = pyDisp(c.py);
@@ -2412,7 +2419,7 @@ async function loadChengyu(){
       await fetch('/api/chengyu/learn',{method:'POST',
         headers:{'Content-Type':'application/json'}, body:JSON.stringify({id:c.id})});
       btn.disabled = true; btn.textContent = '已在卡片里 — in your deck';
-      loadState();
+      loadState(); loadChengyu();          // the learned-count moves with the deck
     };
   }catch(e){}
 }

@@ -847,7 +847,9 @@ def chengyu_today():
     c = curriculum.chengyu_of_the_day()
     state = learner.load()
     known = {w["hanzi"] for w in state["vocab"]}
-    return {"today": c, "in_deck": c["zh"] in known, "count": len(curriculum.CHENGYU)}
+    return {"today": c, "in_deck": c["zh"] in known,
+            "count": len(curriculum.CHENGYU),
+            "learned": sum(1 for x in curriculum.CHENGYU if x["zh"] in known)}
 
 
 @app.post("/api/chengyu/learn")
